@@ -23,13 +23,19 @@ export class MovementManager {
         this.shootCooldown = 500;
         this.lastShootTime = 0;
 
-        this.sendNewPlayerPosition();
+        this.forward = 0;
+        this.side = 0;
+        this.currentSpeed = 0;
+        this.isJumping = false;
+
+        this.updateMovementKeybinds();
         this.setupShootingControls();
     }
 
     update(deltaTime) {
         if (!deltaTime) return;
         
+        this.handleMovementUpdate();
         this.handleMovement(deltaTime);
         this.handleJump(deltaTime);
         this.smoothRotation(deltaTime);
@@ -37,42 +43,22 @@ export class MovementManager {
         // Only check for sending updates periodically
         this.timeSinceLastUpdate += deltaTime * 1000; // Convert to ms
         if (this.timeSinceLastUpdate >= this.updateInterval) {
-            this.sendServerPosition();
             this.timeSinceLastUpdate = 0;
         }
     }
 
     handleMovement(deltaTime) {
-        let forward = 0;
-        let side = 0;
-
-        // Handle movement input from the player (WASD or arrow keys)
-        if (gameState.keyStates.KeyW || gameState.keyStates.ArrowUp) forward -= 1;
-        if (gameState.keyStates.KeyS || gameState.keyStates.ArrowDown) forward += 1;
-        if (gameState.keyStates.KeyD || gameState.keyStates.ArrowRight) side -= 1;
-        if (gameState.keyStates.KeyA || gameState.keyStates.ArrowLeft) side += 1;
-
-        // Normalize the movement vector to prevent faster diagonal movement
-        if (forward !== 0 || side !== 0) {
-            const length = Math.sqrt(forward * forward + side * side);
-            forward /= length;
-            side /= length;
-        }
-
-        // Handle sprinting
-        const currentSpeed = gameState.keyStates.ShiftLeft ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
-
         // Calcul of the direction vectors
         this.sceneManager.cameraContainer.getWorldDirection(this.moveDirection);
         this.sideDirection.copy(this.moveDirection).cross(this.sceneManager.cameraContainer.up);
 
         // Calcul of the target velocity
         this.targetVelocity.set(0, 0, 0);
-        if (forward !== 0) {
-            this.targetVelocity.addScaledVector(this.moveDirection, forward * currentSpeed);
+        if (this.forward !== 0) {
+            this.targetVelocity.addScaledVector(this.moveDirection, this.forward * this.currentSpeed);
         }
-        if (side !== 0) {
-            this.targetVelocity.addScaledVector(this.sideDirection, side * currentSpeed);
+        if (this.side !== 0) {
+            this.targetVelocity.addScaledVector(this.sideDirection, this.side * this.currentSpeed);
         }
 
         // Smooth the velocity
@@ -104,6 +90,45 @@ export class MovementManager {
         }
     }
 
+    handleMovementUpdate()
+    {
+        let oldForward = this.forward;
+        let oldSide = this.side;
+        let oldSpeed = this.currentSpeed;
+        let oldIsJumping = this.isJumping;
+        this.forward = 0;
+        this.side = 0;
+
+        // Handle movement input from the player (WASD or arrow keys)
+        if (gameState.keyStates.KeyW || gameState.keyStates.ArrowUp) this.forward -= 1;
+        if (gameState.keyStates.KeyS || gameState.keyStates.ArrowDown) this.forward += 1;
+        if (gameState.keyStates.KeyD || gameState.keyStates.ArrowRight) this.side -= 1;
+        if (gameState.keyStates.KeyA || gameState.keyStates.ArrowLeft) this.side += 1;
+
+        // Normalize the movement vector to prevent faster diagonal movement
+        if (this.forward !== 0 || this.side !== 0) {
+            const length = Math.sqrt(this.forward * this.forward + this.side * this.side);
+            this.forward /= length;
+            this.side /= length;
+        }
+
+        // Handle sprinting
+        this.currentSpeed = gameState.keyStates.ShiftLeft ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
+
+        if (gameState.keyStates.Space && !gameState.physics.isJumping) {
+            this.isJumping = true;
+        }
+
+        if (this.forward !== oldForward || 
+            this.side !== oldSide || 
+            this.currentSpeed !== oldSpeed || 
+            this.isJumping !== oldIsJumping) 
+        {
+            console.log("Sending movement update");
+            this.updateMovementKeybinds();
+        }
+    }
+
     smoothRotation(deltaTime) {
         // Smooth camera rotation
         gameState.camera.pitch = THREE.MathUtils.lerp(
@@ -123,60 +148,25 @@ export class MovementManager {
         );
     }
 
-    sendNewPlayerPosition() {
+    updateMovementKeybinds() {
+        console.log("Updating movement keybinds");
         if(this.wsocket == null) return;
         if (this.wsocket.readyState !== 1) {
-            setTimeout(() => this.sendNewPlayerPosition(), 100);
+            console.log("Socket not ready, retrying in 100ms");
+            setTimeout(() => this.updateMovementKeybinds(), 100);
             return;
         }
-        let sended_player = 
-        {
-            name: localStorage.getItem('username'),
-            position: this.sceneManager.cameraContainer.position,
-            rotation: this.sceneManager.cameraContainer.rotation,
-            pitch: gameState.camera.pitch
-        }
-
+        console.log("Socket ready, sending movement update");
         this.wsocket.send(JSON.stringify({
-            type: "ADD_NEW_PLAYER",
-            player: sended_player
-        }));
-    }
-
-    sendServerPosition() {
-        if(this.wsocket == null || this.wsocket.readyState !== 1) {
-            this.wsocket = getWebSocket();
-            return;
-        }
-
-        const currentPosition = this.sceneManager.cameraContainer.position;
-        const currentRotation = this.sceneManager.cameraContainer.rotation;
-        const currentPitch = gameState.camera.pitch;
-
-        // Only send if there's significant change
-        const positionChanged = currentPosition.distanceTo(this.lastSentPosition) > this.positionThreshold;
-        const rotationChanged = 
-            Math.abs(currentRotation.y - this.lastSentRotation.y) > this.rotationThreshold ||
-            Math.abs(currentPitch - this.lastSentPitch) > this.rotationThreshold;
-
-        if (positionChanged || rotationChanged) {
-            let sended_player = 
-            {
-                name: localStorage.getItem('username'),
-                position: currentPosition,
-                rotation: currentRotation,
-                pitch: currentPitch
+            type: "UPDATE_PLAYER_KEYBINDS",
+            name: localStorage.getItem('username'),
+            movement: {
+                forward: this.forward,
+                side: this.side,
+                speed: this.currentSpeed,
+                isJumping: this.isJumping
             }
-            this.wsocket.send(JSON.stringify({
-                type: "UPDATE_PLAYER",
-                player: sended_player
-            }));
-            
-            // Save last sent values
-            this.lastSentPosition.copy(currentPosition);
-            this.lastSentRotation.copy(currentRotation);
-            this.lastSentPitch = currentPitch;
-        }
+        }));
     }
 
     setupShootingControls() {
