@@ -1,0 +1,24 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Start Frontend",
+        "type": "shell",
+        "command": "clear; cd static_html_server/; deno run --allow-read=./ --allow-net --watch server.ts 8080",
+        "isBackground": true,
+        "problemMatcher": []
+      },
+      {
+        "label": "Start Backend",
+        "type": "shell",
+        "command": "clear; deno run --allow-net --allow-read --allow-write --watch back_server.ts 3000",
+        "isBackground": true,
+        "problemMatcher": []
+      },
+      {
+        "label": "Start All",
+        "dependsOn": ["Start Frontend", "Start Backend"],
+        "problemMatcher": []
+      }
+    ]
+  }
