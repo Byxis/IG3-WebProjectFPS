@@ -1,2 +1,3 @@
-deno run --allow-net back_server.ts 3000
-Pause
+clear
+cd server/
+deno run --allow-net --allow-read --allow-write --watch back_server.ts 3000
