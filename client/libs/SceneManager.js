@@ -1,6 +1,5 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
 import { CONFIG, GAMESTATE } from "http://localhost:3000/shared/Config.js";
-import { MovementManager } from "./MovementManager.js";
 
 export class SceneManager {
   constructor() {
@@ -37,7 +36,7 @@ export class SceneManager {
 
   setupCamera() {
     // Create a camera and add it to the scene
-    
+
     this.camera = new THREE.PerspectiveCamera(
       CONFIG.FOV,
       window.innerWidth / window.innerHeight,

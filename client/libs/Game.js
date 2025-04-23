@@ -103,6 +103,6 @@ export class Game {
       },
     }));
 
-    setTimeout(() => this.verifyPosition(), 200);
+    setTimeout(() => this.verifyPosition(), 166.7);
   }
 }

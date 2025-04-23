@@ -1,24 +1,19 @@
-
 import { Vector3 } from './Class.ts'
 import { CONFIG } from './Config.ts';
-var boolean = true;
 
 export function simulatePlayerMovement(playerState, deltaTime) {
+    // Copy the state to prevent mutation
     const newState = JSON.parse(JSON.stringify(playerState));
-    if (boolean)
-    {
-      console.log("Player State: ");
-      console.log(newState);
-      console.log("End ");
-      boolean = false;
-    }
     
     // --- HORIZONTAL MOVEMENT ---
     
     const moveDirection = new Vector3().fromEuler(newState.rotation);
-    const sideDirection = new Vector3().copy(moveDirection).cross(new Vector3(0, -1, 0));
+    const sideDirection = new Vector3()
+      .set(moveDirection.z, 0, -moveDirection.x)
+      .normalize();
     
-    const { forward, side, speed } = newState.movement;
+    const { forward, side, isSprinting } = newState.movement;
+    const speed = isSprinting ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
     const targetVelocity = new Vector3(0, 0, 0);
   
     if (forward !== 0) {
@@ -56,14 +51,41 @@ export function simulatePlayerMovement(playerState, deltaTime) {
     return newState;
   }
 
-  export function isValidPosition(currentPos, newPos, maxSpeed, deltaTime) {
+  export function isValidPosition(
+    currentPos, 
+    newPos, 
+    deltaTime, 
+    isSprinting, 
+    isJumping,
+    verticalVelocity = 0
+) {
+
+    // --- HORIZONTAL CHECK ---
     const dx = newPos.x - currentPos.x;
-    const dy = newPos.y - currentPos.y;
     const dz = newPos.z - currentPos.z;
+    const horizontalDistance = Math.sqrt(dx*dx + dz*dz);
     
-    const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
-    const maxDistance = maxSpeed * deltaTime * 3;
-    console.log(distance <= maxDistance);
-    
-    return distance <= maxDistance;
-  }
+    const maxHorizontalSpeed = isSprinting ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
+    const maxHorizontalDistance = maxHorizontalSpeed * deltaTime * 1.5; // Marge de 50%
+
+    const dy = newPos.y - currentPos.y;
+    const isVerticalMovementValid = (
+        !isJumping 
+        ? Math.abs(dy) < CONFIG.GROUND_TOLERANCE * deltaTime
+        : (
+            dy >= 0 // Doit monter pendant le saut
+            && Math.abs(dy) <= CONFIG.MAX_VERTICAL_SPEED * deltaTime * CONFIG.JUMP_TOLERANCE
+            && verticalVelocity > 0 // Doit avoir une vélocité positive
+        )
+    );
+
+    if (horizontalDistance > maxHorizontalDistance || !isVerticalMovementValid) {
+        console.log(`[ANTICHEAT] Invalid movement detected:`);
+        console.log(`- Horizontal: ${horizontalDistance.toFixed(2)} > ${maxHorizontalDistance.toFixed(2)}`);
+        console.log(`- Vertical: ${dy.toFixed(2)} | Jumping: ${isJumping}`);
+        console.log(`- Sprint: ${isSprinting} | Velocity: ${verticalVelocity.toFixed(2)}`);
+        return false;
+    }
+
+    return true;
+}

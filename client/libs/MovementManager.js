@@ -7,9 +7,9 @@ import { Vector3 as SharedVector3 } from "http://localhost:3000/shared/Class.js"
 export class MovementManager {
   constructor(sceneManager, wsocket) {
     this.sceneManager = sceneManager;
-    this.moveDirection = new THREE.Vector3();
-    this.sideDirection = new THREE.Vector3();
-    this.targetVelocity = new THREE.Vector3();
+    this.moveDirection = new SharedVector3();
+    this.sideDirection = new SharedVector3();
+    this.targetVelocity = new SharedVector3();
     this.wsocket = wsocket;
 
     // Network optimization properties
@@ -27,7 +27,6 @@ export class MovementManager {
 
     this.forward = 0;
     this.side = 0;
-    this.currentSpeed = 0;
     this.isJumping = false;
 
     // Player state
@@ -53,14 +52,10 @@ export class MovementManager {
       movement: {
         forward: 0,
         side: 0,
-        speed: CONFIG.WALK_SPEED,
+        isSprinting: false,
         isJumping: false
       }
     };
-    //TODO: Remove
-    this.dxMax = 0;
-    this.dyMax = 0;
-    this.dzMax = 0;
 
     this.updateMovementKeybinds();
     this.setupShootingControls();
@@ -89,7 +84,15 @@ export class MovementManager {
       // Normal movement update when not interpolating
       this.handleMovementUpdate();
       this.simulateMovement(deltaTime);
+      
+      document.getElementById("coords").innerText = 
+        `X: ${this.sceneManager.cameraContainer.position.x.toFixed(0)} 
+        Y: ${this.sceneManager.cameraContainer.position.y.toFixed(0)} 
+        Z: ${this.sceneManager.cameraContainer.position.z.toFixed(0)}`;
     }
+
+    const fps = Math.round(1 / deltaTime);
+    document.getElementById("fps").innerText = `FPS: ${fps}`;
     
     this.smoothRotation(deltaTime);
 
@@ -98,23 +101,6 @@ export class MovementManager {
     if (this.timeSinceLastUpdate >= this.updateInterval) {
       this.timeSinceLastUpdate = 0;
     }
-  }
-
-  // New method to set up position interpolation
-  setPositionInterpolation(startPos, targetPos, durationInSeconds) {
-    this.isInterpolating = true;
-    this.interpolationStartPos.set(startPos.x, startPos.y, startPos.z);
-    this.interpolationTargetPos.set(targetPos.x, targetPos.y, targetPos.z);
-    this.interpolationDuration = durationInSeconds;
-    this.interpolationTimer = 0;
-    
-    // Also update player state to avoid an immediate local simulation overriding this
-    this.playerState.position.x = startPos.x;
-    this.playerState.position.y = startPos.y;
-    this.playerState.position.z = startPos.z;
-    
-    console.log(`Position interpolation started: ${durationInSeconds.toFixed(2)}s from`, 
-                startPos, "to", targetPos);
   }
 
   simulateMovement(deltaTime) {
@@ -130,7 +116,7 @@ export class MovementManager {
     this.playerState.movement = {
       forward: this.forward,
       side: this.side,
-      speed: this.currentSpeed,
+      isSprinting: this.isSprinting,
       isJumping: this.isJumping
     };
 
@@ -143,10 +129,8 @@ export class MovementManager {
     this.dxMax = Math.max(this.dxMax, Math.abs(dx));
     this.dyMax = Math.max(this.dyMax, Math.abs(dy));
     this.dzMax = Math.max(this.dzMax, Math.abs(dz));
-    console.log(
-      `Max deltas: dx: ${this.dxMax.toFixed(2)}, dy: ${this.dyMax.toFixed(2)}, dz: ${this.dzMax.toFixed(2)}`
-    );
-
+    
+    
     // Apply the new position from the returned state
     this.sceneManager.cameraContainer.position.set(
       newState.position.x,
@@ -154,7 +138,6 @@ export class MovementManager {
       newState.position.z
     );
 
-    // Update THREE.Vector3 velocity in GAMESTATE from the plain object returned
     GAMESTATE.physics.velocity.set(
       newState.velocity.x,
       newState.velocity.y,
@@ -172,7 +155,7 @@ export class MovementManager {
   handleMovementUpdate() {
     let oldForward = this.forward;
     let oldSide = this.side;
-    let oldSpeed = this.currentSpeed;
+    let oldIsSprinting = this.isSprinting;
     let oldIsJumping = this.isJumping;
     this.forward = 0;
     this.side = 0;
@@ -200,21 +183,13 @@ export class MovementManager {
       this.side /= length;
     }
 
-    // Handle sprinting
-    this.currentSpeed = GAMESTATE.keyStates.ShiftLeft
-      ? CONFIG.SPRINT_SPEED
-      : CONFIG.WALK_SPEED;
-
-    if (GAMESTATE.keyStates.Space && !GAMESTATE.physics.isJumping) {
-      this.isJumping = true;
-    } else {
-      this.isJumping = false;
-    }
+    this.isSprinting = GAMESTATE.keyStates.ShiftLeft
+    this.isJumping = GAMESTATE.keyStates.Space && !GAMESTATE.physics.isJumping;
 
     if (
       this.forward !== oldForward ||
       this.side !== oldSide ||
-      this.currentSpeed !== oldSpeed ||
+      this.isSprinting !== oldIsSprinting ||
       this.isJumping !== oldIsJumping
     ) {
       console.log("Sending movement update");
@@ -248,14 +223,23 @@ export class MovementManager {
       setTimeout(() => this.updateMovementKeybinds(), 100);
       return;
     }
+    const networkTime = getNetworkTime();
+
     this.wsocket.send(JSON.stringify({
       type: "UPDATE_PLAYER_KEYBINDS",
       name: localStorage.getItem("username"),
+      timestamp: networkTime,
       movement: {
         forward: this.forward,
         side: this.side,
-        speed: this.currentSpeed,
+        isSprinting: this.isSprinting,
         isJumping: this.isJumping,
+        rotation: {
+          x: this.sceneManager.cameraContainer.rotation.x,
+          y: this.sceneManager.cameraContainer.rotation.y,
+          z: this.sceneManager.cameraContainer.rotation.z,
+        },
+        pitch: GAMESTATE.camera.pitch,
       },
     }));
   }
@@ -332,5 +316,13 @@ export class MovementManager {
         }));
       }
     }
+  }
+
+  setPositionInterpolation(startPos, targetPos, duration = 0.2) {
+    this.isInterpolating = true;
+    this.interpolationStartPos = startPos.clone();
+    this.interpolationTargetPos = targetPos.clone();
+    this.interpolationDuration = duration;
+    this.interpolationTimer = 0;
   }
 }

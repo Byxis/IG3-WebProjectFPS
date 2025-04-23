@@ -1,9 +1,10 @@
 import { Application, Router, send } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { oakCors } from "https://deno.land/x/cors/mod.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
-import { initiateNewPlayer, updatePlayer } from "./Libs/PlayerHandler.ts";
-import { ServerPhysics } from "./Libs/ServerPhysics.ts";
+import { initiateNewPlayer, updatePlayer } from "./libs/PlayerHandler.ts";
+import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
+import { playerList } from "../shared/Config.ts";
 
 const router = new Router();
 const app = new Application();
@@ -14,7 +15,7 @@ console.log("Server started");
 
 const physicsInterval = setInterval(() => {
   serverPhysics.updateAll();
-}, 16); // 60 FPS
+}, 16.67); // 60 FPS
 
 app.use(
   oakCors({
@@ -52,14 +53,6 @@ router.get("/", (ctx) => {
   connections.push(ws);
   var i = 0;
   console.log("New connection");
-
-  /*Object.values(players).forEach(p => {
-        ws.send(JSON.stringify(
-            {
-                type: "NEW_PLAYER", player: p
-            }
-        ));
-    });*/
 
   ws.onerror = (_error) => {
     const index = connections.indexOf(ws);
@@ -109,8 +102,11 @@ router.get("/", (ctx) => {
           data.name,
           data.movement.forward,
           data.movement.side,
-          data.movement.speed,
+          data.movement.isSprinting,
           data.movement.isJumping,
+          data.movement.rotation,
+          data.movement.pitch,
+          data.timestamp,
         );
         break;
     }
@@ -150,6 +146,23 @@ router.get("/shared/:path+", async (ctx) => {
     ctx.response.status = 404;
     ctx.response.body = "File not found";
   }
+});
+
+router.get("/api/sync", (ctx) => {
+  ctx.response.body = Date.now().toString();
+});
+
+router.get("/ws", (ctx) => {
+  const ws = ctx.upgrade();
+  
+  ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const clientTime = data.timestamp;
+      const serverTime = Date.now();
+      const latency = serverTime - clientTime;
+
+      const adjustedDeltaTime = (latency / 1000) * 0.5;
+  };
 });
 
 app.use(router.routes());

@@ -1,8 +1,9 @@
-import { Game } from "./Libs/Game.js";
+import { Game } from "./libs/Game.js";
 import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
-import { advancedDebugSceneObjects } from "./Libs/SceneUtils.js";
+import { advancedDebugSceneObjects } from "./libs/SceneUtils.js";
 
 localStorage.setItem("username", "player" + Math.floor(Math.random() * 1000));
+let networkTimeOffset = 0;
 
 let name = document.getElementById("name");
 name.innerHTML = localStorage.getItem("username");
@@ -90,5 +91,31 @@ export function getWebSocket() {
   return wsocket;
 }
 
+async function synchronizeClockWithServer() {
+  const samples = [];
+  for (let i = 0; i < 5; i++) {
+      const start = Date.now();
+      const response = await fetch('/api/sync');
+      const end = Date.now();
+      const serverTime = await response.json();
+      
+      const rtt = end - start;
+      samples.push({
+          offset: (serverTime - start - (rtt / 2)),
+          rtt: rtt
+      });
+      await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  samples.sort((a, b) => a.rtt - b.rtt);
+  networkTimeOffset = samples[0].offset;
+  console.log(`Synchronisé avec le serveur. Offset: ${networkTimeOffset}ms`);
+}
+
+function getNetworkTime() {
+  return Date.now() + networkTimeOffset;
+}
+
 game.start();
+synchronizeClockWithServer();
 advancedDebugSceneObjects(game.sceneManager.scene);
