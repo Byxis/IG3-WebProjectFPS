@@ -91,31 +91,71 @@ export function getWebSocket() {
   return wsocket;
 }
 
-async function synchronizeClockWithServer() {
+function synchronizeClockWithServer(sampleSize = 5) {
   const samples = [];
-  for (let i = 0; i < 5; i++) {
-      const start = Date.now();
-      const response = await fetch('/api/sync');
+  let sampleCount = 0;
+  
+  function collectSample() {
+    const start = Date.now();
+    
+    fetch("http://localhost:3000/api/sync", {
+      method: "GET",
+      mode: "cors",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" }
+    })
+    .then(response => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error("Synchronization failed");
+      }
+    })
+    .then(serverTime => {
       const end = Date.now();
-      const serverTime = await response.json();
-      
       const rtt = end - start;
+      
       samples.push({
-          offset: (serverTime - start - (rtt / 2)),
-          rtt: rtt
+        offset: (serverTime - start - (rtt / 2)),
+        rtt: rtt
       });
-      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      sampleCount++;
+      
+      if (sampleCount < sampleSize) {
+        setTimeout(collectSample, 100);
+      } else {
+        for (let i = 0; i < sampleSize; i++) {
+          console.log(`Sample ${i + 1}: Offset: ${samples[i].offset}ms, RTT: ${samples[i].rtt}ms`);
+          networkTimeOffset += samples[i].offset;
+        }
+        networkTimeOffset /= samples.length;
+        console.log(`Synchronisé avec le serveur. Offset: ${networkTimeOffset}ms`);
+      }
+    })
+    .catch(error => console.error("Error:", error));
   }
-
-  samples.sort((a, b) => a.rtt - b.rtt);
-  networkTimeOffset = samples[0].offset;
-  console.log(`Synchronisé avec le serveur. Offset: ${networkTimeOffset}ms`);
+  
+  collectSample();
 }
 
-function getNetworkTime() {
+export function getNetworkTime() {
   return Date.now() + networkTimeOffset;
 }
 
 game.start();
-synchronizeClockWithServer();
 advancedDebugSceneObjects(game.sceneManager.scene);
+
+// Server time synchronization
+synchronizeClockWithServer();
+
+// Periodic re-synchronization
+setInterval(() => {
+  synchronizeClockWithServer(3);
+}, 60000);
+
+setInterval(() => {
+  document.getElementById('net-debug').innerHTML = `
+      Offset: ${networkTimeOffset.toFixed(2)}ms
+  `;
+}, 1000);

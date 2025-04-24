@@ -63,6 +63,11 @@ canvas {
   left: 10px;
 }
 
+#net-debug {
+  bottom: 10px;
+  left: 50%;
+}
+
 .onTop {
   position: fixed;
   color: white;

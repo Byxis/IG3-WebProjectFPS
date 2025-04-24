@@ -3,6 +3,7 @@ import { CONFIG, GAMESTATE } from "http://localhost:3000/shared/Config.js";
 import { getWebSocket } from "../script.js";
 import { simulatePlayerMovement } from "http://localhost:3000/shared/Physics.js";
 import { Vector3 as SharedVector3 } from "http://localhost:3000/shared/Class.js";
+import { getNetworkTime } from "../script.js";
 
 export class MovementManager {
   constructor(sceneManager, wsocket) {

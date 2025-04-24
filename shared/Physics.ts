@@ -68,22 +68,27 @@ export function simulatePlayerMovement(playerState, deltaTime) {
     const maxHorizontalSpeed = isSprinting ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
     const maxHorizontalDistance = maxHorizontalSpeed * deltaTime * 1.5; // Marge de 50%
 
+    // --- VERTICAL CHECK ---
     const dy = newPos.y - currentPos.y;
-    const isVerticalMovementValid = (
-        !isJumping 
-        ? Math.abs(dy) < CONFIG.GROUND_TOLERANCE * deltaTime
-        : (
-            dy >= 0 // Doit monter pendant le saut
-            && Math.abs(dy) <= CONFIG.MAX_VERTICAL_SPEED * deltaTime * CONFIG.JUMP_TOLERANCE
-            && verticalVelocity > 0 // Doit avoir une vélocité positive
-        )
-    );
+    let isVerticalMovementValid : boolean;
+
+    if (isJumping)
+    {
+      isVerticalMovementValid = Math.abs(dy) <= CONFIG.MAX_VERTICAL_SPEED * deltaTime * CONFIG.JUMP_TOLERANCE;
+    }
+    else
+    {
+      isVerticalMovementValid = Math.abs(dy) < CONFIG.GROUND_TOLERANCE * deltaTime;
+    }
 
     if (horizontalDistance > maxHorizontalDistance || !isVerticalMovementValid) {
-        console.log(`[ANTICHEAT] Invalid movement detected:`);
+        console.log(`Invalid movement detected:`);
         console.log(`- Horizontal: ${horizontalDistance.toFixed(2)} > ${maxHorizontalDistance.toFixed(2)}`);
         console.log(`- Vertical: ${dy.toFixed(2)} | Jumping: ${isJumping}`);
         console.log(`- Sprint: ${isSprinting} | Velocity: ${verticalVelocity.toFixed(2)}`);
+        console.log(`- Current Position: ${currentPos.x}, ${currentPos.y}, ${currentPos.z}`);
+        console.log(`- New Position: ${newPos.x}, ${newPos.y}, ${newPos.z}`);
+        console.log(`horizontal Distance : ${horizontalDistance.toFixed(2)} | maxHorizontalDistance: ${maxHorizontalDistance.toFixed(2)}`);
         return false;
     }
 
