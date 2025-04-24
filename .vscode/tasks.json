@@ -8,7 +8,7 @@
       "isBackground": true,
       "problemMatcher": [],
       "dependsOn": [
-        "Shared Folder Compilation and Adjustment"
+        "Replace Imports in Shared Folder"
       ],
     },
     {
@@ -22,16 +22,6 @@
       "label": "Start All",
       "dependsOn": ["Start Frontend", "Start Backend"],
       "problemMatcher": []
-    },
-    {
-      "label": "Shared Folder Compilation and Adjustment",
-      "type": "shell",
-      "isBackground": true,
-      "problemMatcher": [],
-      "dependsOn": [
-        "Compile Shared Folder",
-        "Replace Imports in Shared Folder"
-      ],
     },
     {
       "label": "Compile ts files in Shared Folder",
@@ -60,4 +50,5 @@
         "cwd": "${workspaceFolder}"
       }
     }
+  ],
 }

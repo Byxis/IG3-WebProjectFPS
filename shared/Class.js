@@ -64,12 +64,10 @@ export class Vector3 {
         this.z += (v.z - this.z) * alpha;
         return this;
     }
-    // Pour calculer la direction mondiale (similaire à getWorldDirection)
     fromEuler(rotation) {
-        // Direction avant = -Z (convention Three.js)
-        const x = -Math.sin(rotation.y) * Math.cos(rotation.x);
-        const y = Math.sin(rotation.x);
-        const z = -Math.cos(rotation.y) * Math.cos(rotation.x);
+        const x = -Math.sin(rotation.y);
+        const y = 0;
+        const z = -Math.cos(rotation.y);
         this.set(x, y, z).normalize();
         return this;
     }

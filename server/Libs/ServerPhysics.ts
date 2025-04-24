@@ -11,7 +11,8 @@ export class ServerPhysics {
       verticalVelocity: number;
       isJumping: boolean;
       lastUpdateTime: number;
-      timestamp: number;
+      lastUpdateSended: number;
+      networkTimeOffset: number;
       movement: {
         forward: number;
         side: number;
@@ -30,7 +31,8 @@ export class ServerPhysics {
       verticalVelocity: 0,
       isJumping: false,
       lastUpdateTime: performance.now(),
-      timestamp: Date.now(),
+      lastUpdateSended: performance.now(),
+      networkTimeOffset: 0,
       movement: {
         forward: 0,
         side: 0,
@@ -53,7 +55,7 @@ export class ServerPhysics {
     isJumping: boolean,
     rotation: any,
     pitch: number,
-    timestamp: number,
+    networkTimeOffset: number,
   ) {
     if (this.players[name]) {
       if (forward !== 0 || side !== 0) {
@@ -63,7 +65,7 @@ export class ServerPhysics {
       }
       this.players[name].rotation = { ...rotation };
       this.players[name].pitch = pitch;
-      this.players[name].timestamp = timestamp;
+      this.players[name].networkTimeOffset = networkTimeOffset;
 
       this.players[name].movement = {
         forward,
@@ -81,16 +83,39 @@ export class ServerPhysics {
     pitch: number,
   ) {
     if (this.players[name]) {
-      if (this.isValidPosition(name, position)) {
-        this.players[name].position = { ...position };
-        this.players[name].rotation = { ...rotation };
-        this.players[name].pitch = pitch;
-        return { corrected: false };
-      } else {
-        console.log(
+      var corrected = false;
+      const ratioX = position.x / this.players[name].position.x;
+      const ratioZ = position.z / this.players[name].position.z;
+      console.log(`X: ${position.x} vs X: ${this.players[name].position.x} ratio: ${ratioX}`);
+      console.warn(`Z: ${position.z} vs Z: ${this.players[name].position.z} ratio: ${ratioZ}`);
+      if (this.isMovementValid(name, position)) {
+        this.players[name].position.x = position.x;
+        this.players[name].position.z = position.z;
+      } 
+      else
+      {
+        corrected = true;
+      }
+      //TODO: Check if vertical movement is valid, optionnal as it will require a lot of work when
+      //TODO: the player is jumping and falling with the map
+      /*
+      if (this.isMovementValid(name, position, Physics.isVerticalMovementValid))
+      {
+        this.players[name].position.y = position.y;
+      }
+      else
+      {
+        corrected = true;
+      } 
+      */
+      this.players[name].position.y = position.y;
+
+      if (corrected)
+      {
+        /*console.log(
           `Player ${name} position is invalid. Correcting...`,
           this.players[name].position,
-        );
+        );*/
         return {
           corrected: true,
           position: this.players[name].position,
@@ -102,22 +127,16 @@ export class ServerPhysics {
     return { corrected: false };
   }
 
-  private isValidPosition(name: string, newPosition: any): boolean {
+  private isMovementValid(name: string, newPosition: any): boolean {
     const player = this.players[name];
     if (!player) return false;
-
-    const serverTime = Date.now();
-    const latency = serverTime - this.players[name].timestamp;
     
-    // Compensation de latence (en secondes)
-    const adjustedDeltaTime = Math.min(0.2, latency / 1000); // Ne pas dépasser 200ms
-    
-    return Physics.isValidPosition(
+    return Physics.isHorizontalMovementValid(
         this.players[name].position,
         newPosition,
-        adjustedDeltaTime,
+        1/60,
+        player.networkTimeOffset,
         this.players[name].movement.isSprinting,
-        this.players[name].movement.isJumping
     );
   }
 
@@ -126,23 +145,17 @@ export class ServerPhysics {
   
     for (const [name, player] of Object.entries(this.players)) {
       const deltaTime = (now - player.lastUpdateTime) / 1000;
-      if (deltaTime > 0 && deltaTime < 0.1) { // Ignore if deltaTime is too high or too low
-        const oldMovement = player.movement;
+      const oldMovement = player.movement;
         
-        const updatedPlayer = Physics.simulatePlayerMovement(player, deltaTime);
-  
-        const dx = player.position.x - updatedPlayer.position.x;
-        const dy = player.position.y - updatedPlayer.position.y;
-        const dz = player.position.z - updatedPlayer.position.z;
+      const updatedPlayer = Physics.simulatePlayerMovement(player, deltaTime);
+      
+      const speed = Math.sqrt(
+        updatedPlayer.velocity.x * updatedPlayer.velocity.x +
+        updatedPlayer.velocity.z * updatedPlayer.velocity.z
+      );
         
-        this.players[name] = updatedPlayer;
-        
-        if (oldMovement !== player.movement) {
-          console.log(`Player ${name} moved:`, player.movement);
-          console.log(`Player ${name} position:`, player.position);
-        }
-      }
-      player.lastUpdateTime = now;
+      this.players[name] = updatedPlayer;
+      this.players[name].lastUpdateTime = now;
     }
   }
 
@@ -155,5 +168,21 @@ export class ServerPhysics {
       };
     }
     return null;
+  }
+
+  isSendUpdateAvailable(name: string): boolean {
+    if (this.players[name]) {
+      const now = performance.now();
+      const deltaTime = (now - this.players[name].lastUpdateSended) / 1000;
+      console.log(deltaTime);
+      return deltaTime > 1;
+    }
+    return true;
+  }
+
+  setSendUpdate(name: string) {
+    if (this.players[name]) {
+      this.players[name].lastUpdateSended = performance.now();
+    }
   }
 }

@@ -3,7 +3,7 @@ import { CONFIG, GAMESTATE } from "http://localhost:3000/shared/Config.js";
 import { getWebSocket } from "../script.js";
 import { simulatePlayerMovement } from "http://localhost:3000/shared/Physics.js";
 import { Vector3 as SharedVector3 } from "http://localhost:3000/shared/Class.js";
-import { getNetworkTime } from "../script.js";
+import { getNetworkTimeOffset } from "../script.js";
 
 export class MovementManager {
   constructor(sceneManager, wsocket) {
@@ -87,9 +87,9 @@ export class MovementManager {
       this.simulateMovement(deltaTime);
       
       document.getElementById("coords").innerText = 
-        `X: ${this.sceneManager.cameraContainer.position.x.toFixed(0)} 
-        Y: ${this.sceneManager.cameraContainer.position.y.toFixed(0)} 
-        Z: ${this.sceneManager.cameraContainer.position.z.toFixed(0)}`;
+        `X: ${this.sceneManager.cameraContainer.position.x.toFixed(4)} 
+        Y: ${this.sceneManager.cameraContainer.position.y.toFixed(4)} 
+        Z: ${this.sceneManager.cameraContainer.position.z.toFixed(4)}`;
     }
 
     const fps = Math.round(1 / deltaTime);
@@ -122,15 +122,7 @@ export class MovementManager {
     };
 
     // Use shared movement logic
-    const newState = simulatePlayerMovement(this.playerState, deltaTime);
-
-    const dx = newState.position.x - this.playerState.position.x;
-    const dy = newState.position.y - this.playerState.position.y;
-    const dz = newState.position.z - this.playerState.position.z;
-    this.dxMax = Math.max(this.dxMax, Math.abs(dx));
-    this.dyMax = Math.max(this.dyMax, Math.abs(dy));
-    this.dzMax = Math.max(this.dzMax, Math.abs(dz));
-    
+    const newState = simulatePlayerMovement(this.playerState, deltaTime);    
     
     // Apply the new position from the returned state
     this.sceneManager.cameraContainer.position.set(
@@ -138,7 +130,6 @@ export class MovementManager {
       newState.position.y,
       newState.position.z
     );
-
     GAMESTATE.physics.velocity.set(
       newState.velocity.x,
       newState.velocity.y,
@@ -196,6 +187,11 @@ export class MovementManager {
       console.log("Sending movement update");
       this.updateMovementKeybinds();
     }
+    else if (this.sceneManager.getPitchHasChanged())
+    {
+      this.updateMovementKeybinds();
+      this.sceneManager.setPitchChanged(false);
+    }
   }
 
   smoothRotation(deltaTime) {
@@ -224,12 +220,12 @@ export class MovementManager {
       setTimeout(() => this.updateMovementKeybinds(), 100);
       return;
     }
-    const networkTime = getNetworkTime();
+    const networkTimeOffset = getNetworkTimeOffset();
 
     this.wsocket.send(JSON.stringify({
       type: "UPDATE_PLAYER_KEYBINDS",
       name: localStorage.getItem("username"),
-      timestamp: networkTime,
+      networkTimeOffset: networkTimeOffset,
       movement: {
         forward: this.forward,
         side: this.side,

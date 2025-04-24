@@ -28,6 +28,8 @@ export const CONFIG = {
   STARTING_LIVES: 3,
   STARTING_AMMO: 30,
 
+  // Checks tolerance (%)
+  MAX_HORIZONTAL_SPEED: 1.1,
 };
 
 

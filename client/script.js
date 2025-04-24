@@ -68,6 +68,10 @@ function initiateWebSocketConnection() {
       game.sceneManager.cameraContainer.position.y = correctedPosition.y;
       game.sceneManager.cameraContainer.position.z = correctedPosition.z;
 
+      // Reset velocity
+      game.movementManager.targetVelocity.x = 0;
+      game.movementManager.targetVelocity.z = 0;
+
       //GAMESTATE.camera.targetPitch = correctedPitch;
 
       console.log("Position corrigée par le serveur");
@@ -114,6 +118,7 @@ function synchronizeClockWithServer(sampleSize = 5) {
     .then(serverTime => {
       const end = Date.now();
       const rtt = end - start;
+      let newNetworkTimeOffset = 0;
       
       samples.push({
         offset: (serverTime - start - (rtt / 2)),
@@ -127,10 +132,13 @@ function synchronizeClockWithServer(sampleSize = 5) {
       } else {
         for (let i = 0; i < sampleSize; i++) {
           console.log(`Sample ${i + 1}: Offset: ${samples[i].offset}ms, RTT: ${samples[i].rtt}ms`);
-          networkTimeOffset += samples[i].offset;
+          newNetworkTimeOffset += samples[i].offset;
         }
-        networkTimeOffset /= samples.length;
+        networkTimeOffset = newNetworkTimeOffset / samples.length;
         console.log(`Synchronisé avec le serveur. Offset: ${networkTimeOffset}ms`);
+        document.getElementById('net-debug').innerHTML = `
+            Offset: ${getNetworkTimeOffset().toFixed(2)}ms
+        `;
       }
     })
     .catch(error => console.error("Error:", error));
@@ -139,8 +147,8 @@ function synchronizeClockWithServer(sampleSize = 5) {
   collectSample();
 }
 
-export function getNetworkTime() {
-  return Date.now() + networkTimeOffset;
+export function getNetworkTimeOffset() {
+  return networkTimeOffset;
 }
 
 game.start();
@@ -149,13 +157,7 @@ advancedDebugSceneObjects(game.sceneManager.scene);
 // Server time synchronization
 synchronizeClockWithServer();
 
-// Periodic re-synchronization
+// Periodic re-synchronization every minute
 setInterval(() => {
-  synchronizeClockWithServer(3);
+  synchronizeClockWithServer(5);
 }, 60000);
-
-setInterval(() => {
-  document.getElementById('net-debug').innerHTML = `
-      Offset: ${networkTimeOffset.toFixed(2)}ms
-  `;
-}, 1000);

@@ -82,13 +82,13 @@ export class Vector3 {
   }
 
   fromEuler(rotation) {
-    const x = -Math.sin(rotation.y) * Math.cos(rotation.x);
-    const y = Math.sin(rotation.x);
-    const z = -Math.cos(rotation.y) * Math.cos(rotation.x);
+    const x = -Math.sin(rotation.y);
+    const y = 0;
+    const z = -Math.cos(rotation.y);
 
     this.set(x, y, z).normalize();
     return this;
-  }
+}
 }
 
 export interface PlayerMovement {

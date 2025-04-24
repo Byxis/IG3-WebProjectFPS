@@ -17,31 +17,32 @@ export class Game {
     this.targetFPS = 60;
     this.frameInterval = 1000 / this.targetFPS; // ~16.67ms
     this.lastFrameTime = 0;
+    this.updateInterval = null;
   }
 
   animate(currentTime) {
     requestAnimationFrame(this.animate);
+  }
 
-    if (this.lastFrameTime === 0) this.lastFrameTime = currentTime;
-    const elapsed = currentTime - this.lastFrameTime;
+  update() {
+    // Should be at a fixed rate of 60 FPS, but the actual FPS may vary
+    const currentTime = performance.now();
+    const deltaTime = (currentTime - this.lastUpdateTime) / 1000;
+    
+    this.lastUpdateTime = currentTime;
+    
+    GAMESTATE.physics.lastTime = currentTime;
 
-    // Update the game state only if enough time has passed
-    if (elapsed >= this.frameInterval) {
-      this.lastFrameTime = currentTime - (elapsed % this.frameInterval);
-
-      const deltaTime = elapsed / 1000;
-      GAMESTATE.physics.lastTime = currentTime;
-
-      this.movementManager.update(deltaTime);
-      this.sceneManager.renderer.render(
-        this.sceneManager.scene,
-        this.sceneManager.camera,
-      );
-    }
+    this.movementManager.update(deltaTime);
+    this.sceneManager.renderer.render(
+      this.sceneManager.scene,
+      this.sceneManager.camera
+    );
   }
 
   start() {
     this.animate(performance.now());
+    this.updateInterval = setInterval(() => this.update(), this.frameInterval);
     this.verifyPosition();
   }
 
@@ -103,6 +104,6 @@ export class Game {
       },
     }));
 
-    setTimeout(() => this.verifyPosition(), 166.7);
+    setTimeout(() => this.verifyPosition(), 1000);
   }
 }

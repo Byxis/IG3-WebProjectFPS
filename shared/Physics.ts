@@ -51,46 +51,33 @@ export function simulatePlayerMovement(playerState, deltaTime) {
     return newState;
   }
 
-  export function isValidPosition(
-    currentPos, 
-    newPos, 
-    deltaTime, 
-    isSprinting, 
-    isJumping,
-    verticalVelocity = 0
-) {
 
+let maxHorizontalDistance = 0;
+
+  export function isHorizontalMovementValid(
+    serverPos: any, 
+    clientPos: any, 
+    deltaTime: number, 
+    networkTimeOffset: number, 
+    isSprinting: boolean
+  ) {
     // --- HORIZONTAL CHECK ---
-    const dx = newPos.x - currentPos.x;
-    const dz = newPos.z - currentPos.z;
+    const dx = clientPos.x - serverPos.x;
+    const dz = clientPos.z - serverPos.z;
     const horizontalDistance = Math.sqrt(dx*dx + dz*dz);
     
     const maxHorizontalSpeed = isSprinting ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
-    const maxHorizontalDistance = maxHorizontalSpeed * deltaTime * 1.5; // Marge de 50%
+    
+    // Tolérance de base pour la simulation physique
+    const physicsDistance = maxHorizontalSpeed * deltaTime + 0.1;
+    // Tolérance de la latence réseau
+    const networkDistance = maxHorizontalSpeed * Math.abs(networkTimeOffset) / 1000;
+    const totalDistance = physicsDistance + networkDistance;
+    //console.log(`HD: ${horizontalDistance.toFixed(2)} | PD: ${physicsDistance.toFixed(2)} | ND: ${networkDistance.toFixed(2)} | TO: ${totalDistance.toFixed(2)}`);
 
-    // --- VERTICAL CHECK ---
-    const dy = newPos.y - currentPos.y;
-    let isVerticalMovementValid : boolean;
-
-    if (isJumping)
-    {
-      isVerticalMovementValid = Math.abs(dy) <= CONFIG.MAX_VERTICAL_SPEED * deltaTime * CONFIG.JUMP_TOLERANCE;
+    if (horizontalDistance > physicsDistance && horizontalDistance > 0.1) {
+      //console.log(`Horizontal: ${horizontalDistance.toFixed(2)} vs allowed ${physicsDistance.toFixed(2)} (latency: ${networkTimeOffset.toFixed(3)}ms)`);
+      return false;
     }
-    else
-    {
-      isVerticalMovementValid = Math.abs(dy) < CONFIG.GROUND_TOLERANCE * deltaTime;
-    }
-
-    if (horizontalDistance > maxHorizontalDistance || !isVerticalMovementValid) {
-        console.log(`Invalid movement detected:`);
-        console.log(`- Horizontal: ${horizontalDistance.toFixed(2)} > ${maxHorizontalDistance.toFixed(2)}`);
-        console.log(`- Vertical: ${dy.toFixed(2)} | Jumping: ${isJumping}`);
-        console.log(`- Sprint: ${isSprinting} | Velocity: ${verticalVelocity.toFixed(2)}`);
-        console.log(`- Current Position: ${currentPos.x}, ${currentPos.y}, ${currentPos.z}`);
-        console.log(`- New Position: ${newPos.x}, ${newPos.y}, ${newPos.z}`);
-        console.log(`horizontal Distance : ${horizontalDistance.toFixed(2)} | maxHorizontalDistance: ${maxHorizontalDistance.toFixed(2)}`);
-        return false;
-    }
-
     return true;
-}
+  }

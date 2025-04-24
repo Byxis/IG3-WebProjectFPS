@@ -37,38 +37,26 @@ export function simulatePlayerMovement(playerState, deltaTime) {
     }
     return newState;
 }
-export function isValidPosition(currentPos, newPos, isSprinting, isJumping, deltaTime) {
-    const dx = newPos.x - currentPos.x;
-    const dy = newPos.y - currentPos.y;
-    const dz = newPos.z - currentPos.z;
-    // Distance horizontale
+let maxHorizontalDistance = 0;
+export function isHorizontalMovementValid(serverPos, clientPos, deltaTime, networkTimeOffset, isSprinting) {
+    // --- HORIZONTAL CHECK ---
+    const dx = clientPos.x - serverPos.x;
+    const dz = clientPos.z - serverPos.z;
     const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
-    // Vitesse de base ajustée selon le sprint
-    const baseSpeed = isSprinting ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
-    const maxHorizontalDistance = baseSpeed * deltaTime * 4;
-    // Distance verticale maximum (affectée par le saut)
-    let maxVerticalDistance;
-    if (isJumping) {
-        maxVerticalDistance = (CONFIG.JUMP_FORCE + CONFIG.GRAVITY * deltaTime) * deltaTime;
-    }
-    else {
-        maxVerticalDistance = CONFIG.GRAVITY * deltaTime * 1.5; // Pour les chutes
-    }
-    // Vérifier si l'une des distances dépasse le maximum autorisé
-    let isValid = true;
+    const maxHorizontalSpeed = isSprinting ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
+    // Tolérance de base pour la simulation physique
+    var physicsDistance = maxHorizontalSpeed * deltaTime * 3 + 0.1;
+    // Tolérance de la latence réseau
+    const networkDistance = maxHorizontalSpeed * Math.abs(networkTimeOffset) / 1000;
+    console.log(`Network distance: ${networkDistance.toFixed(2)}, Physics distance: ${physicsDistance.toFixed(2)}`);
+    physicsDistance += networkDistance;
     if (horizontalDistance > maxHorizontalDistance) {
-        console.log(`Distance horizontale: ${horizontalDistance}, Max: ${maxHorizontalDistance}`);
-        isValid = false;
+        console.log(`New max horizontal distance: ${horizontalDistance.toFixed(2)}`);
+        maxHorizontalDistance = horizontalDistance;
     }
-    if (Math.abs(dy) > maxVerticalDistance && newPos.y > CONFIG.GROUND_LEVEL) {
-        console.log(`Distance verticale: ${Math.abs(dy)}, Max: ${maxVerticalDistance}`);
-        isValid = false;
+    if (horizontalDistance > physicsDistance && horizontalDistance > 0.1) {
+        console.log(`Horizontal: ${horizontalDistance.toFixed(2)} vs allowed ${physicsDistance.toFixed(2)} (latency: ${networkTimeOffset.toFixed(3)}ms)`);
+        return false;
     }
-    if (!isValid) {
-        console.log(`Current Position: ${currentPos.x}, ${currentPos.y}, ${currentPos.z}`);
-        console.log(`New Position: ${newPos.x}, ${newPos.y}, ${newPos.z}`);
-        console.log(`Delta Position: ${dx}, ${dy}, ${dz}`);
-        console.log(`Delta Time: ${deltaTime}, Sprint: ${isSprinting}, Jump: ${isJumping}`);
-    }
-    return isValid;
+    return true;
 }

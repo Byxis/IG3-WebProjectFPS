@@ -87,7 +87,8 @@ router.get("/", (ctx) => {
           data.player.rotation,
           data.player.pitch,
         );
-        if (result.corrected) {
+        if (result.corrected && serverPhysics.isSendUpdateAvailable(data.player.name)) {
+          serverPhysics.setSendUpdate(data.player.name);
           ws.send(JSON.stringify({
             type: MessageTypeEnum.POSITION_CORRECTION,
             position: result.position,
@@ -106,7 +107,7 @@ router.get("/", (ctx) => {
           data.movement.isJumping,
           data.movement.rotation,
           data.movement.pitch,
-          data.timestamp,
+          data.networkTimeOffset,
         );
         break;
     }
@@ -150,19 +151,6 @@ router.get("/shared/:path+", async (ctx) => {
 
 router.get("/api/sync", (ctx) => {
   ctx.response.body = Date.now().toString();
-});
-
-router.get("/ws", (ctx) => {
-  const ws = ctx.upgrade();
-  
-  ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      const clientTime = data.timestamp;
-      const serverTime = Date.now();
-      const latency = serverTime - clientTime;
-
-      const adjustedDeltaTime = (latency / 1000) * 0.5;
-  };
 });
 
 app.use(router.routes());
