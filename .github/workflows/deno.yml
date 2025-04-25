@@ -37,7 +37,7 @@ jobs:
         run: deno lint
 
       - name: Type check
-        run: deno check **/*.ts
+        run: deno check **/*.ts --allow-import
         
       - name: Run tests
         run: |
