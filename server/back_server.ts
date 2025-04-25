@@ -1,10 +1,17 @@
-import { Application, Router, send } from "https://deno.land/x/oak@v17.1.4/mod.ts";
+import {
+  Application,
+  Router,
+  send,
+  type ListenOptions,
+} from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { oakCors } from "https://deno.land/x/cors/mod.ts";
-import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
-import { initiateNewPlayer, updatePlayer, removePlayer, players } from "./libs/PlayerHandler.ts";
+import * as _bcrypt from "https://deno.land/x/bcrypt/mod.ts";
+import {
+  initiateNewPlayer,
+  removePlayer,
+} from "./libs/PlayerHandler.ts";
 import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
-import { playerList } from "../shared/Config.ts";
 
 const router = new Router();
 const app = new Application();
@@ -13,7 +20,7 @@ const serverPhysics = new ServerPhysics();
 
 console.log("Server started");
 
-const physicsInterval = setInterval(() => {
+setInterval(() => {
   serverPhysics.updateAll();
 }, 16.67); // 60 FPS
 
@@ -24,7 +31,7 @@ app.use(
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
-); 
+);
 
 if (Deno.args.length < 1) {
   console.log(
@@ -33,12 +40,20 @@ if (Deno.args.length < 1) {
   Deno.exit();
 }
 
-const options = { port: Deno.args[0] };
+let options: ListenOptions = { 
+  port: Number(Deno.args[0])
+};
 
 if (Deno.args.length >= 3) {
-  options.secure = true;
-  options.cert = await Deno.readTextFile(Deno.args[1]);
-  options.key = await Deno.readTextFile(Deno.args[2]);
+  const cert = await Deno.readTextFile(Deno.args[1]);
+  const key = await Deno.readTextFile(Deno.args[2]);
+  
+  options = {
+    port: Number(Deno.args[0]),
+    secure: true,
+    certFile: cert,
+    keyFile: key,
+  };
   console.log(`SSL conf ready (use https)`);
 }
 
@@ -51,7 +66,7 @@ router.get("/", (ctx) => {
   const ws = ctx.upgrade();
 
   connections.push(ws);
-  var i = 0;
+  let i = 0;
   console.log("New connection");
 
   ws.onerror = (_error) => {
@@ -63,25 +78,27 @@ router.get("/", (ctx) => {
     console.log(`- websocket error`);
   };
 
-  ws.onmessage = async (event) => {
+  ws.onmessage = (event) => {
     const message = event.data;
     const data = JSON.parse(message);
     const type = MessageTypeEnum[data.type as keyof typeof MessageTypeEnum];
 
     switch (type) {
-      case MessageTypeEnum.ADD_NEW_PLAYER:
+      case MessageTypeEnum.ADD_NEW_PLAYER: {
         i++;
         initiateNewPlayer(data.player, ws);
         break;
+      }
 
-      case MessageTypeEnum.VERIFY_POSITION:
+      case MessageTypeEnum.VERIFY_POSITION: {
         const result = serverPhysics.updatePlayerPosition(
           data.player.name,
           data.player.position,
-          data.player.rotation,
-          data.player.pitch,
         );
-        if (result.corrected && serverPhysics.isSendUpdateAvailable(data.player.name)) {
+        if (
+          result.corrected &&
+          serverPhysics.isSendUpdateAvailable(data.player.name)
+        ) {
           serverPhysics.setSendUpdate(data.player.name);
           ws.send(JSON.stringify({
             type: MessageTypeEnum.POSITION_CORRECTION,
@@ -91,8 +108,9 @@ router.get("/", (ctx) => {
           }));
         }
         break;
+      }
 
-      case MessageTypeEnum.UPDATE_PLAYER_KEYBINDS:
+      case MessageTypeEnum.UPDATE_PLAYER_KEYBINDS: {
         serverPhysics.updatePlayerMovement(
           data.name,
           data.movement.forward,
@@ -104,11 +122,18 @@ router.get("/", (ctx) => {
           data.networkTimeOffset,
         );
         break;
-      
-      case MessageTypeEnum.DISCONNECT:
+      }
+
+      case MessageTypeEnum.DISCONNECT: {
         console.log(`Player ${data.name} disconnected`);
         removePlayer(data.name);
         break;
+      }
+
+      default: {
+        console.log(`Unknown message type: ${data.type}`);
+        break;
+      }
     }
   };
 
@@ -121,7 +146,7 @@ router.get("/", (ctx) => {
   };
 });
 
-router.get("/shared", async (ctx) => {
+router.get("/shared", (ctx) => {
   console.log("Showing shared files");
   const files = [];
   for (const file of Deno.readDirSync(`${Deno.cwd()}\\shared\\`)) {
@@ -133,7 +158,7 @@ router.get("/shared", async (ctx) => {
 
 router.get("/shared/:path+", async (ctx) => {
   console.log("Shared file requested");
-  const path = ctx.params.path;
+  const path = ctx.params.path as string;
   try {
     await send(ctx, path, {
       root: `${Deno.cwd()}\\shared\\`,

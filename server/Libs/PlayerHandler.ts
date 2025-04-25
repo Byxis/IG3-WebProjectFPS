@@ -1,8 +1,7 @@
 import { CONFIG } from "../../shared/Config.ts";
 import { connections } from "../back_server.ts";
 
-export const players:
-{
+export const players: {
   [name: string]: {
     name: string;
     health: number;
@@ -29,7 +28,12 @@ export const players:
   };
 } = {};
 
-export function initiateNewPlayer(dataPlayer : any, websocket : WebSocket) {
+export function initiateNewPlayer(dataPlayer: {
+  name: string;
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
+  pitch: number;
+}, websocket: WebSocket) {
   const player = {
     name: dataPlayer.name,
     health: CONFIG.STARTING_LIVES,
@@ -50,7 +54,7 @@ export function initiateNewPlayer(dataPlayer : any, websocket : WebSocket) {
     movement: {
       forward: 0,
       side: 0,
-      isSprinting : false,
+      isSprinting: false,
       isJumping: false,
     },
   };
@@ -64,7 +68,7 @@ export function initiateNewPlayer(dataPlayer : any, websocket : WebSocket) {
       },
     ));
   });
-  
+
   // Send to the new player all the other players
   for (const playerName in players) {
     if (playerName !== dataPlayer.name) {
@@ -78,7 +82,14 @@ export function initiateNewPlayer(dataPlayer : any, websocket : WebSocket) {
   }
 }
 
-export function updatePlayer(player : any) {
+export function updatePlayer(player: 
+  {
+    name: string;
+    position: { x: number; y: number; z: number };
+    rotation: { x: number; y: number; z: number };
+    pitch: number;
+  }
+) {
   connections.forEach((ws) => {
     ws.send(JSON.stringify(
       {
@@ -89,15 +100,14 @@ export function updatePlayer(player : any) {
   });
 }
 
-export function removePlayer(playerName : string) {
+export function removePlayer(playerName: string) {
   connections.forEach((ws) => {
     ws.send(JSON.stringify(
       {
         type: "REMOVE_PLAYER",
-        player: 
-        {
+        player: {
           name: playerName,
-        }
+        },
       },
     ));
   });

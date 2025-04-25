@@ -1,11 +1,9 @@
 import { Game } from "./libs/Game.js";
-import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
-import { advancedDebugSceneObjects } from "./libs/SceneUtils.js";
 
 localStorage.setItem("username", "player" + Math.floor(Math.random() * 1000));
 let networkTimeOffset = 0;
 
-let name = document.getElementById("name");
+const name = document.getElementById("name");
 name.innerHTML = localStorage.getItem("username");
 
 const wsocket = new WebSocket("ws://localhost:3000");
@@ -39,7 +37,7 @@ function initiateWebSocketConnection() {
 
   wsocket.onmessage = function () {
     const message = JSON.parse(event.data);
-    let player = message.player;
+    const player = message.player;
 
     if (message.type == "NEW_PLAYER") {
       if (game.players[player.name] != null) {
@@ -49,7 +47,6 @@ function initiateWebSocketConnection() {
       game.addNewPlayer(
         player.name,
         player.position,
-        player.rotation,
         player.pitch,
       );
     } else if (message.type == "REMOVE_PLAYER") {
@@ -71,14 +68,14 @@ function initiateWebSocketConnection() {
     }
   };
 
-  window.onbeforeunload = function () {
+  globalThis.onbeforeunload = function () {
     if (wsocket.readyState === WebSocket.OPEN) {
       wsocket.send(JSON.stringify({
         type: "DISCONNECT",
         name: localStorage.getItem("username"),
       }));
     }
-  }
+  };
 
   wsocket.onclose = function () {
     console.log("WebSocket connection closed");
@@ -96,50 +93,50 @@ export function getWebSocket() {
 function synchronizeClockWithServer(sampleSize = 5) {
   const samples = [];
   let sampleCount = 0;
-  
+
   function collectSample() {
     const start = Date.now();
-    
+
     fetch("http://localhost:3000/api/sync", {
       method: "GET",
       mode: "cors",
       credentials: "include",
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     })
-    .then(response => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        throw new Error("Synchronization failed");
-      }
-    })
-    .then(serverTime => {
-      const end = Date.now();
-      const rtt = end - start;
-      let newNetworkTimeOffset = 0;
-      
-      samples.push({
-        offset: (serverTime - start - (rtt / 2)),
-        rtt: rtt
-      });
-      
-      sampleCount++;
-      
-      if (sampleCount < sampleSize) {
-        setTimeout(collectSample, 100);
-      } else {
-        for (let i = 0; i < sampleSize; i++) {
-          newNetworkTimeOffset += samples[i].offset;
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("Synchronization failed");
         }
-        networkTimeOffset = newNetworkTimeOffset / samples.length;
-        document.getElementById('net-debug').innerHTML = `
+      })
+      .then((serverTime) => {
+        const end = Date.now();
+        const rtt = end - start;
+        let newNetworkTimeOffset = 0;
+
+        samples.push({
+          offset: (serverTime - start - (rtt / 2)),
+          rtt: rtt,
+        });
+
+        sampleCount++;
+
+        if (sampleCount < sampleSize) {
+          setTimeout(collectSample, 100);
+        } else {
+          for (let i = 0; i < sampleSize; i++) {
+            newNetworkTimeOffset += samples[i].offset;
+          }
+          networkTimeOffset = newNetworkTimeOffset / samples.length;
+          document.getElementById("net-debug").innerHTML = `
             Offset: ${getNetworkTimeOffset().toFixed(2)}ms
         `;
-      }
-    })
-    .catch(error => console.error("Error:", error));
+        }
+      })
+      .catch((error) => console.error("Error:", error));
   }
-  
+
   collectSample();
 }
 

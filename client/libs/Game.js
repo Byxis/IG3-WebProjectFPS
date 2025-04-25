@@ -1,8 +1,7 @@
 import { MovementManager } from "./MovementManager.js";
 import { SceneManager } from "./SceneManager.js";
 import { Player } from "./Player.js";
-import { CONFIG, GAMESTATE } from "http://localhost:3000/shared/Config.js";
-import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
+import { GAMESTATE } from "http://localhost:3000/shared/Config.js";
 import { getWebSocket } from "../script.js";
 
 export class Game {
@@ -17,7 +16,7 @@ export class Game {
     this.frameInterval = 1000 / this.targetFPS; // ~16.67ms
     this.lastFrameTime = 0;
     this.updateInterval = null;
-    
+
     this.maxSocketRetries = 10;
     this.socketRetries = 0;
     this.socketRetryInterval = 1000;
@@ -27,15 +26,15 @@ export class Game {
     // Should be at a fixed rate of 60 FPS, but the actual FPS may vary
     const currentTime = performance.now();
     const deltaTime = (currentTime - this.lastUpdateTime) / 1000;
-    
+
     this.lastUpdateTime = currentTime;
-    
+
     GAMESTATE.physics.lastTime = currentTime;
 
     this.movementManager.update(deltaTime);
     this.sceneManager.renderer.render(
       this.sceneManager.scene,
-      this.sceneManager.camera
+      this.sceneManager.camera,
     );
   }
 
@@ -44,13 +43,13 @@ export class Game {
     this.verifyPosition();
   }
 
-  addNewPlayer(name, position, rotation, pitch) {
+  addNewPlayer(name, position, pitch) {
     // Don't add the local player to the scene
     if (name == localStorage.getItem("username")) {
       return;
     }
     console.log("Adding new player:", name);
-    this.players[name] = new Player(name, position, rotation, pitch);
+    this.players[name] = new Player(name, position, pitch);
     this.sceneManager.scene.add(this.players[name].playerGroup);
   }
 
@@ -65,7 +64,7 @@ export class Game {
 
   updatePlayerPosition(name, position, rotation, pitch) {
     if (this.players[name] == null) {
-      this.addNewPlayer(name, position, rotation, pitch);
+      this.addNewPlayer(name, position, pitch);
       return;
     }
     this.players[name].updatePosition(position, rotation, pitch);
@@ -78,14 +77,14 @@ export class Game {
     }
 
     if (this.wsocket.readyState !== 1) {
-      console.log(`Socket not ready, retrying in ${this.socketRetryInterval} ms`);
+      console.log(
+        `Socket not ready, retrying in ${this.socketRetryInterval} ms`,
+      );
       this.socketRetries++;
       if (this.socketRetries > this.maxSocketRetries) {
         console.log("Max socket retries reached, stopping movement updates");
         this.socketRetries = 0;
-      }
-      else
-      {
+      } else {
         setTimeout(() => this.verifyPosition(), this.socketRetryInterval);
       }
       return;

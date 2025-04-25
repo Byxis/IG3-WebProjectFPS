@@ -9,7 +9,7 @@
       "problemMatcher": [],
       "dependsOn": [
         "Replace Imports in Shared Folder"
-      ],
+      ]
     },
     {
       "label": "Start Backend",
@@ -50,5 +50,5 @@
         "cwd": "${workspaceFolder}"
       }
     }
-  ],
+  ]
 }

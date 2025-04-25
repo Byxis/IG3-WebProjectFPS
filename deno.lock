@@ -59,6 +59,9 @@
     "https://deno.land/x/cors/mod.ts": "https://deno.land/x/cors@v1.2.2/mod.ts"
   },
   "remote": {
+    "http://localhost:3000/shared/Class.js": "cafd07c2498edb70c247ebdd63d68e8dc384382a00430c68b0e87ebc2bf80b7e",
+    "http://localhost:3000/shared/Config.js": "8ceb50f195a94e66b0f82dc41164ae8fbf2278d36cbb0d679e25eb4fe24a9703",
+    "http://localhost:3000/shared/Physics.js": "c5a1ef02f4846cbb2f2585d231d1656d16cc4ce15f9cbffa142a512ee665b47a",
     "https://cdn.skypack.dev/-/three@v0.139.2-sdMdonH6hiZNzWIdCv2L/dist=es2019,mode=imports/optimized/three.js": "b57906b07a9802fbcc2aeb9bd69c41f9327b12ffa7480c2a2ce68924a02fae81",
     "https://cdn.skypack.dev/three@0.139.2": "cff46162a8dad919c84931b18eed9056d776378ab7386aef77809f704c003480",
     "https://deno.land/std@0.152.0/fs/exists.ts": "cb734d872f8554ea40b8bff77ad33d4143c1187eac621a55bf37781a43c56f6d",

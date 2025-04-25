@@ -25,7 +25,6 @@ export const CONFIG = {
   STARTING_AMMO: 30,
 };
 
-
 export const GAMESTATE = {
   // Key States (pressed or not)
   keyStates: {

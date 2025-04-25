@@ -1,4 +1,3 @@
-import { CONFIG } from "../../shared/Config.ts";
 import * as Physics from "../../shared/Physics.ts";
 import { players, updatePlayer } from "./PlayerHandler.ts";
 
@@ -9,7 +8,7 @@ export class ServerPhysics {
     side: number,
     isSprinting: boolean,
     isJumping: boolean,
-    rotation: any,
+    rotation: { x: number; y: number; z: number },
     pitch: number,
     networkTimeOffset: number,
   ) {
@@ -34,18 +33,14 @@ export class ServerPhysics {
 
   updatePlayerPosition(
     name: string,
-    position: any,
-    rotation: any,
-    pitch: number,
+    position: { x: number; y: number; z: number },
   ) {
     if (players[name]) {
-      var corrected = false;
+      let corrected = false;
       if (this.isMovementValid(name, position)) {
         players[name].position.x = position.x;
         players[name].position.z = position.z;
-      } 
-      else
-      {
+      } else {
         corrected = true;
       }
       //TODO: Check if vertical movement is valid, optionnal as it will require a lot of work when
@@ -58,12 +53,11 @@ export class ServerPhysics {
       else
       {
         corrected = true;
-      } 
+      }
       */
       players[name].position.y = position.y;
 
-      if (corrected)
-      {
+      if (corrected) {
         /*console.log(
           `Player ${name} position is invalid. Correcting...`,
           this.players[name].position,
@@ -79,31 +73,32 @@ export class ServerPhysics {
     return { corrected: false };
   }
 
-  private isMovementValid(name: string, newPosition: any): boolean {
+  private isMovementValid(name: string, newPosition: 
+    { x: number; y: number; z: number }
+  ): boolean {
     const player = players[name];
     if (!player) return false;
-    
+
     return Physics.isHorizontalMovementValid(
-        players[name].position,
-        newPosition,
-        1/60,
-        player.networkTimeOffset,
-        players[name].movement.isSprinting,
+      players[name].position,
+      newPosition,
+      1 / 60,
+      player.networkTimeOffset,
+      players[name].movement.isSprinting,
     );
   }
 
-  async updateAll() {
+  updateAll() {
     const now = performance.now();
-  
+
     for (const [name, player] of Object.entries(players)) {
       const deltaTime = (now - player.lastUpdateTime) / 1000;
       const updatedPlayer = Physics.simulatePlayerMovement(player, deltaTime);
       updatedPlayer.lastUpdateTime = now;
-        
+
       players[name] = updatedPlayer;
       updatePlayer(player);
     }
-
   }
 
   getPlayerPosition(name: string) {

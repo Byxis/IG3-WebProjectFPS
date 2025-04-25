@@ -40,7 +40,7 @@ export class SceneManager {
 
     this.camera = new THREE.PerspectiveCamera(
       CONFIG.FOV,
-      window.innerWidth / window.innerHeight,
+      globalThis.innerWidth / globalThis.innerHeight,
       CONFIG.NEAR,
       CONFIG.FAR,
     );
@@ -55,7 +55,7 @@ export class SceneManager {
   setupRenderer() {
     // Create a renderer and add it to the DOM
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
     document.body.appendChild(this.renderer.domElement);
   }
 
@@ -70,7 +70,6 @@ export class SceneManager {
   handleMouseMove(event) {
     // Check if the pointer is locked and if so, rotate the camera
     if (document.pointerLockElement === this.renderer.domElement) {
-      const oldPitch = GAMESTATE.camera.pitch;
       const deltaX = event.movementX * CONFIG.MOUSE_SENSITIVITY;
       const deltaY = event.movementY * CONFIG.MOUSE_SENSITIVITY;
 
@@ -93,7 +92,7 @@ export class SceneManager {
 
   setupEventListeners() {
     this.boundHandleMouseMove = this.handleMouseMove.bind(this);
-    
+
     this.renderer.domElement.addEventListener("click", () => {
       this.renderer.domElement.requestPointerLock();
     });
@@ -120,12 +119,12 @@ export class SceneManager {
       }
     });
 
-    window.addEventListener("resize", () => this.handleResize());
+    globalThis.addEventListener("resize", () => this.handleResize());
   }
 
   handleResize() {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
   }
 }

@@ -1,7 +1,7 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
 
 export class Player {
-  constructor(name, position, rotation, pitch) {
+  constructor(name, position, pitch) {
     this.name = name;
 
     // Creation of the player group
@@ -36,11 +36,11 @@ export class Player {
     if (position) {
       this.playerGroup.position.set(position.x, position.y, position.z);
     }
-    
+
     if (rotation) {
       this.playerGroup.rotation.set(0, rotation.y, 0);
     }
-    
+
     if (pitch !== undefined) {
       this.playerGroup.pitch = pitch;
     }

@@ -1,5 +1,5 @@
-import { Vector3 } from './Class.js';
-import { CONFIG } from './Config.js';
+import { Vector3 } from "./Class.js";
+import { CONFIG } from "./Config.js";
 export function simulatePlayerMovement(playerState, deltaTime) {
     // Copy the state to prevent mutation
     const newState = JSON.parse(JSON.stringify(playerState));
@@ -17,9 +17,12 @@ export function simulatePlayerMovement(playerState, deltaTime) {
     if (side !== 0) {
         targetVelocity.addScaledVector(sideDirection, side * speed);
     }
-    newState.velocity.x += (targetVelocity.x - newState.velocity.x) * CONFIG.MOVEMENT_LERP;
-    newState.velocity.y += (targetVelocity.y - newState.velocity.y) * CONFIG.MOVEMENT_LERP;
-    newState.velocity.z += (targetVelocity.z - newState.velocity.z) * CONFIG.MOVEMENT_LERP;
+    newState.velocity.x += (targetVelocity.x - newState.velocity.x) *
+        CONFIG.MOVEMENT_LERP;
+    newState.velocity.y += (targetVelocity.y - newState.velocity.y) *
+        CONFIG.MOVEMENT_LERP;
+    newState.velocity.z += (targetVelocity.z - newState.velocity.z) *
+        CONFIG.MOVEMENT_LERP;
     newState.position.x += newState.velocity.x * deltaTime;
     newState.position.z += newState.velocity.z * deltaTime;
     // --- VERTICAL MOVEMENT ---
@@ -37,17 +40,19 @@ export function simulatePlayerMovement(playerState, deltaTime) {
     }
     return newState;
 }
-let maxHorizontalDistance = 0;
 export function isHorizontalMovementValid(serverPos, clientPos, deltaTime, networkTimeOffset, isSprinting) {
     // --- HORIZONTAL CHECK ---
     const dx = clientPos.x - serverPos.x;
     const dz = clientPos.z - serverPos.z;
     const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
-    const maxHorizontalSpeed = isSprinting ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
+    const maxHorizontalSpeed = isSprinting
+        ? CONFIG.SPRINT_SPEED
+        : CONFIG.WALK_SPEED;
     // Tolérance de base pour la simulation physique
     const physicsDistance = maxHorizontalSpeed * deltaTime + 0.1;
     // Tolérance de la latence réseau
-    const networkDistance = maxHorizontalSpeed * Math.abs(networkTimeOffset) / 1000;
+    const networkDistance = maxHorizontalSpeed * Math.abs(networkTimeOffset) /
+        1000;
     const totalDistance = physicsDistance + networkDistance;
     //// console.log(`HD: ${horizontalDistance.toFixed(2)} | PD: ${physicsDistance.toFixed(2)} | ND: ${networkDistance.toFixed(2)} | TO: ${totalDistance.toFixed(2)}`);
     return !(horizontalDistance > totalDistance && horizontalDistance > 0.1);
