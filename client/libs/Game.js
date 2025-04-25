@@ -17,6 +17,10 @@ export class Game {
     this.frameInterval = 1000 / this.targetFPS; // ~16.67ms
     this.lastFrameTime = 0;
     this.updateInterval = null;
+    
+    this.maxSocketRetries = 10;
+    this.socketRetries = 0;
+    this.socketRetryInterval = 1000;
   }
 
   update() {
@@ -45,6 +49,7 @@ export class Game {
     if (name == localStorage.getItem("username")) {
       return;
     }
+    console.log("Adding new player:", name);
     this.players[name] = new Player(name, position, rotation, pitch);
     this.sceneManager.scene.add(this.players[name].playerGroup);
   }
@@ -73,9 +78,16 @@ export class Game {
     }
 
     if (this.wsocket.readyState !== 1) {
-      console.log("Socket not ready, retrying in 1000ms");
-      setTimeout(() => this.verifyPosition(), 1000);
-      this.wsocket = getWebSocket();
+      console.log(`Socket not ready, retrying in ${this.socketRetryInterval} ms`);
+      this.socketRetries++;
+      if (this.socketRetries > this.maxSocketRetries) {
+        console.log("Max socket retries reached, stopping movement updates");
+        this.socketRetries = 0;
+      }
+      else
+      {
+        setTimeout(() => this.verifyPosition(), this.socketRetryInterval);
+      }
       return;
     }
 

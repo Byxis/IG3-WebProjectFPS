@@ -1,14 +1,14 @@
 import { Application, Router, send } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { oakCors } from "https://deno.land/x/cors/mod.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
-import { initiateNewPlayer, updatePlayer } from "./libs/PlayerHandler.ts";
+import { initiateNewPlayer, updatePlayer, removePlayer, players } from "./libs/PlayerHandler.ts";
 import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
 import { playerList } from "../shared/Config.ts";
 
 const router = new Router();
 const app = new Application();
-const connections: WebSocket[] = [];
+export const connections: WebSocket[] = [];
 const serverPhysics = new ServerPhysics();
 
 console.log("Server started");
@@ -71,13 +71,7 @@ router.get("/", (ctx) => {
     switch (type) {
       case MessageTypeEnum.ADD_NEW_PLAYER:
         i++;
-        serverPhysics.addPlayer(
-          data.player.name,
-          data.player.position,
-          data.player.rotation,
-          data.player.pitch,
-        );
-        initiateNewPlayer(data, connections);
+        initiateNewPlayer(data.player, ws);
         break;
 
       case MessageTypeEnum.VERIFY_POSITION:
@@ -110,6 +104,11 @@ router.get("/", (ctx) => {
           data.networkTimeOffset,
         );
         break;
+      
+      case MessageTypeEnum.DISCONNECT:
+        console.log(`Player ${data.name} disconnected`);
+        removePlayer(data.name);
+        break;
     }
   };
 
@@ -118,14 +117,12 @@ router.get("/", (ctx) => {
     if (index !== -1) {
       connections.splice(index, 1);
     }
-    serverPhysics.removePlayer(i.toString());
     console.log(`- websocket disconnected (${connections.length})`);
   };
 });
 
 router.get("/shared", async (ctx) => {
   console.log("Showing shared files");
-  const path = ctx.request.url.pathname;
   const files = [];
   for (const file of Deno.readDirSync(`${Deno.cwd()}\\shared\\`)) {
     files.push(file.name);

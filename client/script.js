@@ -39,13 +39,13 @@ function initiateWebSocketConnection() {
 
   wsocket.onmessage = function () {
     const message = JSON.parse(event.data);
-    console.log("WebSocket message received:", message);
     let player = message.player;
 
     if (message.type == "NEW_PLAYER") {
       if (game.players[player.name] != null) {
         return;
       }
+
       game.addNewPlayer(
         player.name,
         player.position,
@@ -54,7 +54,7 @@ function initiateWebSocketConnection() {
       );
     } else if (message.type == "REMOVE_PLAYER") {
       game.removePlayer(player.name);
-    } else if (message.type == "UPDATE_PLAYER_POSITION") {
+    } else if (message.type == "UPDATE_PLAYER") {
       game.updatePlayerPosition(
         player.name,
         player.position,
@@ -67,23 +67,21 @@ function initiateWebSocketConnection() {
       game.sceneManager.cameraContainer.position.x = correctedPosition.x;
       game.sceneManager.cameraContainer.position.y = correctedPosition.y;
       game.sceneManager.cameraContainer.position.z = correctedPosition.z;
-
-      // Reset velocity
-      game.movementManager.targetVelocity.x = 0;
-      game.movementManager.targetVelocity.z = 0;
-
-      //GAMESTATE.camera.targetPitch = correctedPitch;
-
       console.log("Position corrigée par le serveur");
     }
   };
 
+  window.onbeforeunload = function () {
+    if (wsocket.readyState === WebSocket.OPEN) {
+      wsocket.send(JSON.stringify({
+        type: "DISCONNECT",
+        name: localStorage.getItem("username"),
+      }));
+    }
+  }
+
   wsocket.onclose = function () {
     console.log("WebSocket connection closed");
-    wsocket.send(JSON.stringify({
-      type: "DISCONNECT",
-      name: localStorage.getItem("username"),
-    }));
   };
 
   wsocket.onerror = function () {
@@ -131,11 +129,9 @@ function synchronizeClockWithServer(sampleSize = 5) {
         setTimeout(collectSample, 100);
       } else {
         for (let i = 0; i < sampleSize; i++) {
-          console.log(`Sample ${i + 1}: Offset: ${samples[i].offset}ms, RTT: ${samples[i].rtt}ms`);
           newNetworkTimeOffset += samples[i].offset;
         }
         networkTimeOffset = newNetworkTimeOffset / samples.length;
-        console.log(`Synchronisé avec le serveur. Offset: ${networkTimeOffset}ms`);
         document.getElementById('net-debug').innerHTML = `
             Offset: ${getNetworkTimeOffset().toFixed(2)}ms
         `;
@@ -152,7 +148,6 @@ export function getNetworkTimeOffset() {
 }
 
 game.start();
-advancedDebugSceneObjects(game.sceneManager.scene);
 
 // Server time synchronization
 synchronizeClockWithServer();

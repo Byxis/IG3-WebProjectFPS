@@ -1,52 +1,8 @@
 import { CONFIG } from "../../shared/Config.ts";
 import * as Physics from "../../shared/Physics.ts";
+import { players, updatePlayer } from "./PlayerHandler.ts";
 
 export class ServerPhysics {
-  private players: {
-    [name: string]: {
-      position: { x: number; y: number; z: number };
-      rotation: { x: number; y: number; z: number };
-      pitch: number;
-      velocity: { x: number; y: number; z: number };
-      verticalVelocity: number;
-      isJumping: boolean;
-      lastUpdateTime: number;
-      lastUpdateSended: number;
-      networkTimeOffset: number;
-      movement: {
-        forward: number;
-        side: number;
-        isSprinting: boolean;
-        isJumping: boolean;
-      };
-    };
-  } = {};
-
-  addPlayer(name: string, position: any, rotation: any, pitch: number) {
-    this.players[name] = {
-      position: { ...position },
-      rotation: { ...rotation },
-      pitch,
-      velocity: { x: 0, y: 0, z: 0 },
-      verticalVelocity: 0,
-      isJumping: false,
-      lastUpdateTime: performance.now(),
-      lastUpdateSended: performance.now(),
-      networkTimeOffset: 0,
-      movement: {
-        forward: 0,
-        side: 0,
-        isSprinting : false,
-        isJumping: false,
-      },
-    };
-    console.log(this.players);
-  }
-
-  removePlayer(name: string) {
-    delete this.players[name];
-  }
-
   updatePlayerMovement(
     name: string,
     forward: number,
@@ -57,17 +13,17 @@ export class ServerPhysics {
     pitch: number,
     networkTimeOffset: number,
   ) {
-    if (this.players[name]) {
+    if (players[name]) {
       if (forward !== 0 || side !== 0) {
         const length = Math.sqrt(forward * forward + side * side);
         forward /= length;
         side /= length;
       }
-      this.players[name].rotation = { ...rotation };
-      this.players[name].pitch = pitch;
-      this.players[name].networkTimeOffset = networkTimeOffset;
+      players[name].rotation = { ...rotation };
+      players[name].pitch = pitch;
+      players[name].networkTimeOffset = networkTimeOffset;
 
-      this.players[name].movement = {
+      players[name].movement = {
         forward,
         side,
         isSprinting,
@@ -82,11 +38,11 @@ export class ServerPhysics {
     rotation: any,
     pitch: number,
   ) {
-    if (this.players[name]) {
+    if (players[name]) {
       var corrected = false;
       if (this.isMovementValid(name, position)) {
-        this.players[name].position.x = position.x;
-        this.players[name].position.z = position.z;
+        players[name].position.x = position.x;
+        players[name].position.z = position.z;
       } 
       else
       {
@@ -104,7 +60,7 @@ export class ServerPhysics {
         corrected = true;
       } 
       */
-      this.players[name].position.y = position.y;
+      players[name].position.y = position.y;
 
       if (corrected)
       {
@@ -114,9 +70,9 @@ export class ServerPhysics {
         );*/
         return {
           corrected: true,
-          position: this.players[name].position,
-          rotation: this.players[name].rotation,
-          pitch: this.players[name].pitch,
+          position: players[name].position,
+          rotation: players[name].rotation,
+          pitch: players[name].pitch,
         };
       }
     }
@@ -124,60 +80,55 @@ export class ServerPhysics {
   }
 
   private isMovementValid(name: string, newPosition: any): boolean {
-    const player = this.players[name];
+    const player = players[name];
     if (!player) return false;
     
     return Physics.isHorizontalMovementValid(
-        this.players[name].position,
+        players[name].position,
         newPosition,
         1/60,
         player.networkTimeOffset,
-        this.players[name].movement.isSprinting,
+        players[name].movement.isSprinting,
     );
   }
 
   async updateAll() {
     const now = performance.now();
   
-    for (const [name, player] of Object.entries(this.players)) {
+    for (const [name, player] of Object.entries(players)) {
       const deltaTime = (now - player.lastUpdateTime) / 1000;
-      const oldMovement = player.movement;
-        
       const updatedPlayer = Physics.simulatePlayerMovement(player, deltaTime);
-      
-      const speed = Math.sqrt(
-        updatedPlayer.velocity.x * updatedPlayer.velocity.x +
-        updatedPlayer.velocity.z * updatedPlayer.velocity.z
-      );
+      updatedPlayer.lastUpdateTime = now;
         
-      this.players[name] = updatedPlayer;
-      this.players[name].lastUpdateTime = now;
+      players[name] = updatedPlayer;
+      updatePlayer(player);
     }
+
   }
 
   getPlayerPosition(name: string) {
-    if (this.players[name]) {
+    if (players[name]) {
       return {
-        position: this.players[name].position,
-        rotation: this.players[name].rotation,
-        pitch: this.players[name].pitch,
+        position: players[name].position,
+        rotation: players[name].rotation,
+        pitch: players[name].pitch,
       };
     }
     return null;
   }
 
   isSendUpdateAvailable(name: string): boolean {
-    if (this.players[name]) {
+    if (players[name]) {
       const now = performance.now();
-      const deltaTime = (now - this.players[name].lastUpdateSended) / 1000;
+      const deltaTime = (now - players[name].lastUpdateSended) / 1000;
       return deltaTime > 1;
     }
     return true;
   }
 
   setSendUpdate(name: string) {
-    if (this.players[name]) {
-      this.players[name].lastUpdateSended = performance.now();
+    if (players[name]) {
+      players[name].lastUpdateSended = performance.now();
     }
   }
 }

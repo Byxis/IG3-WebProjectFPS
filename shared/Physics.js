@@ -45,18 +45,10 @@ export function isHorizontalMovementValid(serverPos, clientPos, deltaTime, netwo
     const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
     const maxHorizontalSpeed = isSprinting ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
     // Tolérance de base pour la simulation physique
-    var physicsDistance = maxHorizontalSpeed * deltaTime * 3 + 0.1;
+    const physicsDistance = maxHorizontalSpeed * deltaTime + 0.1;
     // Tolérance de la latence réseau
     const networkDistance = maxHorizontalSpeed * Math.abs(networkTimeOffset) / 1000;
-    console.log(`Network distance: ${networkDistance.toFixed(2)}, Physics distance: ${physicsDistance.toFixed(2)}`);
-    physicsDistance += networkDistance;
-    if (horizontalDistance > maxHorizontalDistance) {
-        console.log(`New max horizontal distance: ${horizontalDistance.toFixed(2)}`);
-        maxHorizontalDistance = horizontalDistance;
-    }
-    if (horizontalDistance > physicsDistance && horizontalDistance > 0.1) {
-        console.log(`Horizontal: ${horizontalDistance.toFixed(2)} vs allowed ${physicsDistance.toFixed(2)} (latency: ${networkTimeOffset.toFixed(3)}ms)`);
-        return false;
-    }
-    return true;
+    const totalDistance = physicsDistance + networkDistance;
+    //// console.log(`HD: ${horizontalDistance.toFixed(2)} | PD: ${physicsDistance.toFixed(2)} | ND: ${networkDistance.toFixed(2)} | TO: ${totalDistance.toFixed(2)}`);
+    return !(horizontalDistance > totalDistance && horizontalDistance > 0.1);
 }

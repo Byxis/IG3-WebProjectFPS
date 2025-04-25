@@ -21,6 +21,10 @@ export class MovementManager {
     this.side = 0;
     this.isJumping = false;
 
+    this.maxSocketRetries = 10;
+    this.socketRetries = 0;
+    this.socketRetryInterval = 1000;
+
     // Player state
     this.playerState = {
       position: {
@@ -188,8 +192,16 @@ export class MovementManager {
   updateMovementKeybinds() {
     if (this.wsocket == null) return;
     if (this.wsocket.readyState !== 1) {
-      console.log("Socket not ready, retrying in 100ms");
-      setTimeout(() => this.updateMovementKeybinds(), 100);
+      console.log(`Socket not ready, retrying in ${this.socketRetryInterval} ms`);
+      this.socketRetries++;
+      if (this.socketRetries > this.maxSocketRetries) {
+        console.log("Max socket retries reached, stopping movement updates");
+        this.socketRetries = 0;
+      }
+      else
+      {
+        setTimeout(() => this.updateMovementKeybinds(), this.socketRetryInterval);
+      }
       return;
     }
     const networkTimeOffset = getNetworkTimeOffset();
