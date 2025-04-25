@@ -11,17 +11,12 @@ export class Game {
     this.wsocket = wsocket;
     this.sceneManager = new SceneManager();
     this.movementManager = new MovementManager(this.sceneManager, wsocket);
-    this.animate = this.animate.bind(this);
     GAMESTATE.physics.lastTime = performance.now();
 
     this.targetFPS = 60;
     this.frameInterval = 1000 / this.targetFPS; // ~16.67ms
     this.lastFrameTime = 0;
     this.updateInterval = null;
-  }
-
-  animate(currentTime) {
-    requestAnimationFrame(this.animate);
   }
 
   update() {
@@ -41,7 +36,6 @@ export class Game {
   }
 
   start() {
-    this.animate(performance.now());
     this.updateInterval = setInterval(() => this.update(), this.frameInterval);
     this.verifyPosition();
   }

@@ -10,10 +10,6 @@ export const CONFIG = {
   JUMP_FORCE: 7,
   GRAVITY: 20,
   GROUND_LEVEL: 0,
-  FRICTION: 0.9,
-  JUMP_TOLERANCE: 1.5,
-  MAX_VERTICAL_SPEED: 7 * 1.2, // JUMP_FORCE * 1.2
-  GROUND_TOLERANCE: 0.5, 
 
   // Camera configuration
   FOV: 75,
@@ -27,9 +23,6 @@ export const CONFIG = {
   // Player settings
   STARTING_LIVES: 3,
   STARTING_AMMO: 30,
-
-  // Checks tolerance (%)
-  MAX_HORIZONTAL_SPEED: 1.1,
 };
 
 

@@ -80,11 +80,6 @@ export class SceneManager {
         -Math.PI / 2,
         Math.min(Math.PI / 2, GAMESTATE.camera.targetPitch),
       );
-
-      // Update if the pitch has changed
-      if (Math.abs(oldPitch - GAMESTATE.camera.targetPitch) > 0.01) {
-        
-      }
     }
   }
 

@@ -84,10 +84,6 @@ export class ServerPhysics {
   ) {
     if (this.players[name]) {
       var corrected = false;
-      const ratioX = position.x / this.players[name].position.x;
-      const ratioZ = position.z / this.players[name].position.z;
-      console.log(`X: ${position.x} vs X: ${this.players[name].position.x} ratio: ${ratioX}`);
-      console.warn(`Z: ${position.z} vs Z: ${this.players[name].position.z} ratio: ${ratioZ}`);
       if (this.isMovementValid(name, position)) {
         this.players[name].position.x = position.x;
         this.players[name].position.z = position.z;
@@ -174,7 +170,6 @@ export class ServerPhysics {
     if (this.players[name]) {
       const now = performance.now();
       const deltaTime = (now - this.players[name].lastUpdateSended) / 1000;
-      console.log(deltaTime);
       return deltaTime > 1;
     }
     return true;

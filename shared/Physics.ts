@@ -73,9 +73,9 @@ let maxHorizontalDistance = 0;
     // Tolérance de la latence réseau
     const networkDistance = maxHorizontalSpeed * Math.abs(networkTimeOffset) / 1000;
     const totalDistance = physicsDistance + networkDistance;
-    //console.log(`HD: ${horizontalDistance.toFixed(2)} | PD: ${physicsDistance.toFixed(2)} | ND: ${networkDistance.toFixed(2)} | TO: ${totalDistance.toFixed(2)}`);
+    console.log(`HD: ${horizontalDistance.toFixed(2)} | PD: ${physicsDistance.toFixed(2)} | ND: ${networkDistance.toFixed(2)} | TO: ${totalDistance.toFixed(2)}`);
 
-    if (horizontalDistance > physicsDistance && horizontalDistance > 0.1) {
+    if (horizontalDistance > totalDistance && horizontalDistance > 0.1) {
       //console.log(`Horizontal: ${horizontalDistance.toFixed(2)} vs allowed ${physicsDistance.toFixed(2)} (latency: ${networkTimeOffset.toFixed(3)}ms)`);
       return false;
     }

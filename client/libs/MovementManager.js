@@ -13,15 +13,6 @@ export class MovementManager {
     this.targetVelocity = new SharedVector3();
     this.wsocket = wsocket;
 
-    // Network optimization properties
-    this.lastSentPosition = new THREE.Vector3();
-    this.lastSentRotation = new THREE.Euler();
-    this.lastSentPitch = 0;
-    this.updateInterval = 25;
-    this.timeSinceLastUpdate = 0;
-    this.positionThreshold = 0.1;
-    this.rotationThreshold = 0.01;
-
     this.raycaster = new THREE.Raycaster();
     this.shootCooldown = 500;
     this.lastShootTime = 0;
@@ -65,43 +56,18 @@ export class MovementManager {
   update(deltaTime) {
     if (!deltaTime) return;
 
-    // Handle position correction interpolation if active
-    if (this.isInterpolating) {
-      this.interpolationTimer += deltaTime;
-      const progress = Math.min(this.interpolationTimer / this.interpolationDuration, 1.0);
-      
-      if (progress < 1.0) {
-        // Interpolate position smoothly
-        this.sceneManager.cameraContainer.position.lerpVectors(
-          this.interpolationStartPos,
-          this.interpolationTargetPos,
-          progress
-        );
-      } else {
-        // Interpolation complete
-        this.isInterpolating = false;
-      }
-    } else {
-      // Normal movement update when not interpolating
-      this.handleMovementUpdate();
-      this.simulateMovement(deltaTime);
-      
-      document.getElementById("coords").innerText = 
-        `X: ${this.sceneManager.cameraContainer.position.x.toFixed(4)} 
-        Y: ${this.sceneManager.cameraContainer.position.y.toFixed(4)} 
-        Z: ${this.sceneManager.cameraContainer.position.z.toFixed(4)}`;
-    }
+    this.handleMovementUpdate();
+    this.simulateMovement(deltaTime);
+    
+    document.getElementById("coords").innerText = 
+      `X: ${this.sceneManager.cameraContainer.position.x.toFixed(4)} 
+      Y: ${this.sceneManager.cameraContainer.position.y.toFixed(4)} 
+      Z: ${this.sceneManager.cameraContainer.position.z.toFixed(4)}`;
 
     const fps = Math.round(1 / deltaTime);
     document.getElementById("fps").innerText = `FPS: ${fps}`;
     
     this.smoothRotation(deltaTime);
-
-    // Only check for sending updates periodically
-    this.timeSinceLastUpdate += deltaTime * 1000; // Convert to ms
-    if (this.timeSinceLastUpdate >= this.updateInterval) {
-      this.timeSinceLastUpdate = 0;
-    }
   }
 
   simulateMovement(deltaTime) {
@@ -184,13 +150,14 @@ export class MovementManager {
       this.isSprinting !== oldIsSprinting ||
       this.isJumping !== oldIsJumping
     ) {
-      console.log("Sending movement update");
       this.updateMovementKeybinds();
     }
     else if (this.sceneManager.getPitchHasChanged())
     {
+      //* Maybe we should set a timer to send the pitch update,
+      //* so we don't spam the server with updates
       this.updateMovementKeybinds();
-      this.sceneManager.setPitchChanged(false);
+      this.sceneManager.setPitchHasChanged(false);
     }
   }
 
@@ -201,9 +168,14 @@ export class MovementManager {
       GAMESTATE.camera.targetPitch,
         CONFIG.ROTATION_LERP
     );
+    if (Math.abs(this.sceneManager.camera.rotation.x - GAMESTATE.camera.pitch) > 0.000001) {
+      this.sceneManager.setPitchHasChanged(true);
+    }
 
     // Apply camera rotation
     this.sceneManager.camera.rotation.x = GAMESTATE.camera.pitch;
+
+    
 
     // Smooth camera rotation
     this.sceneManager.cameraContainer.rotation.y = THREE.MathUtils.lerp(
@@ -313,13 +285,5 @@ export class MovementManager {
         }));
       }
     }
-  }
-
-  setPositionInterpolation(startPos, targetPos, duration = 0.2) {
-    this.isInterpolating = true;
-    this.interpolationStartPos = startPos.clone();
-    this.interpolationTargetPos = targetPos.clone();
-    this.interpolationDuration = duration;
-    this.interpolationTimer = 0;
   }
 }
