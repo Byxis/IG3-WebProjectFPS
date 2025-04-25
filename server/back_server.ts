@@ -1,15 +1,12 @@
 import {
   Application,
+  type ListenOptions,
   Router,
   send,
-  type ListenOptions,
 } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { oakCors } from "https://deno.land/x/cors/mod.ts";
 import * as _bcrypt from "https://deno.land/x/bcrypt/mod.ts";
-import {
-  initiateNewPlayer,
-  removePlayer,
-} from "./libs/PlayerHandler.ts";
+import { initiateNewPlayer, removePlayer } from "./libs/PlayerHandler.ts";
 import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
 
@@ -40,14 +37,14 @@ if (Deno.args.length < 1) {
   Deno.exit();
 }
 
-let options: ListenOptions = { 
-  port: Number(Deno.args[0])
+let options: ListenOptions = {
+  port: Number(Deno.args[0]),
 };
 
 if (Deno.args.length >= 3) {
   const cert = await Deno.readTextFile(Deno.args[1]);
   const key = await Deno.readTextFile(Deno.args[2]);
-  
+
   options = {
     port: Number(Deno.args[0]),
     secure: true,

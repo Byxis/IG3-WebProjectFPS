@@ -1,20 +1,19 @@
 import { Vector3 } from "./Class.ts";
 import { CONFIG } from "./Config.ts";
 
-export function simulatePlayerMovement(playerState : 
-  {
-    position: { x: number; y: number; z: number };
-    rotation: { x: number; y: number; z: number };
-    velocity: { x: number; y: number; z: number };
-    verticalVelocity: number;
+export function simulatePlayerMovement(playerState: {
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
+  velocity: { x: number; y: number; z: number };
+  verticalVelocity: number;
+  isJumping: boolean;
+  movement: {
+    forward: number;
+    side: number;
+    isSprinting: boolean;
     isJumping: boolean;
-    movement: {
-      forward: number;
-      side: number;
-      isSprinting: boolean;
-      isJumping: boolean;
-    };
-  }, deltaTime : number) {
+  };
+}, deltaTime: number) {
   // Copy the state to prevent mutation
   const newState = JSON.parse(JSON.stringify(playerState));
 

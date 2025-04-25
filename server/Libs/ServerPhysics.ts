@@ -73,8 +73,9 @@ export class ServerPhysics {
     return { corrected: false };
   }
 
-  private isMovementValid(name: string, newPosition: 
-    { x: number; y: number; z: number }
+  private isMovementValid(
+    name: string,
+    newPosition: { x: number; y: number; z: number },
   ): boolean {
     const player = players[name];
     if (!player) return false;

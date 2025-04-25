@@ -82,14 +82,12 @@ export function initiateNewPlayer(dataPlayer: {
   }
 }
 
-export function updatePlayer(player: 
-  {
-    name: string;
-    position: { x: number; y: number; z: number };
-    rotation: { x: number; y: number; z: number };
-    pitch: number;
-  }
-) {
+export function updatePlayer(player: {
+  name: string;
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
+  pitch: number;
+}) {
   connections.forEach((ws) => {
     ws.send(JSON.stringify(
       {
