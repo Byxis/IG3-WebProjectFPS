@@ -30,13 +30,22 @@ jobs:
         uses: denoland/setup-deno@61fe2df320078202e33d7d5ad347e7dcfa0e8f31  # v1.1.2
         with:
           deno-version: v1.x
-
-      # Uncomment this step to verify the use of 'deno fmt' on each commit.
-      # - name: Verify formatting
-      #   run: deno fmt --check
+      - name: Verify formatting
+        run: deno fmt --check
 
       - name: Run linter
         run: deno lint
 
+      - name: Type check
+        run: deno check **/*.ts
+        
       - name: Run tests
-        run: deno test -A
+        run: |
+          deno test -A || if [ $? -eq 1 ]; then 
+            if grep -q "No test modules found" <<< "$(deno test -A 2>&1)"; then
+              echo "No tests found, but that's OK!"
+              exit 0
+            else
+              exit 1
+            fi
+          fi
