@@ -6,6 +6,8 @@
 # This workflow will install Deno then run `deno lint` and `deno test`.
 # For more information see: https://github.com/denoland/setup-deno
 
+# Addition : execute deno fmt --check, deno check, and handle no test modules found error
+
 name: Deno
 
 on:
@@ -28,7 +30,7 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: '2.2.6'
+          deno-version: "2.2.6"
       - name: Verify formatting
         run: deno fmt --check
 
@@ -37,10 +39,10 @@ jobs:
 
       - name: Type check
         run: deno check **/*.ts --allow-import
-        
+
       - name: Run tests
         run: |
-          deno test -A || if [ $? -eq 1 ]; then 
+          deno test -A || if [ $? -eq 1 ]; then
             if grep -q "No test modules found" <<< "$(deno test -A 2>&1)"; then
               echo "No tests found, but that's OK!"
               exit 0
