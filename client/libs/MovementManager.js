@@ -229,6 +229,9 @@ export class MovementManager {
 
   setupShootingControls() {
     document.addEventListener("click", (event) => {
+      if (document.pointerLockElement !== this.sceneManager.renderer.domElement) {
+        return;
+      }
       if (
         event.target.tagName === "BUTTON" || event.target.tagName === "INPUT"
       ) {
