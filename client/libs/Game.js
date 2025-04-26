@@ -3,6 +3,7 @@ import { SceneManager } from "./SceneManager.js";
 import { Player } from "./Player.js";
 import { GAMESTATE } from "http://localhost:3000/shared/Config.js";
 import { getWebSocket } from "../script.js";
+import { UIManager } from "./UIManager.js";
 
 export class Game {
   constructor(wsocket) {
@@ -10,6 +11,7 @@ export class Game {
     this.wsocket = wsocket;
     this.sceneManager = new SceneManager();
     this.movementManager = new MovementManager(this.sceneManager, wsocket);
+    this.uimanager = new UIManager(this.sceneManager);
     GAMESTATE.physics.lastTime = performance.now();
 
     this.targetFPS = 60;
