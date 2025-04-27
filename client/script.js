@@ -1,4 +1,8 @@
 import { Game } from "./libs/Game.js";
+import uiManager from "./libs/UIManager.js";
+import sceneManager from "./libs/SceneManager.js";
+import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
+
 
 localStorage.setItem("username", "player" + Math.floor(Math.random() * 1000));
 let networkTimeOffset = 0;
@@ -6,9 +10,17 @@ let networkTimeOffset = 0;
 const name = document.getElementById("name");
 name.innerHTML = localStorage.getItem("username");
 
+
+
 const wsocket = new WebSocket("ws://localhost:3000");
-const game = new Game(wsocket);
 initiateWebSocketConnection();
+
+export function getWebSocket() {
+  return wsocket;
+}
+
+const game = new Game(wsocket);
+
 
 function initiateWebSocketConnection() {
   console.log(localStorage.getItem("auth_token"));
@@ -17,7 +29,7 @@ function initiateWebSocketConnection() {
     console.log("WebSocket connection opened");
 
     wsocket.send(JSON.stringify({
-      type: "ADD_NEW_PLAYER",
+      type: MessageTypeEnum.ADD_NEW_PLAYER,
       player: {
         name: localStorage.getItem("username"),
         position: {
@@ -36,10 +48,10 @@ function initiateWebSocketConnection() {
   };
 
   wsocket.onmessage = function () {
-    const message = JSON.parse(event.data);
-    const player = message.player;
+    const data = JSON.parse(event.data);
+    const player = data.player;
 
-    if (message.type == "NEW_PLAYER") {
+    if (data.type == MessageTypeEnum.NEW_PLAYER) {
       if (game.players[player.name] != null) {
         return;
       }
@@ -49,23 +61,31 @@ function initiateWebSocketConnection() {
         player.position,
         player.pitch,
       );
-    } else if (message.type == "REMOVE_PLAYER") {
+    } else if (data.type == MessageTypeEnum.REMOVE_PLAYER) {
       game.removePlayer(player.name);
-    } else if (message.type == "UPDATE_PLAYER") {
+    } else if (data.type == MessageTypeEnum.UPDATE_PLAYER) {
       game.updatePlayerPosition(
         player.name,
         player.position,
         player.rotation,
         player.pitch,
       );
-    } else if (message.type == "POSITION_CORRECTION") {
-      const correctedPosition = message.position;
+    } else if (data.type == MessageTypeEnum.POSITION_CORRECTION) {
+      const correctedPosition = data.position;
 
-      game.sceneManager.cameraContainer.position.x = correctedPosition.x;
-      game.sceneManager.cameraContainer.position.y = correctedPosition.y;
-      game.sceneManager.cameraContainer.position.z = correctedPosition.z;
+      sceneManager.cameraContainer.position.x = correctedPosition.x;
+      sceneManager.cameraContainer.position.y = correctedPosition.y;
+      sceneManager.cameraContainer.position.z = correctedPosition.z;
       console.log("Position corrigée par le serveur");
     }
+    else if (data.type == MessageTypeEnum.SEND_CHAT_MESSAGE) {
+      const name = data.name;
+      const message = data.message;
+      const role = data.role;
+      uiManager.addNewChatMessage(name, role, message);
+      console.log("Received message:", message);
+    }
+
   };
 
   globalThis.onbeforeunload = function () {
@@ -84,10 +104,6 @@ function initiateWebSocketConnection() {
   wsocket.onerror = function () {
     console.error("WebSocket error:", error);
   };
-}
-
-export function getWebSocket() {
-  return wsocket;
 }
 
 function synchronizeClockWithServer(sampleSize = 5) {

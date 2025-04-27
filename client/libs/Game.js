@@ -1,17 +1,13 @@
-import { MovementManager } from "./MovementManager.js";
-import { SceneManager } from "./SceneManager.js";
+import movementManager from "./MovementManager.js";
+import sceneManager from "./SceneManager.js";
 import { Player } from "./Player.js";
 import { GAMESTATE } from "http://localhost:3000/shared/Config.js";
 import { getWebSocket } from "../script.js";
-import { UIManager } from "./UIManager.js";
+import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
 
 export class Game {
-  constructor(wsocket) {
+  constructor() {
     this.players = {};
-    this.wsocket = wsocket;
-    this.sceneManager = new SceneManager();
-    this.movementManager = new MovementManager(this.sceneManager, wsocket);
-    this.uimanager = new UIManager(this.sceneManager);
     GAMESTATE.physics.lastTime = performance.now();
 
     this.targetFPS = 60;
@@ -33,10 +29,10 @@ export class Game {
 
     GAMESTATE.physics.lastTime = currentTime;
 
-    this.movementManager.update(deltaTime);
-    this.sceneManager.renderer.render(
-      this.sceneManager.scene,
-      this.sceneManager.camera,
+    movementManager.update(deltaTime);
+    sceneManager.renderer.render(
+      sceneManager.scene,
+      sceneManager.camera,
     );
   }
 
@@ -52,7 +48,7 @@ export class Game {
     }
     console.log("Adding new player:", name);
     this.players[name] = new Player(name, position, pitch);
-    this.sceneManager.scene.add(this.players[name].playerGroup);
+    sceneManager.scene.add(this.players[name].playerGroup);
   }
 
   removePlayer(name) {
@@ -60,7 +56,7 @@ export class Game {
     if (this.players[name] == null) {
       return;
     }
-    this.sceneManager.scene.remove(this.players[name].playerGroup);
+    sceneManager.scene.remove(this.players[name].playerGroup);
     delete this.players[name];
   }
 
@@ -73,12 +69,12 @@ export class Game {
   }
 
   verifyPosition() {
-    if (this.wsocket == null) {
-      this.wsocket = getWebSocket();
+    let wsocket = getWebSocket();
+    if (wsocket == null) {
       return;
     }
 
-    if (this.wsocket.readyState !== 1) {
+    if (wsocket.readyState !== 1) {
       console.log(
         `Socket not ready, retrying in ${this.socketRetryInterval} ms`,
       );
@@ -93,19 +89,19 @@ export class Game {
     }
 
     // Verify the player's position
-    this.wsocket.send(JSON.stringify({
-      type: "VERIFY_POSITION",
+    wsocket.send(JSON.stringify({
+      type: MessageTypeEnum.VERIFY_POSITION,
       player: {
         name: localStorage.getItem("username"),
         position: {
-          x: this.sceneManager.cameraContainer.position.x,
-          y: this.sceneManager.cameraContainer.position.y,
-          z: this.sceneManager.cameraContainer.position.z,
+          x: sceneManager.cameraContainer.position.x,
+          y: sceneManager.cameraContainer.position.y,
+          z: sceneManager.cameraContainer.position.z,
         },
         rotation: {
-          x: this.sceneManager.cameraContainer.rotation.x,
-          y: this.sceneManager.cameraContainer.rotation.y,
-          z: this.sceneManager.cameraContainer.rotation.z,
+          x: sceneManager.cameraContainer.rotation.x,
+          y: sceneManager.cameraContainer.rotation.y,
+          z: sceneManager.cameraContainer.rotation.z,
         },
         pitch: GAMESTATE.camera.pitch,
       },

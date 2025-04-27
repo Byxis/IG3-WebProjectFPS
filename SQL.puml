@@ -1,0 +1,64 @@
+@startuml
+!define primary_key(x) <b><color:#b8861b><&key></color> x</b>
+!define foreign_key(x) <color:#aaaaaa><&key></color> x
+!define column(x) <color:#efefef><&media-record></color> x
+!define table(x) entity x << (T, white) >>
+
+table( users ) {
+  primary_key( user_id ): INTEGER
+  column( username ): TEXT
+  column( password_hash ): TEXT
+  column( created_at ): TIMESTAMP
+  column( last_login ): TIMESTAMP
+  column( time_played): INTEGER
+  foreign_key( player_role): INTEGER
+}
+
+table( matches ) {
+  primary_key( match_id ): INTEGER
+  column( start_time ): TIMESTAMP
+  column( end_time ): TIMESTAMP
+  column( status ): TEXT
+}
+
+table( player_matches ) {
+  primary_key(foreign_key( ~~user_id~~ )): INTEGER
+  primary_key(foreign_key( ~~match_id~~ )): INTEGER
+  column( kills ): INTEGER
+  column( deaths ): INTEGER
+  column( headshots ): INTEGER
+  column( bodyshots): INTEGER
+  column( missedshots): INTEGER
+}
+
+table( chat_messages ) {
+  primary_key(foreign_key( ~~sender_id~~ )): INTEGER
+  primary_key(foreign_key( ~~match_id~~ )): INTEGER
+  primary_key(foreign_key( timestamp)): TIMESTAMP
+  column( message_text ): TEXT
+}
+
+table( private_messages ) {
+  primary_key(foreign_key( ~~sender_id~~ )): INTEGER
+  primary_key(foreign_key( ~~receiver_id~~ )): INTEGER
+  primary_key(foreign_key( timestamp)): TIMESTAMP
+  column( message_text ): TEXT
+}
+
+table( roles ) {
+  primary_key(role_id): INTEGER
+  column( role_name ): TEXT
+}
+
+
+' Relationships
+users ||--o{ player_matches
+users ||--o{ chat_messages
+users ||--o{ private_messages
+
+matches ||--o{ player_matches
+matches ||--o{ chat_messages
+
+roles ||--o{ users
+
+@enduml

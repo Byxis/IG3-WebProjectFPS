@@ -9,6 +9,7 @@ import * as _bcrypt from "https://deno.land/x/bcrypt/mod.ts";
 import { initiateNewPlayer, removePlayer } from "./libs/PlayerHandler.ts";
 import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
+import sqlHandler, { SqlHandler } from "./libs/SqlHandler.ts";
 
 const router = new Router();
 const app = new Application();
@@ -65,6 +66,7 @@ router.get("/", (ctx) => {
   connections.push(ws);
   let i = 0;
   console.log("New connection");
+  
 
   ws.onerror = (_error) => {
     const index = connections.indexOf(ws);
@@ -75,7 +77,7 @@ router.get("/", (ctx) => {
     console.log(`- websocket error`);
   };
 
-  ws.onmessage = (event) => {
+  ws.onmessage = async (event) => {
     const message = event.data;
     const data = JSON.parse(message);
     const type = MessageTypeEnum[data.type as keyof typeof MessageTypeEnum];
@@ -124,6 +126,32 @@ router.get("/", (ctx) => {
       case MessageTypeEnum.DISCONNECT: {
         console.log(`Player ${data.name} disconnected`);
         removePlayer(data.name);
+        break;
+      }
+
+      case MessageTypeEnum.SEND_CHAT_MESSAGE: {
+        console.log(`Chat message from ${data.name}: ${data.message}`);
+        //TODO: get match id from the current match
+        let playerId = -1;
+        if (!(await sqlHandler.doUserExists(data.name))) {
+          const passwordHash = await _bcrypt.hash(data.password);
+          await sqlHandler.createUser(data.name, passwordHash);
+        }
+        playerId = await sqlHandler.getUserByName(data.name);
+        sqlHandler.changeUserRole(playerId, Math.floor(Math.random() * 3) + 1);
+        const matchId = 1;
+        sqlHandler.createMatch();
+        sqlHandler.addChatMessage(playerId, matchId, data.message);
+        for (const connection of connections) {
+          connection.send(
+            JSON.stringify({
+              type: MessageTypeEnum.SEND_CHAT_MESSAGE,
+              name: data.name,
+              message: data.message,
+              role: await sqlHandler.getUserRole(playerId),
+            }),
+          );
+        }
         break;
       }
 

@@ -94,3 +94,6 @@ export class SceneManager {
     this.boundHandleMouseMove = this.handleMouseMove.bind(this);
   }
 }
+
+const sceneManager = new SceneManager();
+export default sceneManager;

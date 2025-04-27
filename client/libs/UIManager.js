@@ -1,11 +1,14 @@
 import { GAMESTATE } from "http://localhost:3000/shared/Config.js";
+import { getWebSocket } from "../script.js";
+import sceneManager from "./SceneManager.js";
+import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
 
 export class UIManager {
 
-    constructor(sceneManager)
+    constructor()
     {
-        this.sceneManager = sceneManager;
         this.chatbox = document.getElementById("chatbox");
+        this.chatboxmessages = document.getElementById("chatbox-messages");
         this.chatboxinput = document.getElementById("chatbox-input");
         this.chatboxsend = document.getElementById("chatbox-send");
         this.isChatboxActive = false;
@@ -13,24 +16,23 @@ export class UIManager {
     }
 
     setupListeners() {
-
-        this.sceneManager.renderer.domElement.addEventListener("click", () => {
+        sceneManager.renderer.domElement.addEventListener("click", () => {
             if (!this.isChatboxActive)
             {
-                this.sceneManager.renderer.domElement.requestPointerLock();
+                sceneManager.renderer.domElement.requestPointerLock();
             }
           });
 
         document.addEventListener("pointerlockchange", () => {
-            if (document.pointerLockElement === this.sceneManager.renderer.domElement && !this.isChatboxActive) {
-              document.addEventListener("mousemove", this.sceneManager.boundHandleMouseMove);
+            if (document.pointerLockElement === sceneManager.renderer.domElement && !this.isChatboxActive) {
+              document.addEventListener("mousemove", sceneManager.boundHandleMouseMove);
             } else {
-              document.removeEventListener("mousemove", this.sceneManager.boundHandleMouseMove);
+              document.removeEventListener("mousemove", sceneManager.boundHandleMouseMove);
             }
         });
 
         document.addEventListener("keydown", (event) => {
-            if (event.code in GAMESTATE.keyStates && document.pointerLockElement === this.sceneManager.renderer.domElement) {
+            if (event.code in GAMESTATE.keyStates && document.pointerLockElement === sceneManager.renderer.domElement) {
                 GAMESTATE.keyStates[event.code] = true;
                 event.preventDefault();
             }
@@ -45,6 +47,16 @@ export class UIManager {
 
         this.chatboxsend.addEventListener("click", (event) => {
             event.preventDefault();
+            const websocket = getWebSocket();
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                const message = this.chatboxinput.value;
+                websocket.send(JSON.stringify({
+                    type: MessageTypeEnum.SEND_CHAT_MESSAGE,
+                    name: localStorage.getItem("username"),
+                    message: message,
+                }));
+                console.log("Sent message:", message);
+            }
             this.chatboxinput.value = "";
             this.chatboxinput.focus();
         });
@@ -75,7 +87,7 @@ export class UIManager {
                             this.chatbox.style.opacity = 0.5;
                     }, 3000);
                     setTimeout(() => {
-                        this.sceneManager.renderer.domElement.requestPointerLock();
+                        sceneManager.renderer.domElement.requestPointerLock();
                     }, 100);
                 }
                 else 
@@ -90,8 +102,36 @@ export class UIManager {
     }
 
     handleResize() {
-        this.sceneManager.camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
-        this.sceneManager.camera.updateProjectionMatrix();
-        this.sceneManager.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
-      }
+        sceneManager.camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
+        sceneManager.camera.updateProjectionMatrix();
+        sceneManager.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
+    }
+
+    addNewChatMessage(name, role, message) {
+        const chatMessage = document.createElement("p");
+        
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = name;
+        
+        if (role === 3) {
+            nameSpan.style.color = "#ff4444";
+        } else if (role === 2) {
+            nameSpan.style.color = "#ffff44";
+        } else {
+            nameSpan.style.color = "#ffffff";
+        }
+        
+        chatMessage.appendChild(nameSpan);
+        chatMessage.appendChild(document.createTextNode(": " + message));
+        this.chatboxmessages.appendChild(chatMessage);
+        this.chatbox.scrollTop = this.chatbox.scrollHeight;
+        
+        setTimeout(() => {
+            this.chatboxmessages.scrollTop = this.chatboxmessages.scrollHeight;            
+            this.chatbox.scrollTop = this.chatbox.scrollHeight;
+        }, 10);
+    }
 }
+
+const uiManager = new UIManager();
+export default uiManager;
