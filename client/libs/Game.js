@@ -69,7 +69,7 @@ export class Game {
   }
 
   verifyPosition() {
-    let wsocket = getWebSocket();
+    const wsocket = getWebSocket();
     if (wsocket == null) {
       return;
     }

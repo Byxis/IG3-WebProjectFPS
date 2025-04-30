@@ -51,7 +51,7 @@ export class MovementManager {
         isJumping: false,
       },
     };
-    
+
     this.setupShootingControls();
   }
 
@@ -188,7 +188,7 @@ export class MovementManager {
   }
 
   updateMovementKeybinds() {
-    let wsocket = getWebSocket();
+    const wsocket = getWebSocket();
     if (wsocket == null) return;
     if (wsocket.readyState !== 1) {
       console.log(

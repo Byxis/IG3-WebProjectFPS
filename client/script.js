@@ -3,14 +3,11 @@ import uiManager from "./libs/UIManager.js";
 import sceneManager from "./libs/SceneManager.js";
 import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
 
-
 localStorage.setItem("username", "player" + Math.floor(Math.random() * 1000));
 let networkTimeOffset = 0;
 
 const name = document.getElementById("name");
 name.innerHTML = localStorage.getItem("username");
-
-
 
 const wsocket = new WebSocket("ws://localhost:3000");
 initiateWebSocketConnection();
@@ -20,7 +17,6 @@ export function getWebSocket() {
 }
 
 const game = new Game(wsocket);
-
 
 function initiateWebSocketConnection() {
   console.log(localStorage.getItem("auth_token"));
@@ -67,12 +63,12 @@ function initiateWebSocketConnection() {
         );
         break;
       }
-        
+
       case MessageTypeEnum.REMOVE_PLAYER: {
         game.removePlayer(player.name);
         break;
       }
-        
+
       case MessageTypeEnum.UPDATE_PLAYER: {
         game.updatePlayerPosition(
           player.name,
@@ -82,7 +78,7 @@ function initiateWebSocketConnection() {
         );
         break;
       }
-        
+
       case MessageTypeEnum.POSITION_CORRECTION: {
         const correctedPosition = data.position;
         sceneManager.cameraContainer.position.x = correctedPosition.x;
@@ -91,7 +87,7 @@ function initiateWebSocketConnection() {
         console.log("Position corrigée par le serveur");
         break;
       }
-        
+
       case MessageTypeEnum.SEND_CHAT_MESSAGE: {
         const name = data.name;
         const message = data.message;
@@ -100,15 +96,19 @@ function initiateWebSocketConnection() {
         console.log("Received message:", message);
         break;
       }
-        
+
       case MessageTypeEnum.GET_CHAT_MESSAGES: {
         const messages = data.messages;
         messages.forEach((message) => {
-          uiManager.addNewChatMessage(message.name, message.role, message.message);
+          uiManager.addNewChatMessage(
+            message.name,
+            message.role,
+            message.message,
+          );
         });
         break;
       }
-        
+
       default: {
         console.log("Message type non géré:", data.type);
         break;

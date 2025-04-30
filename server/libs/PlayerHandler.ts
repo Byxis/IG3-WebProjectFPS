@@ -5,7 +5,7 @@ import sqlHandler from "./SqlHandler.ts";
 export enum RoleLevel {
   USER = 1,
   MODERATOR = 2,
-  ADMIN = 3
+  ADMIN = 3,
 }
 
 export const players: {
