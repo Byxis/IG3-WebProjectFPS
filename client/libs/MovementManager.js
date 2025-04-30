@@ -2,15 +2,15 @@ import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
 import { CONFIG, GAMESTATE } from "http://localhost:3000/shared/Config.js";
 import { simulatePlayerMovement } from "http://localhost:3000/shared/Physics.js";
 import { Vector3 as SharedVector3 } from "http://localhost:3000/shared/Class.js";
-import { getNetworkTimeOffset } from "../script.js";
+import { getNetworkTimeOffset, getWebSocket } from "../script.js";
+import sceneManager from "./SceneManager.js";
+import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
 
 export class MovementManager {
-  constructor(sceneManager, wsocket) {
-    this.sceneManager = sceneManager;
+  constructor() {
     this.moveDirection = new SharedVector3();
     this.sideDirection = new SharedVector3();
     this.targetVelocity = new SharedVector3();
-    this.wsocket = wsocket;
 
     this.raycaster = new THREE.Raycaster();
     this.shootCooldown = 500;
@@ -27,13 +27,13 @@ export class MovementManager {
     // Player state
     this.playerState = {
       position: {
-        x: this.sceneManager.cameraContainer.position.x,
-        y: this.sceneManager.cameraContainer.position.y,
-        z: this.sceneManager.cameraContainer.position.z,
+        x: sceneManager.cameraContainer.position.x,
+        y: sceneManager.cameraContainer.position.y,
+        z: sceneManager.cameraContainer.position.z,
       },
       rotation: {
         x: 0,
-        y: this.sceneManager.cameraContainer.rotation.y,
+        y: sceneManager.cameraContainer.rotation.y,
         z: 0,
       },
       pitch: GAMESTATE.camera.pitch,
@@ -52,7 +52,6 @@ export class MovementManager {
       },
     };
 
-    this.updateMovementKeybinds();
     this.setupShootingControls();
   }
 
@@ -63,10 +62,10 @@ export class MovementManager {
     this.simulateMovement(deltaTime);
 
     document.getElementById("coords").innerText = `X: ${
-      this.sceneManager.cameraContainer.position.x.toFixed(4)
+      sceneManager.cameraContainer.position.x.toFixed(4)
     } 
-      Y: ${this.sceneManager.cameraContainer.position.y.toFixed(4)} 
-      Z: ${this.sceneManager.cameraContainer.position.z.toFixed(4)}`;
+      Y: ${sceneManager.cameraContainer.position.y.toFixed(4)} 
+      Z: ${sceneManager.cameraContainer.position.z.toFixed(4)}`;
 
     const fps = Math.round(1 / deltaTime);
     document.getElementById("fps").innerText = `FPS: ${fps}`;
@@ -76,11 +75,11 @@ export class MovementManager {
 
   simulateMovement(deltaTime) {
     // Update player state with current values
-    this.playerState.position.x = this.sceneManager.cameraContainer.position.x;
-    this.playerState.position.y = this.sceneManager.cameraContainer.position.y;
-    this.playerState.position.z = this.sceneManager.cameraContainer.position.z;
+    this.playerState.position.x = sceneManager.cameraContainer.position.x;
+    this.playerState.position.y = sceneManager.cameraContainer.position.y;
+    this.playerState.position.z = sceneManager.cameraContainer.position.z;
 
-    this.playerState.rotation.y = this.sceneManager.cameraContainer.rotation.y;
+    this.playerState.rotation.y = sceneManager.cameraContainer.rotation.y;
     this.playerState.pitch = GAMESTATE.camera.pitch;
 
     // Update movement state
@@ -95,7 +94,7 @@ export class MovementManager {
     const newState = simulatePlayerMovement(this.playerState, deltaTime);
 
     // Apply the new position from the returned state
-    this.sceneManager.cameraContainer.position.set(
+    sceneManager.cameraContainer.position.set(
       newState.position.x,
       newState.position.y,
       newState.position.z,
@@ -155,11 +154,11 @@ export class MovementManager {
       this.isJumping !== oldIsJumping
     ) {
       this.updateMovementKeybinds();
-    } else if (this.sceneManager.getPitchHasChanged()) {
+    } else if (sceneManager.getPitchHasChanged()) {
       //* Maybe we should set a timer to send the pitch update,
       //* so we don't spam the server with updates
       this.updateMovementKeybinds();
-      this.sceneManager.setPitchHasChanged(false);
+      sceneManager.setPitchHasChanged(false);
     }
   }
 
@@ -171,26 +170,27 @@ export class MovementManager {
       CONFIG.ROTATION_LERP,
     );
     if (
-      Math.abs(this.sceneManager.camera.rotation.x - GAMESTATE.camera.pitch) >
+      Math.abs(sceneManager.camera.rotation.x - GAMESTATE.camera.pitch) >
         0.000001
     ) {
-      this.sceneManager.setPitchHasChanged(true);
+      sceneManager.setPitchHasChanged(true);
     }
 
     // Apply camera rotation
-    this.sceneManager.camera.rotation.x = GAMESTATE.camera.pitch;
+    sceneManager.camera.rotation.x = GAMESTATE.camera.pitch;
 
     // Smooth camera rotation
-    this.sceneManager.cameraContainer.rotation.y = THREE.MathUtils.lerp(
-      this.sceneManager.cameraContainer.rotation.y,
+    sceneManager.cameraContainer.rotation.y = THREE.MathUtils.lerp(
+      sceneManager.cameraContainer.rotation.y,
       GAMESTATE.camera.targetRotationY,
       CONFIG.ROTATION_LERP,
     );
   }
 
   updateMovementKeybinds() {
-    if (this.wsocket == null) return;
-    if (this.wsocket.readyState !== 1) {
+    const wsocket = getWebSocket();
+    if (wsocket == null) return;
+    if (wsocket.readyState !== 1) {
       console.log(
         `Socket not ready, retrying in ${this.socketRetryInterval} ms`,
       );
@@ -208,8 +208,8 @@ export class MovementManager {
     }
     const networkTimeOffset = getNetworkTimeOffset();
 
-    this.wsocket.send(JSON.stringify({
-      type: "UPDATE_PLAYER_KEYBINDS",
+    wsocket.send(JSON.stringify({
+      type: MessageTypeEnum.UPDATE_PLAYER_KEYBINDS,
       name: localStorage.getItem("username"),
       networkTimeOffset: networkTimeOffset,
       movement: {
@@ -218,9 +218,9 @@ export class MovementManager {
         isSprinting: this.isSprinting,
         isJumping: this.isJumping,
         rotation: {
-          x: this.sceneManager.cameraContainer.rotation.x,
-          y: this.sceneManager.cameraContainer.rotation.y,
-          z: this.sceneManager.cameraContainer.rotation.z,
+          x: sceneManager.cameraContainer.rotation.x,
+          y: sceneManager.cameraContainer.rotation.y,
+          z: sceneManager.cameraContainer.rotation.z,
         },
         pitch: GAMESTATE.camera.pitch,
       },
@@ -229,6 +229,9 @@ export class MovementManager {
 
   setupShootingControls() {
     document.addEventListener("click", (event) => {
+      if (document.pointerLockElement !== sceneManager.renderer.domElement) {
+        return;
+      }
       if (
         event.target.tagName === "BUTTON" || event.target.tagName === "INPUT"
       ) {
@@ -247,15 +250,15 @@ export class MovementManager {
     }
     this.lastShootTime = now;
 
-    const cameraPosition = this.sceneManager.camera.getWorldPosition(
+    const cameraPosition = sceneManager.camera.getWorldPosition(
       new THREE.Vector3(),
     );
     const cameraDirection = new THREE.Vector3();
-    this.sceneManager.camera.getWorldDirection(cameraDirection);
+    sceneManager.camera.getWorldDirection(cameraDirection);
 
     this.raycaster.set(cameraPosition, cameraDirection);
 
-    const scene = this.sceneManager.scene;
+    const scene = sceneManager.scene;
     const targets = [];
 
     scene.traverse((object) => {
@@ -287,8 +290,8 @@ export class MovementManager {
           }`,
         );
 
-        this.wsocket.send(JSON.stringify({
-          type: "PLAYER_SHOT",
+        getWebSocket().send(JSON.stringify({
+          type: MessageTypeEnum.PLAYER_SHOT,
           shooter: localStorage.getItem("username"),
           target: hitPlayerName,
           hitPoint: {
@@ -301,3 +304,6 @@ export class MovementManager {
     }
   }
 }
+
+const movementManager = new MovementManager();
+export default movementManager;

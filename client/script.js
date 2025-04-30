@@ -1,4 +1,7 @@
 import { Game } from "./libs/Game.js";
+import uiManager from "./libs/UIManager.js";
+import sceneManager from "./libs/SceneManager.js";
+import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
 
 localStorage.setItem("username", "player" + Math.floor(Math.random() * 1000));
 let networkTimeOffset = 0;
@@ -7,8 +10,13 @@ const name = document.getElementById("name");
 name.innerHTML = localStorage.getItem("username");
 
 const wsocket = new WebSocket("ws://localhost:3000");
-const game = new Game(wsocket);
 initiateWebSocketConnection();
+
+export function getWebSocket() {
+  return wsocket;
+}
+
+const game = new Game(wsocket);
 
 function initiateWebSocketConnection() {
   console.log(localStorage.getItem("auth_token"));
@@ -17,7 +25,7 @@ function initiateWebSocketConnection() {
     console.log("WebSocket connection opened");
 
     wsocket.send(JSON.stringify({
-      type: "ADD_NEW_PLAYER",
+      type: MessageTypeEnum.ADD_NEW_PLAYER,
       player: {
         name: localStorage.getItem("username"),
         position: {
@@ -33,38 +41,78 @@ function initiateWebSocketConnection() {
         pitch: 0,
       },
     }));
+
+    wsocket.send(JSON.stringify({
+      type: MessageTypeEnum.GET_CHAT_MESSAGES,
+    }));
   };
 
-  wsocket.onmessage = function () {
-    const message = JSON.parse(event.data);
-    const player = message.player;
+  wsocket.onmessage = function (event) {
+    const data = JSON.parse(event.data);
+    const player = data.player;
 
-    if (message.type == "NEW_PLAYER") {
-      if (game.players[player.name] != null) {
-        return;
+    switch (data.type) {
+      case MessageTypeEnum.NEW_PLAYER: {
+        if (game.players[player.name] != null) {
+          return;
+        }
+        game.addNewPlayer(
+          player.name,
+          player.position,
+          player.pitch,
+        );
+        break;
       }
 
-      game.addNewPlayer(
-        player.name,
-        player.position,
-        player.pitch,
-      );
-    } else if (message.type == "REMOVE_PLAYER") {
-      game.removePlayer(player.name);
-    } else if (message.type == "UPDATE_PLAYER") {
-      game.updatePlayerPosition(
-        player.name,
-        player.position,
-        player.rotation,
-        player.pitch,
-      );
-    } else if (message.type == "POSITION_CORRECTION") {
-      const correctedPosition = message.position;
+      case MessageTypeEnum.REMOVE_PLAYER: {
+        game.removePlayer(player.name);
+        break;
+      }
 
-      game.sceneManager.cameraContainer.position.x = correctedPosition.x;
-      game.sceneManager.cameraContainer.position.y = correctedPosition.y;
-      game.sceneManager.cameraContainer.position.z = correctedPosition.z;
-      console.log("Position corrigée par le serveur");
+      case MessageTypeEnum.UPDATE_PLAYER: {
+        game.updatePlayerPosition(
+          player.name,
+          player.position,
+          player.rotation,
+          player.pitch,
+        );
+        break;
+      }
+
+      case MessageTypeEnum.POSITION_CORRECTION: {
+        const correctedPosition = data.position;
+        sceneManager.cameraContainer.position.x = correctedPosition.x;
+        sceneManager.cameraContainer.position.y = correctedPosition.y;
+        sceneManager.cameraContainer.position.z = correctedPosition.z;
+        console.log("Position corrigée par le serveur");
+        break;
+      }
+
+      case MessageTypeEnum.SEND_CHAT_MESSAGE: {
+        const name = data.name;
+        const message = data.message;
+        const role = data.role;
+        uiManager.addNewChatMessage(name, role, message);
+        console.log("Received message:", message);
+        break;
+      }
+
+      case MessageTypeEnum.GET_CHAT_MESSAGES: {
+        const messages = data.messages;
+        messages.forEach((message) => {
+          uiManager.addNewChatMessage(
+            message.name,
+            message.role,
+            message.message,
+          );
+        });
+        break;
+      }
+
+      default: {
+        console.log("Message type non géré:", data.type);
+        break;
+      }
     }
   };
 
@@ -84,10 +132,6 @@ function initiateWebSocketConnection() {
   wsocket.onerror = function () {
     console.error("WebSocket error:", error);
   };
-}
-
-export function getWebSocket() {
-  return wsocket;
 }
 
 function synchronizeClockWithServer(sampleSize = 5) {

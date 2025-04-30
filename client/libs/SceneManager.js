@@ -7,7 +7,7 @@ export class SceneManager {
     this.setupCamera();
     this.setupRenderer();
     this.setupTestCube();
-    this.setupEventListeners();
+    this.setupMouse();
     this.hasPitchChanged = false;
   }
 
@@ -90,41 +90,10 @@ export class SceneManager {
     return this.hasPitchChanged;
   }
 
-  setupEventListeners() {
+  setupMouse() {
     this.boundHandleMouseMove = this.handleMouseMove.bind(this);
-
-    this.renderer.domElement.addEventListener("click", () => {
-      this.renderer.domElement.requestPointerLock();
-    });
-
-    document.addEventListener("pointerlockchange", () => {
-      if (document.pointerLockElement === this.renderer.domElement) {
-        document.addEventListener("mousemove", this.boundHandleMouseMove);
-      } else {
-        document.removeEventListener("mousemove", this.boundHandleMouseMove);
-      }
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.code in GAMESTATE.keyStates) {
-        GAMESTATE.keyStates[event.code] = true;
-        event.preventDefault();
-      }
-    });
-
-    document.addEventListener("keyup", (event) => {
-      if (event.code in GAMESTATE.keyStates) {
-        GAMESTATE.keyStates[event.code] = false;
-        event.preventDefault();
-      }
-    });
-
-    globalThis.addEventListener("resize", () => this.handleResize());
-  }
-
-  handleResize() {
-    this.camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
   }
 }
+
+const sceneManager = new SceneManager();
+export default sceneManager;

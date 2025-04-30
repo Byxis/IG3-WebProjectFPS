@@ -1,5 +1,12 @@
 import { CONFIG } from "../../shared/Config.ts";
 import { connections } from "../back_server.ts";
+import sqlHandler from "./SqlHandler.ts";
+
+export enum RoleLevel {
+  USER = 1,
+  MODERATOR = 2,
+  ADMIN = 3,
+}
 
 export const players: {
   [name: string]: {
@@ -9,6 +16,9 @@ export const players: {
     kills: number;
     killStreak: number;
     deaths: number;
+    headshots: number;
+    bodyshots: number;
+    missedshots: number;
     websocket: WebSocket;
     position: { x: number; y: number; z: number };
     rotation: { x: number; y: number; z: number };
@@ -28,19 +38,23 @@ export const players: {
   };
 } = {};
 
-export function initiateNewPlayer(dataPlayer: {
+export async function initiateNewPlayer(dataPlayer: {
   name: string;
   position: { x: number; y: number; z: number };
   rotation: { x: number; y: number; z: number };
   pitch: number;
 }, websocket: WebSocket) {
+  const stats = await sqlHandler.getUserStats(dataPlayer.name);
   const player = {
     name: dataPlayer.name,
     health: CONFIG.STARTING_LIVES,
     ammo: CONFIG.STARTING_AMMO,
-    kills: 0, // TODO: get from database if found
+    kills: stats.kills,
     killStreak: 0,
-    deaths: 0, // TODO: get from database if found
+    deaths: stats.deaths,
+    headshots: stats.headshots,
+    bodyshots: stats.bodyshots,
+    missedshots: stats.missedshots,
     websocket: websocket,
     position: { ...dataPlayer.position },
     rotation: { ...dataPlayer.rotation },
@@ -123,4 +137,8 @@ function getPlayerSendInfo(name: string) {
     };
   }
   return null;
+}
+
+export function playerExists(name: string): boolean {
+  return players[name] !== undefined;
 }

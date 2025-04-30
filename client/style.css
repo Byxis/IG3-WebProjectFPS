@@ -76,3 +76,56 @@ canvas {
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 3px;
 }
+
+#chatbox {
+  bottom: 20%;
+  left: 10px;
+  opacity: 0.5;
+  transition: ease-in-out 0.3s;
+}
+
+#chatbox-input {
+  width: 300px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+#chatbox-input:focus {
+  outline: none;
+  border-color: rgba(0, 0, 0, 0.5);
+}
+
+#chatbox-messages {
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: 5px;
+  font-size: 12px;
+  width: 300px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+#chatbox-send {
+  background-color: rgba(255, 255, 255, 0.5);
+  color: white;
+  padding: 5px;
+  border-radius: 3px;
+  border-color: transparent;
+  margin-top: 5px;
+}
+
+#chatbox-messages {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  direction: rtl;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+#chatbox-messages p {
+  direction: ltr;
+  text-align: left;
+}
