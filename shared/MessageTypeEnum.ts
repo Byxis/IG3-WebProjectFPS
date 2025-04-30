@@ -14,6 +14,7 @@ export const MessageTypeEnum = {
   SEND_PRIVATE_MESSAGE: "SEND_PRIVATE_MESSAGE",
   GET_CHAT_MESSAGES: "GET_CHAT_MESSAGES",
   GET_PRIVATE_MESSAGES: "GET_PRIVATE_MESSAGES",
+  COMMAND_RESPONSE: "COMMAND_RESPONSE",
 } as const;
 
 export type MessageType = keyof typeof MessageTypeEnum;

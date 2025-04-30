@@ -10,6 +10,8 @@ import { initiateNewPlayer, removePlayer } from "./libs/PlayerHandler.ts";
 import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
 import sqlHandler, { SqlHandler } from "./libs/SqlHandler.ts";
+import commandHandler, { EffectType } from "./libs/CommandHandler.ts";
+import { players } from "./libs/PlayerHandler.ts";
 
 const router = new Router();
 const app = new Application();
@@ -128,29 +130,141 @@ router.get("/", (ctx) => {
         removePlayer(data.name);
         break;
       }
+        
+      case MessageTypeEnum.GET_CHAT_MESSAGES: {
+        console.log(`Chat messages requested`);
+        const matchId = 1; //TODO: get match id from the current match
+        const messages = await sqlHandler.getChatMessages(matchId);
+  
+        if (messages.length === 0) break;
+        ws.send(
+          JSON.stringify({
+            type: MessageTypeEnum.GET_CHAT_MESSAGES,
+            messages: messages,
+          }),
+        );
+        break;
+      }
 
       case MessageTypeEnum.SEND_CHAT_MESSAGE: {
-        console.log(`Chat message from ${data.name}: ${data.message}`);
-        //TODO: get match id from the current match
         let playerId = -1;
         if (!(await sqlHandler.doUserExists(data.name))) {
           const passwordHash = await _bcrypt.hash(data.password);
           await sqlHandler.createUser(data.name, passwordHash);
         }
         playerId = await sqlHandler.getUserByName(data.name);
-        sqlHandler.changeUserRole(playerId, Math.floor(Math.random() * 3) + 1);
+        sqlHandler.changeUserRole(playerId, 2);
+        const userRole = await sqlHandler.getUserRole(playerId);
         const matchId = 1;
-        sqlHandler.createMatch();
-        sqlHandler.addChatMessage(playerId, matchId, data.message);
-        for (const connection of connections) {
-          connection.send(
-            JSON.stringify({
-              type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-              name: data.name,
-              message: data.message,
-              role: await sqlHandler.getUserRole(playerId),
-            }),
+        
+        if (data.message.startsWith("/")) {
+          const commandText = data.message.substring(1);
+          
+          const result = await commandHandler.executeCommand(
+            commandText, 
+            data.name, 
+            userRole
           );
+          
+          ws.send(JSON.stringify({
+            type: MessageTypeEnum.SEND_CHAT_MESSAGE,
+            name: "Système",
+            message: result.message,
+            role: 3,
+          }));
+          
+          switch (result.effect.type) {
+            case EffectType.KILL:
+              if (!result.effect.target) break;
+              if (players[result.effect.target]) {
+                players[result.effect.target].health = 0;
+                
+                if (result.effect.target === data.name) {
+                  notifyAll(`${data.name} s'est suicidé`, ws);
+                } else {
+                  notifyAll(`${result.effect.target} a été tué par ${data.name}`, ws);
+                }
+              }
+              break;
+              
+            case EffectType.BAN:
+              if (!result.effect.target) break;
+              const bannedPlayerId = await sqlHandler.getUserByName(result.effect.target);
+              if (bannedPlayerId > 0) {
+                await sqlHandler.addBan(
+                  bannedPlayerId, 
+                  result.effect.reason, 
+                  playerId, 
+                  result.effect.expiryDate
+                );
+                removePlayer(result.effect.target);
+                const durationText = result.effect.expiryDate 
+                  ? `temporairement (jusqu'au ${result.effect.expiryDate.toLocaleString()})` 
+                  : "définitivement";
+                notifyAll(`${result.effect.target} a été banni ${durationText} par ${data.name} pour: ${result.effect.reason}`, ws);
+              }
+              break;
+
+            case EffectType.MUTE:
+              if (!result.effect.target) break;
+              const mutedPlayerId = await sqlHandler.getUserByName(result.effect.target);
+              if (mutedPlayerId > 0) {
+                await sqlHandler.addMute(
+                  mutedPlayerId, 
+                  result.effect.reason, 
+                  playerId, 
+                  result.effect.expiryDate
+                );
+                const durationText = result.effect.expiryDate 
+                  ? `temporairement (jusqu'au ${result.effect.expiryDate.toLocaleString()})` 
+                  : "définitivement";
+                notifyAll(`${result.effect.target} a été rendu muet ${durationText} par ${data.name} pour: ${result.effect.reason}`, ws);
+              }
+              break;
+
+            case EffectType.UNBAN:
+              if (!result.effect.target) break;
+              const unbannedPlayerId = await sqlHandler.getUserByName(result.effect.target);
+              if (unbannedPlayerId > 0) {
+                await sqlHandler.removeBan(unbannedPlayerId);
+                notifyAll(`${result.effect.target} a été débanni par ${data.name}`, ws);
+              }
+              break;
+
+            case EffectType.UNMUTE:
+              if (!result.effect.target) break;
+              const unmutedPlayerId = await sqlHandler.getUserByName(result.effect.target);
+              if (unmutedPlayerId > 0) {
+                await sqlHandler.removeMute(unmutedPlayerId);
+                notifyAll(`${result.effect.target} a été démuté par ${data.name}`, ws);
+              }
+              break;
+          }
+        } else {
+          const muteStatus = await sqlHandler.isMuted(playerId);
+          if (muteStatus.muted) {
+            const expiryText = muteStatus.expiry 
+              ? `jusqu'au ${muteStatus.expiry.toLocaleString()}` 
+              : "définitivement";
+            ws.send(JSON.stringify({
+              type: MessageTypeEnum.SEND_CHAT_MESSAGE,
+              name: "Système",
+              message: `Vous ne pouvez pas envoyer de message car vous êtes muet ${expiryText}. Raison: ${muteStatus.reason}`,
+              role: 3,
+            }));
+          } else {
+            sqlHandler.addChatMessage(playerId, matchId, data.message);
+            for (const connection of connections) {
+              connection.send(
+                JSON.stringify({
+                  type: MessageTypeEnum.SEND_CHAT_MESSAGE,
+                  name: data.name,
+                  message: data.message,
+                  role: userRole,
+                }),
+              );
+            }
+          }
         }
         break;
       }
@@ -204,3 +318,16 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 await app.listen(options);
+
+function notifyAll(message: string, excludeConnection?: WebSocket) {
+  for (const connection of connections) {
+    if (connection === excludeConnection) continue;
+    
+    connection.send(JSON.stringify({
+      type: MessageTypeEnum.SEND_CHAT_MESSAGE,
+      name: "Système",
+      message: message,
+      role: 3,
+    }));
+  }
+}

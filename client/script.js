@@ -45,47 +45,75 @@ function initiateWebSocketConnection() {
         pitch: 0,
       },
     }));
+
+    wsocket.send(JSON.stringify({
+      type: MessageTypeEnum.GET_CHAT_MESSAGES,
+    }));
   };
 
-  wsocket.onmessage = function () {
+  wsocket.onmessage = function (event) {
     const data = JSON.parse(event.data);
     const player = data.player;
 
-    if (data.type == MessageTypeEnum.NEW_PLAYER) {
-      if (game.players[player.name] != null) {
-        return;
+    switch (data.type) {
+      case MessageTypeEnum.NEW_PLAYER: {
+        if (game.players[player.name] != null) {
+          return;
+        }
+        game.addNewPlayer(
+          player.name,
+          player.position,
+          player.pitch,
+        );
+        break;
       }
-
-      game.addNewPlayer(
-        player.name,
-        player.position,
-        player.pitch,
-      );
-    } else if (data.type == MessageTypeEnum.REMOVE_PLAYER) {
-      game.removePlayer(player.name);
-    } else if (data.type == MessageTypeEnum.UPDATE_PLAYER) {
-      game.updatePlayerPosition(
-        player.name,
-        player.position,
-        player.rotation,
-        player.pitch,
-      );
-    } else if (data.type == MessageTypeEnum.POSITION_CORRECTION) {
-      const correctedPosition = data.position;
-
-      sceneManager.cameraContainer.position.x = correctedPosition.x;
-      sceneManager.cameraContainer.position.y = correctedPosition.y;
-      sceneManager.cameraContainer.position.z = correctedPosition.z;
-      console.log("Position corrigée par le serveur");
+        
+      case MessageTypeEnum.REMOVE_PLAYER: {
+        game.removePlayer(player.name);
+        break;
+      }
+        
+      case MessageTypeEnum.UPDATE_PLAYER: {
+        game.updatePlayerPosition(
+          player.name,
+          player.position,
+          player.rotation,
+          player.pitch,
+        );
+        break;
+      }
+        
+      case MessageTypeEnum.POSITION_CORRECTION: {
+        const correctedPosition = data.position;
+        sceneManager.cameraContainer.position.x = correctedPosition.x;
+        sceneManager.cameraContainer.position.y = correctedPosition.y;
+        sceneManager.cameraContainer.position.z = correctedPosition.z;
+        console.log("Position corrigée par le serveur");
+        break;
+      }
+        
+      case MessageTypeEnum.SEND_CHAT_MESSAGE: {
+        const name = data.name;
+        const message = data.message;
+        const role = data.role;
+        uiManager.addNewChatMessage(name, role, message);
+        console.log("Received message:", message);
+        break;
+      }
+        
+      case MessageTypeEnum.GET_CHAT_MESSAGES: {
+        const messages = data.messages;
+        messages.forEach((message) => {
+          uiManager.addNewChatMessage(message.name, message.role, message.message);
+        });
+        break;
+      }
+        
+      default: {
+        console.log("Message type non géré:", data.type);
+        break;
+      }
     }
-    else if (data.type == MessageTypeEnum.SEND_CHAT_MESSAGE) {
-      const name = data.name;
-      const message = data.message;
-      const role = data.role;
-      uiManager.addNewChatMessage(name, role, message);
-      console.log("Received message:", message);
-    }
-
   };
 
   globalThis.onbeforeunload = function () {

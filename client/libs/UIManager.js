@@ -73,7 +73,21 @@ export class UIManager {
                 }
                 else 
                 {
-                    this.chatboxsend.click();
+                    if (this.chatboxinput.value.length > 0) {
+                      this.chatboxsend.click();  
+                    } 
+                    else
+                    {
+                        this.chatboxinput.blur();                    
+                        this.isChatboxActive = false;
+                        setTimeout(() => {
+                            if (!this.isChatboxActive)
+                                this.chatbox.style.opacity = 0.5;
+                        }, 3000);
+                        setTimeout(() => {
+                            sceneManager.renderer.domElement.requestPointerLock();
+                        }, 100);
+                    }
                 }
             }
                 
@@ -122,7 +136,20 @@ export class UIManager {
         }
         
         chatMessage.appendChild(nameSpan);
-        chatMessage.appendChild(document.createTextNode(": " + message));
+        
+        if (name === "Système") {
+            const messageLines = message.split("<br>");
+            
+            chatMessage.appendChild(document.createTextNode(": " + messageLines[0]));
+            
+            for (let i = 1; i < messageLines.length; i++) {
+                chatMessage.appendChild(document.createElement("br"));
+                chatMessage.appendChild(document.createTextNode(messageLines[i]));
+            }
+        } else {
+            chatMessage.appendChild(document.createTextNode(": " + message));
+        }
+        
         this.chatboxmessages.appendChild(chatMessage);
         this.chatbox.scrollTop = this.chatbox.scrollHeight;
         

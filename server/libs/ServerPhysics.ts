@@ -43,7 +43,7 @@ export class ServerPhysics {
       } else {
         corrected = true;
       }
-      //TODO: Check if vertical movement is valid, optionnal as it will require a lot of work when
+      //TODO: Check if vertical movement is valid, optional as it will require a lot of work when
       //TODO: the player is jumping and falling with the map
       /*
       if (this.isMovementValid(name, position, Physics.isVerticalMovementValid))
