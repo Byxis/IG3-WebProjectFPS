@@ -404,10 +404,11 @@ export class CommandHandler {
           effect: { type: EffectType.NONE, target: "", reason: "" },
         };
       }
-      
+
       if (!playerExists(targetPlayer)) {
         return {
-          message: `Erreur: Le joueur ${targetPlayer} n'existe pas ou n'est pas connecté`,
+          message:
+            `Erreur: Le joueur ${targetPlayer} n'existe pas ou n'est pas connecté`,
           effect: { type: EffectType.NONE, target: "", reason: "" },
         };
       }
@@ -418,20 +419,20 @@ export class CommandHandler {
           effect: { type: EffectType.NONE, target: "", reason: "" },
         };
       }
-      
+
       const senderId = sqlHandler.getUserByName(sender);
       const receiverId = sqlHandler.getUserByName(targetPlayer);
-      
+
       if (senderId > 0 && receiverId > 0) {
         sqlHandler.sendPrivateMessage(senderId, receiverId, messageText);
       }
-      
+
       return {
         message: `MP à ${targetPlayer} : ${messageText}`,
-        effect: { 
-          type: EffectType.PRIVATE_MESSAGE, 
-          target: targetPlayer, 
-          reason: messageText 
+        effect: {
+          type: EffectType.PRIVATE_MESSAGE,
+          target: targetPlayer,
+          reason: messageText,
         },
       };
     });

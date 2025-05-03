@@ -190,15 +190,23 @@ router.get("/", (ctx) => {
               break;
             }
             case EffectType.PRIVATE_MESSAGE: {
-              if (!result.effect.target || !players[result.effect.target]) break;
-              
+              if (!result.effect.target || !players[result.effect.target]) {
+                break;
+              }
+
               const targetWs = players[result.effect.target].websocket;
-              
+
               console.log("Tentative d'envoi de MP");
               console.log("Joueur cible:", result.effect.target);
-              console.log("Objet joueur complet:", players[result.effect.target]);
-              console.log("Propriétés disponibles:", Object.keys(players[result.effect.target]));
-              
+              console.log(
+                "Objet joueur complet:",
+                players[result.effect.target],
+              );
+              console.log(
+                "Propriétés disponibles:",
+                Object.keys(players[result.effect.target]),
+              );
+
               if (targetWs && targetWs.readyState === WebSocket.OPEN) {
                 console.log("WebSocket trouvé et ouvert, envoi du message");
                 targetWs.send(JSON.stringify({
@@ -209,7 +217,10 @@ router.get("/", (ctx) => {
                 }));
               } else {
                 console.log("WebSocket non disponible:", targetWs);
-                console.log("État de la connexion:", targetWs ? targetWs.readyState : "undefined");
+                console.log(
+                  "État de la connexion:",
+                  targetWs ? targetWs.readyState : "undefined",
+                );
               }
               break;
             }
