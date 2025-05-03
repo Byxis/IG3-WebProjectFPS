@@ -4,5 +4,8 @@
       "tags": ["recommended"],
       "include": ["camelcase", "prefer-const", "no-unused-vars"]
     }
+  },
+  "fmt": {
+    "exclude": [".github"]
   }
 }
