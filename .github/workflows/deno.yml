@@ -32,7 +32,7 @@ jobs:
         with:
           deno-version: "2.2.6"
       - name: Verify formatting
-        run: deno fmt --check --exclude ./github
+        run: deno fmt --check
 
       - name: Run linter
         run: deno lint
