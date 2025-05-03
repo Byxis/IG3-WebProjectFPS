@@ -6,9 +6,9 @@ import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js
 export class UIManager {
   constructor() {
     this.chatbox = document.getElementById("chatbox");
-    this.chatboxmessages = document.getElementById("chatbox-messages");
-    this.chatboxinput = document.getElementById("chatbox-input");
-    this.chatboxsend = document.getElementById("chatbox-send");
+    this.chatboxMessages = document.getElementById("chatbox-messages");
+    this.chatboxInput = document.getElementById("chatbox-input");
+    this.chatboxSend = document.getElementById("chatbox-send");
     this.isChatboxActive = false;
     this.setupListeners();
   }
@@ -54,11 +54,11 @@ export class UIManager {
       }
     });
 
-    this.chatboxsend.addEventListener("click", (event) => {
+    this.chatboxSend.addEventListener("click", (event) => {
       event.preventDefault();
       const websocket = getWebSocket();
       if (websocket && websocket.readyState === WebSocket.OPEN) {
-        const message = this.chatboxinput.value;
+        const message = this.chatboxInput.value;
         websocket.send(JSON.stringify({
           type: MessageTypeEnum.SEND_CHAT_MESSAGE,
           name: localStorage.getItem("username"),
@@ -66,8 +66,8 @@ export class UIManager {
         }));
         console.log("Sent message:", message);
       }
-      this.chatboxinput.value = "";
-      this.chatboxinput.focus();
+      this.chatboxInput.value = "";
+      this.chatboxInput.focus();
     });
 
     document.addEventListener("keydown", (event) => {
@@ -75,13 +75,13 @@ export class UIManager {
         if (!this.isChatboxActive) {
           document.exitPointerLock();
           this.chatbox.style.opacity = 1;
-          this.chatboxinput.focus();
+          this.chatboxInput.focus();
           this.isChatboxActive = true;
         } else {
-          if (this.chatboxinput.value.length > 0) {
-            this.chatboxsend.click();
+          if (this.chatboxInput.value.length > 0) {
+            this.chatboxSend.click();
           } else {
-            this.chatboxinput.blur();
+            this.chatboxInput.blur();
             this.isChatboxActive = false;
             setTimeout(() => {
               if (!this.isChatboxActive) {
@@ -97,7 +97,7 @@ export class UIManager {
 
       if (event.code === "Escape") {
         if (this.isChatboxActive) {
-          this.chatboxinput.blur();
+          this.chatboxInput.blur();
           this.isChatboxActive = false;
           setTimeout(() => {
             if (!this.isChatboxActive) {
@@ -154,11 +154,11 @@ export class UIManager {
       chatMessage.appendChild(document.createTextNode(": " + message));
     }
 
-    this.chatboxmessages.appendChild(chatMessage);
+    this.chatboxMessages.appendChild(chatMessage);
     this.chatbox.scrollTop = this.chatbox.scrollHeight;
 
     setTimeout(() => {
-      this.chatboxmessages.scrollTop = this.chatboxmessages.scrollHeight;
+      this.chatboxMessages.scrollTop = this.chatboxMessages.scrollHeight;
       this.chatbox.scrollTop = this.chatbox.scrollHeight;
     }, 10);
   }

@@ -22,8 +22,8 @@ table( matches ) {
 }
 
 table( player_matches ) {
-  primary_key(foreign_key( ~~user_id~~ )): INTEGER
-  primary_key(foreign_key( ~~match_id~~ )): INTEGER
+  primary_key(foreign_key( user_id )): INTEGER
+  primary_key(foreign_key( match_id )): INTEGER
   column( kills ): INTEGER
   column( deaths ): INTEGER
   column( headshots ): INTEGER
@@ -32,29 +32,53 @@ table( player_matches ) {
 }
 
 table( chat_messages ) {
-  primary_key(foreign_key( ~~sender_id~~ )): INTEGER
-  primary_key(foreign_key( ~~match_id~~ )): INTEGER
-  primary_key(foreign_key( timestamp)): TIMESTAMP
+  primary_key( cmsg_id ): INTEGER
+  foreign_key( sender_id ): INTEGER
+  foreign_key( match_id ): INTEGER
+  column( timestamp ): TIMESTAMP
   column( message_text ): TEXT
 }
 
 table( private_messages ) {
-  primary_key(foreign_key( ~~sender_id~~ )): INTEGER
-  primary_key(foreign_key( ~~receiver_id~~ )): INTEGER
-  primary_key(foreign_key( timestamp)): TIMESTAMP
+  primary_key( pmsg_id ): INTEGER
+  foreign_key( sender_id ): INTEGER
+  foreign_key( receiver_id ): INTEGER
+  column( timestamp ): TIMESTAMP
   column( message_text ): TEXT
 }
 
 table( roles ) {
-  primary_key(role_id): INTEGER
+  primary_key( role_id ): INTEGER
   column( role_name ): TEXT
 }
 
+table( bans ) {
+  primary_key( ban_id ): INTEGER
+  foreign_key( user_id ): INTEGER
+  column( reason ): TEXT
+  column( ban_date ): TIMESTAMP
+  column( expiry_date ): TIMESTAMP
+  foreign_key( banned_by ): INTEGER
+}
+
+table( mutes ) {
+  primary_key( mute_id ): INTEGER
+  foreign_key( user_id ): INTEGER
+  column( reason ): TEXT
+  column( mute_date ): TIMESTAMP
+  column( expiry_date ): TIMESTAMP
+  foreign_key( muted_by ): INTEGER
+}
 
 ' Relationships
 users ||--o{ player_matches
 users ||--o{ chat_messages
-users ||--o{ private_messages
+users ||--o{ private_messages : sender
+users ||--o{ private_messages : receiver
+users ||--o{ bans : banned user
+users ||--o{ bans : banned by
+users ||--o{ mutes : muted user
+users ||--o{ mutes : muted by
 
 matches ||--o{ player_matches
 matches ||--o{ chat_messages

@@ -251,7 +251,7 @@ export class SqlHandler {
     return result.length > 0;
   }
 
-  updateUserToker(userId: number, token: string): boolean {
+  updateUserToken(userId: number, token: string): boolean {
     const result = this.db.query(
       "UPDATE users SET token = ? WHERE user_id = ?",
       [token, userId],

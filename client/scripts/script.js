@@ -1,6 +1,6 @@
-import { Game } from "./libs/Game.js";
-import uiManager from "./libs/UIManager.js";
-import sceneManager from "./libs/SceneManager.js";
+import { Game } from "../libs/Game.js";
+import uiManager from "../libs/UIManager.js";
+import sceneManager from "../libs/SceneManager.js";
 import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
 
 localStorage.setItem("username", "player" + Math.floor(Math.random() * 1000));

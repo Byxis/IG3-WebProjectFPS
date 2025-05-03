@@ -9,6 +9,7 @@ export enum EffectType {
   MUTE = "mute",
   UNBAN = "unban",
   UNMUTE = "unmute",
+  PRIVATE_MESSAGE = "private_message",
 }
 
 export interface CommandEffect {
@@ -383,6 +384,56 @@ export class CommandHandler {
       return {
         message: helpText,
         effect: { type: EffectType.NONE, target: "", reason: "" },
+      };
+    });
+
+    this.registerCommand("msg", RoleLevel.USER, (args, sender) => {
+      if (args.length < 2) {
+        return {
+          message: "Usage: /msg <playerName> <message>",
+          effect: { type: EffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      const targetPlayer = args[0];
+      const messageText = args.slice(1).join(" ");
+
+      if (messageText.length > 255) {
+        return {
+          message: "Erreur: Le message est trop long (max 255 caractères)",
+          effect: { type: EffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      if (!playerExists(targetPlayer)) {
+        return {
+          message:
+            `Erreur: Le joueur ${targetPlayer} n'existe pas ou n'est pas connecté`,
+          effect: { type: EffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      if (targetPlayer === sender) {
+        return {
+          message: "Vous ne pouvez pas vous envoyer de message à vous-même",
+          effect: { type: EffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      const senderId = sqlHandler.getUserByName(sender);
+      const receiverId = sqlHandler.getUserByName(targetPlayer);
+
+      if (senderId > 0 && receiverId > 0) {
+        sqlHandler.sendPrivateMessage(senderId, receiverId, messageText);
+      }
+
+      return {
+        message: `MP à ${targetPlayer} : ${messageText}`,
+        effect: {
+          type: EffectType.PRIVATE_MESSAGE,
+          target: targetPlayer,
+          reason: messageText,
+        },
       };
     });
   }
