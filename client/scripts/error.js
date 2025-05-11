@@ -1,0 +1,301 @@
+import { ErrorTypes } from "../enum/ErrorTypes.js";
+import { refreshAuthToken } from "../libs/AuthManager.js";
+
+document.addEventListener('DOMContentLoaded', () => {
+  const errorTitle = document.getElementById('error-title');
+  const errorMessage = document.getElementById('error-message');
+  const errorDetails = document.getElementById('error-details');
+  const retryButton = document.getElementById('retry-btn');
+  const loginButton = document.getElementById('login-btn');
+  
+  // Parse URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const errorType = parseInt(urlParams.get('type')) || ErrorTypes.UNKNOWN;
+  const attempts = urlParams.get('attempts') || '0';
+  const redirectFrom = urlParams.get('from') || '';
+  
+  // Track current error type
+  let currentErrorType = errorType;
+  
+  configureErrorDisplay(currentErrorType, attempts, redirectFrom);
+  
+  // Auto-retry logic for server_unreachable errors
+  const autoRetry = document.getElementById('auto-retry');
+  let countdownElement = document.getElementById('countdown');
+  let countdown = 5;
+  let reconnectAttempts = parseInt(attempts) || 0;
+  const maxReconnectAttempts = 20;
+
+  // Only setup auto-retry for server unreachable errors
+  if (currentErrorType === ErrorTypes.SERVER_UNREACHABLE && autoRetry && countdownElement) {
+    autoRetry.style.display = 'block';
+    startReconnectCountdown();
+  }
+  
+  function startReconnectCountdown() {
+    reconnectAttempts++;
+    countdown = 5;
+    
+    // Update URL to reflect current attempt count without reloading page
+    updateUrlParam('attempts', reconnectAttempts.toString());
+    
+    countdownElement.textContent = countdown;
+    
+    const interval = setInterval(() => {
+      countdown--;
+      countdownElement.textContent = countdown;
+      
+      if (countdown <= 0) {
+        clearInterval(interval);
+        
+        // Try to refresh auth token first if error is auth-related
+        if (currentErrorType === ErrorTypes.AUTH_REQUIRED || 
+            currentErrorType === ErrorTypes.AUTH_FAILED) {
+          refreshAuthToken()
+            .then(refreshed => {
+              if (refreshed) {
+                window.location.href = 'index.html';
+              } else {
+                // If token refresh fails, redirect to login
+                window.location.href = `login.html?error=${currentErrorType}`;
+              }
+            })
+            .catch(() => {
+              window.location.href = `login.html?error=${currentErrorType}`;
+            });
+          return;
+        }
+        
+        // For other errors, check server connection
+        checkServerConnection()
+          .then(result => {
+            if (result.isConnected) {
+              // Server is reachable, go to index
+              window.location.href = 'index.html';
+            } else if (result.errorType !== currentErrorType) {
+              // Error type changed, update display and URL
+              currentErrorType = result.errorType;
+              updateUrlParam('type', currentErrorType);
+              configureErrorDisplay(currentErrorType, reconnectAttempts, redirectFrom);
+              
+              // If it's an auth error, try to refresh the token
+              if (currentErrorType === ErrorTypes.AUTH_REQUIRED || 
+                  currentErrorType === ErrorTypes.AUTH_FAILED) {
+                refreshAuthToken()
+                  .then(refreshed => {
+                    if (refreshed) {
+                      window.location.href = 'index.html';
+                    } else {
+                      // Only show login button if auth failed
+                      loginButton.style.display = 'block';
+                      retryButton.style.display = 'none';
+                      autoRetry.style.display = 'none';
+                    }
+                  });
+                return;
+              }
+              
+              // Don't continue attempting reconnection for other auth errors
+              if (currentErrorType === ErrorTypes.ACCESS_DENIED || 
+                  currentErrorType === ErrorTypes.BANNED) {
+                return;
+              }
+            }
+            
+            // Continue attempting reconnection for server unreachable
+            if (reconnectAttempts <= maxReconnectAttempts) {
+              // Update the error message to show current attempt count
+              const errorMessage = document.getElementById('error-message');
+              errorMessage.textContent = `Unable to connect to the game server after ${reconnectAttempts} attempts.`;
+              
+              autoRetry.innerHTML = 'Automatically retrying in <span id="countdown">5</span> seconds...';
+              countdownElement = document.getElementById('countdown');
+              startReconnectCountdown();
+            } else {
+              autoRetry.textContent = 'Maximum reconnection attempts reached. Please try manually.';
+            }
+          });
+      }
+    }, 1000);
+  }
+  
+  function updateUrlParam(key, value) {
+    const url = new URL(window.location.href);
+    url.searchParams.set(key, value);
+    window.history.replaceState({}, '', url);
+  }
+  
+  retryButton.addEventListener('click', async () => {
+    // For auth errors, try token refresh first
+    if (currentErrorType === ErrorTypes.AUTH_REQUIRED || 
+        currentErrorType === ErrorTypes.AUTH_FAILED) {
+      
+      retryButton.disabled = true;
+      retryButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Trying...';
+      
+      try {
+        const refreshed = await refreshAuthToken();
+        if (refreshed) {
+          window.location.href = 'index.html';
+          return;
+        }
+        
+        // If refresh fails, redirect to login
+        window.location.href = `login.html?error=${currentErrorType}`;
+        return;
+      } catch (e) {
+        retryButton.disabled = false;
+        retryButton.innerHTML = '<i class="fas fa-sync-alt"></i> Retry';
+        errorDetails.textContent = 'Token refresh failed. Please try logging in again.';
+        errorDetails.style.color = '#ff4655';
+        setTimeout(() => {
+          window.location.href = `login.html?error=${currentErrorType}`;
+        }, 2000);
+        return;
+      }
+    }
+    
+    // For other errors, check server connection
+    checkServerConnection()
+      .then(result => {
+        if (result.isConnected) {
+          window.location.href = 'index.html';
+        } else if (result.errorType !== currentErrorType) {
+          // Error type changed, update display and URL
+          currentErrorType = result.errorType;
+          updateUrlParam('type', currentErrorType);
+          configureErrorDisplay(currentErrorType, reconnectAttempts, redirectFrom);
+        } else {
+          // Same error, just flash a message
+          const originalText = errorDetails.textContent;
+          errorDetails.textContent = 'Server is still unreachable. Please try again later.';
+          errorDetails.style.color = '#ff4655';
+          
+          setTimeout(() => {
+            errorDetails.textContent = originalText;
+            errorDetails.style.color = '';
+          }, 3000);
+        }
+      });
+  });
+  
+  loginButton.addEventListener('click', () => {
+    window.location.href = `login.html?error=${currentErrorType}`;
+  });
+});
+
+async function checkServerConnection() {
+  try {
+    // First try to refresh token silently
+    if (await refreshAuthToken()) {
+      return { isConnected: true, errorType: null };
+    }
+    
+    // If that doesn't work, try a regular API request
+    const response = await fetch('https://localhost:3000/api/verify', {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'include'
+    });
+    
+    // Determine the error type based on server response
+    if (response.ok) {
+      return { isConnected: true, errorType: null };
+    } else if (response.status === 401) {
+      return { isConnected: false, errorType: ErrorTypes.AUTH_REQUIRED };
+    } else if (response.status === 403) {
+      return { isConnected: false, errorType: ErrorTypes.ACCESS_DENIED };
+    } else if (response.status === 429) {
+      return { isConnected: false, errorType: ErrorTypes.RATE_LIMITED };
+    } else if (response.status === 410) {
+      return { isConnected: false, errorType: ErrorTypes.BANNED };
+    } else if (response.status >= 500) {
+      return { isConnected: false, errorType: ErrorTypes.SERVER_ERROR };
+    } else {
+      return { isConnected: false, errorType: ErrorTypes.SERVER_UNREACHABLE };
+    }
+  } catch (error) {
+    // Network error means server is unreachable
+    return { isConnected: false, errorType: ErrorTypes.SERVER_UNREACHABLE };
+  }
+}
+
+function configureErrorDisplay(type, attempts, redirectFrom) {
+  const errorTitle = document.getElementById('error-title');
+  const errorMessage = document.getElementById('error-message');
+  const errorDetails = document.getElementById('error-details');
+  const retryButton = document.getElementById('retry-btn');
+  const loginButton = document.getElementById('login-btn');
+  const autoRetry = document.getElementById('auto-retry');
+  
+  switch (type) {
+    case ErrorTypes.SERVER_UNREACHABLE:
+      errorTitle.textContent = 'Server Unreachable';
+      errorMessage.textContent = `Unable to connect to the game server after ${attempts} attempts.`;
+      errorDetails.textContent = 'The server may be down for maintenance or experiencing high load. Please try again later.';
+      loginButton.style.display = 'none';
+      autoRetry.style.display = 'block';
+      break;
+      
+    case ErrorTypes.AUTH_REQUIRED:
+      errorTitle.textContent = 'Authentication Required';
+      errorMessage.textContent = 'Your session has expired or is invalid.';
+      errorDetails.textContent = 'Please log in again to continue.';
+      retryButton.style.display = 'none';
+      autoRetry.style.display = 'none';
+      loginButton.style.display = 'block';
+      break;
+      
+    case ErrorTypes.AUTH_FAILED:
+      errorTitle.textContent = 'Authentication Failed';
+      errorMessage.textContent = 'Unable to verify your identity.';
+      errorDetails.textContent = 'Please log in again or contact support if this persists.';
+      retryButton.style.display = 'none';
+      autoRetry.style.display = 'none';
+      loginButton.style.display = 'block';
+      break;
+      
+    case ErrorTypes.ACCESS_DENIED:
+      errorTitle.textContent = 'Access Denied';
+      errorMessage.textContent = 'You do not have permission to access this resource.';
+      errorDetails.textContent = 'Please log in with an account that has the required permissions.';
+      retryButton.style.display = 'none';
+      autoRetry.style.display = 'none';
+      loginButton.style.display = 'block';
+      break;
+      
+    case ErrorTypes.BANNED:
+      errorTitle.textContent = 'Account Banned';
+      errorMessage.textContent = 'Your account has been suspended from this server.';
+      errorDetails.textContent = 'Please contact a server administrator for more information.';
+      retryButton.style.display = 'none';
+      autoRetry.style.display = 'none';
+      break;
+      
+    case ErrorTypes.RATE_LIMITED:
+      errorTitle.textContent = 'Rate Limited';
+      errorMessage.textContent = 'You have exceeded the rate limit for requests.';
+      errorDetails.textContent = 'Please wait a while before trying again.';
+      retryButton.style.display = 'none';
+      autoRetry.style.display = 'none';
+      break;
+      
+    case ErrorTypes.SERVER_ERROR:
+      errorTitle.textContent = 'Server Error';
+      errorMessage.textContent = 'The server encountered an error.';
+      errorDetails.textContent = 'Please try again later or contact support if this persists.';
+      retryButton.style.display = 'none';
+      autoRetry.style.display = 'none';
+      break;
+      
+    default:
+      errorTitle.textContent = 'Unknown Error';
+      errorMessage.textContent = 'An unexpected error has occurred.';
+      errorDetails.textContent = 'Please try again or contact support if this persists.';
+      autoRetry.style.display = 'none';
+  }
+  
+  if (redirectFrom) {
+    errorDetails.textContent += ` (Redirected from: ${redirectFrom})`;
+  }
+}

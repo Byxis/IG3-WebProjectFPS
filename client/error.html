@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Connection Error - FPS Project</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/error.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-body">
+    <div class="background-animation">
+        <div class="shape-container"><div class="shape triangle"></div></div>
+        <div class="shape-container"><div class="shape triangle"></div></div>
+        <div class="shape-container"><div class="shape triangle small"></div></div>
+        <div class="shape-container"><div class="shape triangle small"></div></div>
+        <div class="shape-container"><div class="shape triangle tiny"></div></div>
+        <div class="shape-container"><div class="shape triangle tiny"></div></div>
+
+        <div class="shape-container"><div class="shape circle"></div></div>
+        <div class="shape-container"><div class="shape circle"></div></div>
+        <div class="shape-container"><div class="shape circle small"></div></div>
+        <div class="shape-container"><div class="shape circle small"></div></div>
+        <div class="shape-container"><div class="shape circle tiny"></div></div>
+        <div class="shape-container"><div class="shape circle tiny"></div></div>
+
+        <div class="shape-container"><div class="shape square"></div></div>
+        <div class="shape-container"><div class="shape square"></div></div>
+        <div class="shape-container"><div class="shape square small"></div></div>
+        <div class="shape-container"><div class="shape square small"></div></div>
+        <div class="shape-container"><div class="shape square tiny"></div></div>
+        <div class="shape-container"><div class="shape square tiny"></div></div>
+      
+        <div class="shape-container"><div class="shape star"></div></div>
+        <div class="shape-container"><div class="shape star"></div></div>
+        <div class="shape-container"><div class="shape star small"></div></div>
+        <div class="shape-container"><div class="shape star small"></div></div>
+        <div class="shape-container"><div class="shape star tiny"></div></div>
+        <div class="shape-container"><div class="shape star tiny"></div></div>
+
+        <div class="shape-container"><div class="shape pentagon"></div></div>
+        <div class="shape-container"><div class="shape pentagon"></div></div>
+        <div class="shape-container"><div class="shape pentagon small"></div></div>
+        <div class="shape-container"><div class="shape pentagon small"></div></div>
+        <div class="shape-container"><div class="shape pentagon tiny"></div></div>
+        <div class="shape-container"><div class="shape pentagon tiny"></div></div>
+    </div>
+    
+    <div class="error-container">
+        <div class="logo">
+            <h1>FPS <span>PROJECT</span></h1>
+            <div class="logo-underline"></div>
+        </div>
+        <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h2 class="error-title" id="error-title">Connection Error</h2>
+        <p class="error-message" id="error-message">
+            We're having trouble connecting to the game server. This could be due to server maintenance or network issues.
+        </p>
+        <p id="error-details" class="details"></p>
+        <div class="error-buttons">
+            <button class="error-btn retry-btn" id="retry-btn">
+                <i class="fas fa-sync-alt"></i> Retry
+            </button>
+            <button class="error-btn login-btn" id="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+        </div>
+        <div class="countdown" id="auto-retry">
+            Automatically retrying in <span id="countdown">10</span> seconds...
+        </div>
+    </div>
+
+    <script type="module" src="scripts/error.js"></script>
+</body>
+</html>
