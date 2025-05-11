@@ -16,11 +16,12 @@
   --animation-timing: 0.3s ease;
   --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   --gradient: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  --font-family: 'Poppins', sans-serif;
 }
 
 .login-body {
   background-color: var(--bg-dark);
-  font-family: 'Arial', sans-serif;
+  font-family: var(--font-family);
   display: flex;
   align-items: center;
   justify-content: center;

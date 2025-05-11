@@ -1,4 +1,40 @@
-import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
+import { ErrorTypes } from "../enum/ErrorTypes.js";
+import { refreshAuthToken } from "../libs/AuthManager.js";
+
+document.addEventListener('DOMContentLoaded', async function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const errorType = urlParams.get('error');
+  
+  try {
+    const refreshed = await refreshAuthToken();
+    if (refreshed) {
+      window.location.href = "https://localhost:8080/";
+      return;
+    }
+  } catch (error) {
+    console.error("Failed to restore session:", error);
+  }
+  
+  // Handle URL error parameters
+  if (errorType) {
+    switch(parseInt(errorType)) {
+      case ErrorTypes.AUTH_REQUIRED:
+        showError('Your session has expired. Please log in again.', 'login-error');
+        break;
+      case ErrorTypes.AUTH_FAILED:
+        showError('Authentication failed. Please log in again.', 'login-error');
+        break;
+      case ErrorTypes.ACCESS_DENIED:
+        showError('Access denied. Please log in with appropriate credentials.', 'login-error');
+        break;
+      case ErrorTypes.BANNED:
+        showError('Your account has been suspended from the server.', 'login-error');
+        break;
+      default:
+        showError('An error occurred. Please try again.', 'login-error');
+    }
+  }
+});
 
 const tabs = document.querySelectorAll('.tab-btn');
 const indicator = document.querySelector('.tab-indicator');
@@ -31,13 +67,19 @@ tabs.forEach(button => {
   });
 });
 
-function showError(message) {
-  registerError.textContent = message;
-  registerError.style.display = 'block';
+function showError(message, elementId = 'register-error') {
+  const errorElement = document.getElementById(elementId);
+  if (errorElement) {
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+  }
 }
 
-function hideError() {
-  registerError.style.display = 'none';
+function hideError(elementId = 'register-error') {
+  const errorElement = document.getElementById(elementId);
+  if (errorElement) {
+    errorElement.style.display = 'none';
+  }
 }
 
 function validatePassword() {
@@ -151,37 +193,60 @@ submitBtn.addEventListener("click", function(event) {
 });
 
 async function submit() {
+  hideError('login-error');
+  
   if(validateLoginUsername() && loginPassword.value !== "") {
     let data = {
       "username": loginUsername.value,
       "password": loginPassword.value
     };
-    fetch("http://localhost:3000/login", {
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
-      headers: {"Content-Type": "application/json",},
-      body: JSON.stringify(data),
-    })
-    .then(async response => 
-    {
-      if (response.ok)
-      {
+    
+    try {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+      
+      const response = await fetch("https://localhost:3000/login", {
+        method: "POST",
+        mode: "cors",
+        credentials: "include",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data),
+      });
+      
+      if (response.ok) {
+        console.log("Login successful");
         const data = await response.json();
-        ctx.cookies.set('auth_token', data.auth_token, { path: '/' });
-        ctx.cookies.set('username', data.username, { path: '/' });
-        window.location.href = "http://localhost:8080/";
-        return;
-      } 
-      else 
-      {
-        throw new Error("Login failed");
+        localStorage.setItem('username', data.username);
+        window.location.href = "https://localhost:8080/";
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'LOGIN <i class="fas fa-arrow-right"></i>';
+        
+        const errorData = await response.json();
+        
+        if (errorData && errorData.error) {
+          console.error("Error:", errorData);
+          showError(errorData.message || "Login failed", 'login-error');
+        } else {
+          if (response.status === ErrorTypes.ACCESS_DENIED) {
+            showError('Invalid username or password.', 'login-error');
+          } else if (response.status === ErrorTypes.RATE_LIMITED) {
+            showError('Too many login attempts. Please try again later.', 'login-error');
+          } else if (response.status === ErrorTypes.BANNED) {
+            showError('Your account has been banned.', 'login-error');
+          } else {
+            showError('Login failed. Please try again.', 'login-error');
+          }
+        }
       }
-    })
-    .then(data => console.log(data))
-    .catch(error => console.error("Error:", error));
+    } catch (error) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'LOGIN <i class="fas fa-arrow-right"></i>';
+      console.error("Error:", error);
+      showError('Server connection error. Please try again later.', 'login-error');
+    }
   } else {
-    showError('Please check username and password');
+    showError('Please check username and password', 'login-error');
   }
 }
 
@@ -226,34 +291,50 @@ registerBtn.addEventListener("click", function(event) {
 });
 
 async function register() {
-  console.log("register");
   if(validateRegisterUsername() && validatePassword()) {
     let data = {
       "username": registerUsername.value,
       "password": registerPassword.value
     };
-    fetch("http://localhost:3000/register", {
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
-      headers: {"Content-Type": "application/json",},
-      body: JSON.stringify(data),
-    })
-    .then(async response => 
-    {
-      if (response.ok)
-      {
+    
+    try {
+      registerBtn.disabled = true;
+      registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+      
+      const response = await fetch("https://localhost:3000/register", {
+        method: "POST",
+        mode: "cors",
+        credentials: "include",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data),
+      });
+      
+      if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('auth_token', data.auth_token);
-        window.location.href = "http://localhost:8080/";
-        return;
-      } 
-      else 
-      {
-        throw new Error("Login failed");
+        localStorage.setItem('username', data.username);
+        window.location.href = "https://localhost:8080/";
+      } else {
+        registerBtn.disabled = false;
+        registerBtn.innerHTML = 'REGISTER <i class="fas fa-user-plus"></i>';
+        
+        const errorData = await response.json();
+        
+        // Display the specific error message from the server
+        if (errorData && errorData.message) {
+          showError(errorData.message);
+        } else {
+          if (response.status === 409) {
+            showError('Username already taken. Please choose another one.');
+          } else {
+            showError('Registration failed. Please try again.');
+          }
+        }
       }
-    })
-    .then(data => console.log(data))
-    .catch(error => console.error("Error:", error));
+    } catch (error) {
+      registerBtn.disabled = false;
+      registerBtn.innerHTML = 'REGISTER <i class="fas fa-user-plus"></i>';
+      console.error("Error:", error);
+      showError('Server connection error. Please try again later.');
+    }
   }
 }
