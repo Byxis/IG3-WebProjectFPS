@@ -15,6 +15,14 @@ app.use(async (ctx) => {
       });
       return;
     }
+
+    if (ctx.request.url.pathname === "/error") {
+      await ctx.send({
+        root: ROOT,
+        path: "error.html",
+      });
+      return;
+    }
     
     await ctx.send({
       root: ROOT,

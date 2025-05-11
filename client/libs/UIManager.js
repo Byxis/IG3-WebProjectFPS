@@ -1,7 +1,7 @@
-import { GAMESTATE } from "http://localhost:3000/shared/Config.js";
-import { getWebSocket } from "../script.js";
+import { GAMESTATE } from "https://localhost:3000/shared/Config.js";
+import { getWebSocket } from "./WebSocketManager.js";
 import sceneManager from "./SceneManager.js";
-import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
+import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
 
 export class UIManager {
   constructor() {
@@ -10,7 +10,51 @@ export class UIManager {
     this.chatboxInput = document.getElementById("chatbox-input");
     this.chatboxSend = document.getElementById("chatbox-send");
     this.isChatboxActive = false;
+    this.devMode = false;
+
+    // Connection status UI elements
+    this.connectionError = document.getElementById("connection-error");
+    this.connectionErrorText = document.getElementById("connection-error-text");
+
+    // Create UI container for display elements
+    this.createUIContainer();
+
     this.setupListeners();
+  }
+
+  createUIContainer() {
+    // Check if container already exists
+    let uiContainer = document.getElementById("ui-container");
+    if (!uiContainer) {
+      uiContainer = document.createElement("div");
+      uiContainer.id = "ui-container";
+      uiContainer.style.position = "fixed";
+      uiContainer.style.top = "10px";
+      uiContainer.style.left = "10px";
+      uiContainer.style.color = "white";
+      uiContainer.style.fontFamily = "monospace";
+      uiContainer.style.fontSize = "14px";
+      uiContainer.style.textShadow = "1px 1px 2px black";
+      uiContainer.style.zIndex = "1000";
+      document.body.appendChild(uiContainer);
+
+      // Create position display
+      const positionDiv = document.createElement("div");
+      positionDiv.id = "position-display";
+      uiContainer.appendChild(positionDiv);
+
+      // Create FPS display (initially hidden)
+      const fpsDiv = document.createElement("div");
+      fpsDiv.id = "fps";
+      fpsDiv.style.display = "none";
+      uiContainer.appendChild(fpsDiv);
+
+      // Create net-debug display (initially hidden)
+      const netDebugDiv = document.createElement("div");
+      netDebugDiv.id = "net-debug";
+      netDebugDiv.style.display = "none";
+      uiContainer.appendChild(netDebugDiv);
+    }
   }
 
   setupListeners() {
@@ -64,7 +108,6 @@ export class UIManager {
           name: localStorage.getItem("username"),
           message: message,
         }));
-        console.log("Sent message:", message);
       }
       this.chatboxInput.value = "";
       this.chatboxInput.focus();
@@ -111,9 +154,56 @@ export class UIManager {
           document.exitPointerLock();
         }
       }
+
+      // toggle dev mode
+      if (event.ctrlKey && event.code === "KeyP") {
+        event.preventDefault();
+        this.toggleDevMode();
+      }
     });
 
     globalThis.addEventListener("resize", () => this.handleResize());
+  }
+
+  toggleDevMode() {
+    this.devMode = !this.devMode;
+
+    // Update UI elements visibility
+    const fpsElement = document.getElementById("fps");
+    const netDebugElement = document.getElementById("net-debug");
+
+    if (this.devMode) {
+      fpsElement.style.display = "block";
+      netDebugElement.style.display = "block";
+    } else {
+      fpsElement.style.display = "none";
+      netDebugElement.style.display = "none";
+    }
+
+    console.log(`Dev mode ${this.devMode ? "enabled" : "disabled"}`);
+  }
+
+  updatePosition(position) {
+    const positionDisplay = document.getElementById("position-display");
+    if (this.devMode) {
+      positionDisplay.innerText = `X: ${position.x.toFixed(4)} Y: ${position.y.toFixed(4)} Z: ${position.z.toFixed(4)}`;
+    } else {
+      positionDisplay.innerText = `Position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})`;
+    }
+  }
+
+  updateFPS(fps) {
+    if (this.devMode) {
+      const fpsElement = document.getElementById("fps");
+      fpsElement.innerText = `FPS: ${fps}`;
+    }
+  }
+
+  updateNetworkOffset(offset) {
+    if (this.devMode) {
+      const netDebugElement = document.getElementById("net-debug");
+      netDebugElement.innerText = `Offset: ${offset.toFixed(2)}ms`;
+    }
   }
 
   handleResize() {
@@ -161,6 +251,20 @@ export class UIManager {
       this.chatboxMessages.scrollTop = this.chatboxMessages.scrollHeight;
       this.chatbox.scrollTop = this.chatbox.scrollHeight;
     }, 10);
+  }
+
+  showConnectionStatus(message) {
+    this.connectionErrorText.textContent = message;
+    this.connectionError.classList.add('visible');
+  }
+
+  showConnectionError(message) {
+    this.connectionErrorText.textContent = message;
+    this.connectionError.classList.add('visible', 'error');
+  }
+
+  hideConnectionError() {
+    this.connectionError.classList.remove('visible', 'error');
   }
 }
 

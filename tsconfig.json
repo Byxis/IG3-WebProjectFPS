@@ -9,6 +9,6 @@
       "*": ["*"]
     }
   },
-  "include": ["shared/**/*", "Libs/**/*"],
+  "include": ["shared/**/*", "Libs/**/*", "server/enums"],
   "compileOnSave": true
 }

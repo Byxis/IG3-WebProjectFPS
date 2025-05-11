@@ -37,6 +37,7 @@ export class ServerPhysics {
   ) {
     if (players[name]) {
       let corrected = false;
+
       if (this.isMovementValid(name, position)) {
         players[name].position.x = position.x;
         players[name].position.z = position.z;
@@ -79,22 +80,25 @@ export class ServerPhysics {
   ): boolean {
     const player = players[name];
     if (!player) return false;
-
+    
+    const now = performance.now();
+    const deltaTime = (now - player.lastUpdateTime) / 1000;
+    
     return Physics.isHorizontalMovementValid(
       players[name].position,
       newPosition,
-      1 / 60,
+      deltaTime,
       player.networkTimeOffset,
       players[name].movement.isSprinting,
     );
   }
 
-  updateAll() {
+  updateAll(deltaTime?: number) {
     const now = performance.now();
 
     for (const [name, player] of Object.entries(players)) {
-      const deltaTime = (now - player.lastUpdateTime) / 1000;
-      const updatedPlayer = Physics.simulatePlayerMovement(player, deltaTime);
+      const dt = deltaTime || (now - player.lastUpdateTime) / 1000;
+      const updatedPlayer = Physics.simulatePlayerMovement(player, dt);
       updatedPlayer.lastUpdateTime = now;
 
       players[name] = updatedPlayer;

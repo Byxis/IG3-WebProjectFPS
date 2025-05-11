@@ -1,16 +1,15 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
-import { CONFIG, GAMESTATE } from "http://localhost:3000/shared/Config.js";
-import { simulatePlayerMovement } from "http://localhost:3000/shared/Physics.js";
-import { Vector3 as SharedVector3 } from "http://localhost:3000/shared/Class.js";
-import { getNetworkTimeOffset, getWebSocket } from "../script.js";
+import { CONFIG, GAMESTATE } from "https://localhost:3000/shared/Config.js";
+import { simulatePlayerMovement } from "https://localhost:3000/shared/Physics.js";
+import { Vector3 as SharedVector3 } from "https://localhost:3000/shared/Class.js";
+import { getWebSocket, wsState } from "./WebSocketManager.js";
+import { getNetworkTimeOffset } from "./NetworkSynchronizer.js";
 import sceneManager from "./SceneManager.js";
-import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
+import uiManager from "./UIManager.js";
+import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
 
 export class MovementManager {
   constructor() {
-    this.moveDirection = new SharedVector3();
-    this.sideDirection = new SharedVector3();
-    this.targetVelocity = new SharedVector3();
 
     this.raycaster = new THREE.Raycaster();
     this.shootCooldown = 500;
@@ -19,10 +18,13 @@ export class MovementManager {
     this.forward = 0;
     this.side = 0;
     this.isJumping = false;
-
+    
+    // WebSocket retry mechanism
     this.maxSocketRetries = 10;
-    this.socketRetries = 0;
-    this.socketRetryInterval = 1000;
+    
+    // Verification timer for rare position sync
+    this.lastVerificationTime = 0;
+    this.verificationInterval = 2000; // Every 2 seconds is enough for safety checks
 
     // Player state
     this.playerState = {
@@ -60,21 +62,14 @@ export class MovementManager {
 
     this.handleMovementUpdate();
     this.simulateMovement(deltaTime);
+    this.checkForVerification();
 
-    document.getElementById("coords").innerText = `X: ${
-      sceneManager.cameraContainer.position.x.toFixed(4)
-    } 
-      Y: ${sceneManager.cameraContainer.position.y.toFixed(4)} 
-      Z: ${sceneManager.cameraContainer.position.z.toFixed(4)}`;
-
-    const fps = Math.round(1 / deltaTime);
-    document.getElementById("fps").innerText = `FPS: ${fps}`;
+    uiManager.updatePosition(sceneManager.cameraContainer.position);
 
     this.smoothRotation(deltaTime);
   }
 
   simulateMovement(deltaTime) {
-    // Update player state with current values
     this.playerState.position.x = sceneManager.cameraContainer.position.x;
     this.playerState.position.y = sceneManager.cameraContainer.position.y;
     this.playerState.position.z = sceneManager.cameraContainer.position.z;
@@ -82,7 +77,6 @@ export class MovementManager {
     this.playerState.rotation.y = sceneManager.cameraContainer.rotation.y;
     this.playerState.pitch = GAMESTATE.camera.pitch;
 
-    // Update movement state
     this.playerState.movement = {
       forward: this.forward,
       side: this.side,
@@ -90,10 +84,8 @@ export class MovementManager {
       isJumping: this.isJumping,
     };
 
-    // Use shared movement logic
     const newState = simulatePlayerMovement(this.playerState, deltaTime);
 
-    // Apply the new position from the returned state
     sceneManager.cameraContainer.position.set(
       newState.position.x,
       newState.position.y,
@@ -105,11 +97,9 @@ export class MovementManager {
       newState.velocity.z,
     );
 
-    // Update vertical states
     GAMESTATE.physics.verticalVelocity = newState.verticalVelocity;
     GAMESTATE.physics.isJumping = newState.isJumping;
 
-    // Keep our local state updated with the simulation results
     this.playerState = newState;
   }
 
@@ -155,14 +145,12 @@ export class MovementManager {
     ) {
       this.updateMovementKeybinds();
     } else if (sceneManager.getPitchHasChanged()) {
-      //* Maybe we should set a timer to send the pitch update,
-      //* so we don't spam the server with updates
       this.updateMovementKeybinds();
       sceneManager.setPitchHasChanged(false);
     }
   }
 
-  smoothRotation(_deltaTime) {
+  smoothRotation(deltaTime) {
     // Smooth camera rotation
     GAMESTATE.camera.pitch = THREE.MathUtils.lerp(
       GAMESTATE.camera.pitch,
@@ -189,42 +177,68 @@ export class MovementManager {
 
   updateMovementKeybinds() {
     const wsocket = getWebSocket();
-    if (wsocket == null) return;
-    if (wsocket.readyState !== 1) {
-      console.log(
-        `Socket not ready, retrying in ${this.socketRetryInterval} ms`,
-      );
-      this.socketRetries++;
-      if (this.socketRetries > this.maxSocketRetries) {
-        console.log("Max socket retries reached, stopping movement updates");
-        this.socketRetries = 0;
-      } else {
-        setTimeout(
-          () => this.updateMovementKeybinds(),
-          this.socketRetryInterval,
-        );
-      }
+    if (!wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected) {
       return;
     }
-    const networkTimeOffset = getNetworkTimeOffset();
-
-    wsocket.send(JSON.stringify({
-      type: MessageTypeEnum.UPDATE_PLAYER_KEYBINDS,
-      name: localStorage.getItem("username"),
-      networkTimeOffset: networkTimeOffset,
-      movement: {
-        forward: this.forward,
-        side: this.side,
-        isSprinting: this.isSprinting,
-        isJumping: this.isJumping,
+    
+    const now = Date.now();
+    try {
+      wsocket.send(JSON.stringify({
+        type: MessageTypeEnum.UPDATE_PLAYER_KEYBINDS,
+        name: localStorage.getItem("username"),
+        timestamp: now,
+        networkTimeOffset: getNetworkTimeOffset(),
+        movement: {
+          forward: this.forward,
+          side: this.side,
+          isSprinting: this.isSprinting,
+          isJumping: this.isJumping,
+          rotation: {
+            x: sceneManager.cameraContainer.rotation.x,
+            y: sceneManager.cameraContainer.rotation.y,
+            z: sceneManager.cameraContainer.rotation.z,
+          },
+          pitch: GAMESTATE.camera.pitch,
+        },
+      }));
+    } catch (error) {
+      console.error("Failed to send movement update:", error);
+    }
+  }
+  
+  checkForVerification() {
+    const now = Date.now();
+    if (now - this.lastVerificationTime < this.verificationInterval) {
+      return;
+    }
+    
+    this.lastVerificationTime = now;
+    
+    const wsocket = getWebSocket();
+    if (!wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected) {
+      return;
+    }
+    
+    try {
+      wsocket.send(JSON.stringify({
+        type: MessageTypeEnum.VERIFY_POSITION,
+        name: localStorage.getItem("username"),
+        timestamp: now,
+        position: {
+          x: sceneManager.cameraContainer.position.x,
+          y: sceneManager.cameraContainer.position.y,
+          z: sceneManager.cameraContainer.position.z,
+        },
         rotation: {
           x: sceneManager.cameraContainer.rotation.x,
           y: sceneManager.cameraContainer.rotation.y,
           z: sceneManager.cameraContainer.rotation.z,
         },
         pitch: GAMESTATE.camera.pitch,
-      },
-    }));
+      }));
+    } catch (error) {
+      console.error("Failed to send position verification:", error);
+    }
   }
 
   setupShootingControls() {
@@ -242,7 +256,7 @@ export class MovementManager {
   }
 
   shoot() {
-    console.log("Shot !");
+    console.log("Shot fired");
 
     const now = performance.now();
     if (now - this.lastShootTime < this.shootCooldown) {
@@ -281,25 +295,28 @@ export class MovementManager {
       }
 
       const hitPlayerName = hitObject.parent.name;
-      console.log(hitPlayerName);
 
       if (hitPlayerName) {
         console.log(
-          `Joueur touché: ${hitPlayerName} à une distance de ${
+          `Hit player ${hitPlayerName} at distance ${
             hit.distance.toFixed(2)
           }`,
         );
 
-        getWebSocket().send(JSON.stringify({
-          type: MessageTypeEnum.PLAYER_SHOT,
-          shooter: localStorage.getItem("username"),
-          target: hitPlayerName,
-          hitPoint: {
-            x: hit.point.x,
-            y: hit.point.y,
-            z: hit.point.z,
-          },
-        }));
+        const wsocket = getWebSocket();
+        if (wsocket && wsocket.readyState === WebSocket.OPEN && wsState.isConnected) {
+          wsocket.send(JSON.stringify({
+            type: MessageTypeEnum.PLAYER_SHOT,
+            shooter: localStorage.getItem("username"),
+            target: hitPlayerName,
+            timestamp: Date.now(),
+            hitPoint: {
+              x: hit.point.x,
+              y: hit.point.y,
+              z: hit.point.z,
+            },
+          }));
+        }
       }
     }
   }
