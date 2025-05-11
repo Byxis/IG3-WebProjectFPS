@@ -103,6 +103,17 @@ export class SqlHandler {
       );
     `);
 
+    this.db.execute(`
+      CREATE TABLE IF NOT EXISTS refresh_tokens (
+        token_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+      );
+    `);
+
     this.db.execute(
       `CREATE INDEX IF NOT EXISTS idx_player_matches_user ON player_matches(user_id);`,
     );
@@ -150,6 +161,15 @@ export class SqlHandler {
     );
     this.db.execute(
       `CREATE INDEX IF NOT EXISTS idx_mutes_date ON mutes(mute_date);`,
+    );
+    this.db.execute(
+      `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);`,
+    );
+    this.db.execute(
+      `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);`,
+    );
+    this.db.execute(
+      `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at);`,
     );
 
     this.db.execute(`
@@ -251,12 +271,26 @@ export class SqlHandler {
     return result.length > 0;
   }
 
-  updateUserToken(userId: number, token: string): boolean {
+  updateUserPassword(
+    userId: number,
+    newPasswordHash: string,
+  ): boolean {
     const result = this.db.query(
-      "UPDATE users SET token = ? WHERE user_id = ?",
-      [token, userId],
+      "UPDATE users SET password_hash = ? WHERE user_id = ?",
+      [newPasswordHash, userId],
     );
     return result.length > 0;
+  }
+
+  getUserPasswordHash(id: number): string {
+    const result = this.db.query(
+      "SELECT password_hash FROM users WHERE user_id = ?",
+      [id],
+    );
+    if (result.length > 0) {
+      return result[0][0] as string;
+    }
+    return ""; 
   }
 
   addTimePlayed(userId: number, from: Date, to: Date): boolean {
@@ -453,6 +487,63 @@ export class SqlHandler {
       [userId],
     );
     return result.length > 0;
+  }
+
+  storeRefreshToken(userId: number, token: string, expiresIn: number): boolean {
+    const expiresAt = new Date(Date.now() + expiresIn).toISOString();
+    try {
+      this.db.query(
+        "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)",
+        [userId, token, expiresAt]
+      );
+      return true;
+    } catch (error) {
+      console.error("Error storing refresh token:", error);
+      return false;
+    }
+  }
+
+  verifyRefreshToken(userId: number, token: string): boolean {
+    try {
+      const result = this.db.query(
+        "SELECT token_id FROM refresh_tokens WHERE user_id = ? AND token = ? AND expires_at > datetime('now')",
+        [userId, token]
+      );
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error verifying refresh token:", error);
+      return false;
+    }
+  }
+
+  removeRefreshToken(token: string): boolean {
+    try {
+      this.db.query("DELETE FROM refresh_tokens WHERE token = ?", [token]);
+      return true;
+    } catch (error) {
+      console.error("Error removing refresh token:", error);
+      return false;
+    }
+  }
+
+  removeAllUserRefreshTokens(userId: number): boolean {
+    try {
+      this.db.query("DELETE FROM refresh_tokens WHERE user_id = ?", [userId]);
+      return true;
+    } catch (error) {
+      console.error("Error removing user refresh tokens:", error);
+      return false;
+    }
+  }
+
+  cleanExpiredTokens(): number {
+    try {
+      const result = this.db.query("DELETE FROM refresh_tokens WHERE expires_at <= datetime('now')");
+      return result.length;
+    } catch (error) {
+      console.error("Error cleaning expired tokens:", error);
+      return 0;
+    }
   }
 
   close(): void {
