@@ -1,10 +1,10 @@
 import { Game } from "./Game.js";
 import uiManager from "./UIManager.js";
 import sceneManager from "./SceneManager.js";
+import { API_URL, WSS_URL } from "../config/config.js";
 import { synchronizeClockWithServer } from "./NetworkSynchronizer.js";
 import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
 import { ErrorTypes } from "../enum/ErrorTypes.js";
-import { verifyAuthentication, refreshAuthToken } from "./AuthManager.js";
 
 let wsocket = null;
 let reconnectTimer = null;
@@ -63,8 +63,8 @@ export async function connectWebSocket() {
       }, 2000);
       return;
     }
-    
-    wsocket = new WebSocket(`wss://localhost:3000/ws`);
+
+    wsocket = new WebSocket(`${WSS_URL}/ws`);
     setupWebSocketHandlers();
   } catch (error) {
     wsState.isConnecting = false;
@@ -145,8 +145,7 @@ async function attemptReconnection() {
     const message = `Reconnecting... Attempt ${wsState.reconnectAttempts}`;
     
     updateReconnectionStatus(message); 
-    
-    // Try to refresh the token before reconnecting
+
     if (wsState.reconnectAttempts % 2 === 0) { // Every second attempt
       try {
         await refreshAuthToken();
@@ -154,12 +153,12 @@ async function attemptReconnection() {
         console.log("Failed to refresh token during reconnection attempt");
       }
     }
-    
+
     setTimeout(() => {
       connectWebSocket();
     }, RECONNECTION_DELAY);
   } else {
-    window.location.href = `error?type=${ErrorTypes.SERVER_UNREACHABLE}&attempts=${wsState.reconnectAttempts}&from=game`;
+    window.location.href = `error.html?type=${ErrorTypes.CONNECTION_ERROR}&attempts=${wsState.reconnectAttempts}&from=game`;
   }
 }
 
@@ -292,7 +291,7 @@ function handleWebSocketMessage(event) {
 }
 
 function handleLogout() {
-  fetch("https://localhost:3000/logout", {
+  fetch(`${API_URL}/logout`, {
     method: "POST",
     credentials: "include",
   })

@@ -1,5 +1,6 @@
 import { ErrorTypes } from "../enum/ErrorTypes.js";
 import { refreshAuthToken } from "../libs/AuthManager.js";
+import { API_URL, CLIENT_URL } from "../config/config.js";
 
 document.addEventListener('DOMContentLoaded', async function() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -8,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   try {
     const refreshed = await refreshAuthToken();
     if (refreshed) {
-      window.location.href = "https://localhost:8080/";
+      window.location.href = CLIENT_URL;
       return;
     }
   } catch (error) {
@@ -205,7 +206,7 @@ async function submit() {
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
       
-      const response = await fetch("https://localhost:3000/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         mode: "cors",
         credentials: "include",
@@ -217,7 +218,7 @@ async function submit() {
         console.log("Login successful");
         const data = await response.json();
         localStorage.setItem('username', data.username);
-        window.location.href = "https://localhost:8080/";
+        window.location.href = CLIENT_URL;
       } else {
         submitBtn.disabled = false;
         submitBtn.innerHTML = 'LOGIN <i class="fas fa-arrow-right"></i>';
@@ -301,7 +302,7 @@ async function register() {
       registerBtn.disabled = true;
       registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
       
-      const response = await fetch("https://localhost:3000/register", {
+      const response = await fetch(`${API_URL}/register`, {
         method: "POST",
         mode: "cors",
         credentials: "include",
@@ -312,14 +313,13 @@ async function register() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('username', data.username);
-        window.location.href = "https://localhost:8080/";
+        window.location.href = CLIENT_URL;
       } else {
         registerBtn.disabled = false;
         registerBtn.innerHTML = 'REGISTER <i class="fas fa-user-plus"></i>';
         
         const errorData = await response.json();
         
-        // Display the specific error message from the server
         if (errorData && errorData.message) {
           showError(errorData.message);
         } else {

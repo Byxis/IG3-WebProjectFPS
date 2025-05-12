@@ -2,8 +2,8 @@ import { connectWebSocket } from "../libs/WebSocketManager.js";
 import { startNetworkSyncInterval } from "../libs/NetworkSynchronizer.js";
 import { ErrorTypes } from "../enum/ErrorTypes.js";
 import { refreshAuthToken } from "../libs/AuthManager.js";
+import { API_URL } from "../config/config.js";
 
-// Initialize application
 initializeApp();
 
 async function initializeApp() {
@@ -18,7 +18,7 @@ async function initializeApp() {
 
 async function checkAuth() {
   try {
-    const response = await fetch('https://localhost:3000/api/verify', {
+    const response = await fetch(`${API_URL}/api/verify`, {
       method: 'GET',
       credentials: 'include'
     });
@@ -26,7 +26,6 @@ async function checkAuth() {
     console.log("Auth check response status:", response.status);
     
     if (!response.ok) {
-      // Auth verification failed, try to refresh the token
       console.log("Authentication check failed, attempting to refresh token");
       const refreshed = await refreshAuthToken();
       

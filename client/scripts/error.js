@@ -1,5 +1,6 @@
 import { ErrorTypes } from "../enum/ErrorTypes.js";
 import { refreshAuthToken } from "../libs/AuthManager.js";
+import { API_URL } from "../config/config.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   const errorTitle = document.getElementById('error-title');
@@ -8,25 +9,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const retryButton = document.getElementById('retry-btn');
   const loginButton = document.getElementById('login-btn');
   
-  // Parse URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const errorType = parseInt(urlParams.get('type')) || ErrorTypes.UNKNOWN;
   const attempts = urlParams.get('attempts') || '0';
   const redirectFrom = urlParams.get('from') || '';
   
-  // Track current error type
   let currentErrorType = errorType;
   
   configureErrorDisplay(currentErrorType, attempts, redirectFrom);
   
-  // Auto-retry logic for server_unreachable errors
   const autoRetry = document.getElementById('auto-retry');
   let countdownElement = document.getElementById('countdown');
   let countdown = 5;
   let reconnectAttempts = parseInt(attempts) || 0;
   const maxReconnectAttempts = 20;
 
-  // Only setup auto-retry for server unreachable errors
   if (currentErrorType === ErrorTypes.SERVER_UNREACHABLE && autoRetry && countdownElement) {
     autoRetry.style.display = 'block';
     startReconnectCountdown();
@@ -36,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
     reconnectAttempts++;
     countdown = 5;
     
-    // Update URL to reflect current attempt count without reloading page
     updateUrlParam('attempts', reconnectAttempts.toString());
     
     countdownElement.textContent = countdown;
@@ -48,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (countdown <= 0) {
         clearInterval(interval);
         
-        // Try to refresh auth token first if error is auth-related
         if (currentErrorType === ErrorTypes.AUTH_REQUIRED || 
             currentErrorType === ErrorTypes.AUTH_FAILED) {
           refreshAuthToken()
@@ -56,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
               if (refreshed) {
                 window.location.href = 'index.html';
               } else {
-                // If token refresh fails, redirect to login
                 window.location.href = `login.html?error=${currentErrorType}`;
               }
             })
@@ -66,19 +60,15 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         
-        // For other errors, check server connection
         checkServerConnection()
           .then(result => {
             if (result.isConnected) {
-              // Server is reachable, go to index
               window.location.href = 'index.html';
             } else if (result.errorType !== currentErrorType) {
-              // Error type changed, update display and URL
               currentErrorType = result.errorType;
               updateUrlParam('type', currentErrorType);
               configureErrorDisplay(currentErrorType, reconnectAttempts, redirectFrom);
               
-              // If it's an auth error, try to refresh the token
               if (currentErrorType === ErrorTypes.AUTH_REQUIRED || 
                   currentErrorType === ErrorTypes.AUTH_FAILED) {
                 refreshAuthToken()
@@ -86,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (refreshed) {
                       window.location.href = 'index.html';
                     } else {
-                      // Only show login button if auth failed
                       loginButton.style.display = 'block';
                       retryButton.style.display = 'none';
                       autoRetry.style.display = 'none';
@@ -95,16 +84,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
               }
               
-              // Don't continue attempting reconnection for other auth errors
               if (currentErrorType === ErrorTypes.ACCESS_DENIED || 
                   currentErrorType === ErrorTypes.BANNED) {
                 return;
               }
             }
             
-            // Continue attempting reconnection for server unreachable
             if (reconnectAttempts <= maxReconnectAttempts) {
-              // Update the error message to show current attempt count
               const errorMessage = document.getElementById('error-message');
               errorMessage.textContent = `Unable to connect to the game server after ${reconnectAttempts} attempts.`;
               
@@ -126,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   retryButton.addEventListener('click', async () => {
-    // For auth errors, try token refresh first
     if (currentErrorType === ErrorTypes.AUTH_REQUIRED || 
         currentErrorType === ErrorTypes.AUTH_FAILED) {
       
@@ -140,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         
-        // If refresh fails, redirect to login
         window.location.href = `login.html?error=${currentErrorType}`;
         return;
       } catch (e) {
@@ -155,18 +139,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     
-    // For other errors, check server connection
     checkServerConnection()
       .then(result => {
         if (result.isConnected) {
           window.location.href = 'index.html';
         } else if (result.errorType !== currentErrorType) {
-          // Error type changed, update display and URL
           currentErrorType = result.errorType;
           updateUrlParam('type', currentErrorType);
           configureErrorDisplay(currentErrorType, reconnectAttempts, redirectFrom);
         } else {
-          // Same error, just flash a message
           const originalText = errorDetails.textContent;
           errorDetails.textContent = 'Server is still unreachable. Please try again later.';
           errorDetails.style.color = '#ff4655';
@@ -186,19 +167,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function checkServerConnection() {
   try {
-    // First try to refresh token silently
     if (await refreshAuthToken()) {
       return { isConnected: true, errorType: null };
     }
     
-    // If that doesn't work, try a regular API request
-    const response = await fetch('https://localhost:3000/api/verify', {
+    const response = await fetch(`${API_URL}/api/verify`, {
       method: 'GET',
       mode: 'cors',
       credentials: 'include'
     });
     
-    // Determine the error type based on server response
     if (response.ok) {
       return { isConnected: true, errorType: null };
     } else if (response.status === 401) {
@@ -215,7 +193,6 @@ async function checkServerConnection() {
       return { isConnected: false, errorType: ErrorTypes.SERVER_UNREACHABLE };
     }
   } catch (error) {
-    // Network error means server is unreachable
     return { isConnected: false, errorType: ErrorTypes.SERVER_UNREACHABLE };
   }
 }

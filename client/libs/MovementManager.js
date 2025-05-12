@@ -1,7 +1,6 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
 import { CONFIG, GAMESTATE } from "https://localhost:3000/shared/Config.js";
 import { simulatePlayerMovement } from "https://localhost:3000/shared/Physics.js";
-import { Vector3 as SharedVector3 } from "https://localhost:3000/shared/Class.js";
 import { getWebSocket, wsState } from "./WebSocketManager.js";
 import { getNetworkTimeOffset } from "./NetworkSynchronizer.js";
 import sceneManager from "./SceneManager.js";

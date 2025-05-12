@@ -2,6 +2,7 @@ import { Context } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { verifyJWT, createTokenPair, ACCESS_TOKEN_EXP, REFRESH_TOKEN_EXP } from "../libs/JWTUtils.ts";
 import sqlHandler from "../libs/SqlHandler.ts";
 import { ErrorTypes } from "../../client/enum/ErrorTypes.js";
+import { API_URL, WSS_URL } from "../config/config.ts";
 
 export async function refreshTokenMiddleware(ctx: Context) {
     const token = await ctx.cookies.get('refreshToken');
@@ -150,7 +151,7 @@ export const cspMiddleware = async (ctx: Context, next: () => Promise<unknown>) 
         `style-src ${trustedDomains.styles}`,
         `font-src ${trustedDomains.fonts}`,
         `img-src ${trustedDomains.images}`,
-        `connect-src 'self' wss://localhost:3000 https://localhost:3000`
+        `connect-src 'self' ${API_URL} ${WSS_URL}`
     ].join("; ");
     
     ctx.response.headers.set("Content-Security-Policy", cspDirectives);
