@@ -1,4 +1,3 @@
-import { Game } from "./Game.js";
 import uiManager from "./UIManager.js";
 import sceneManager from "./SceneManager.js";
 import { API_URL, WSS_URL } from "../config/config.js";
