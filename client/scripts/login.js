@@ -144,50 +144,6 @@ registerUsername.addEventListener('input', function() {
   }
 });
 
-const shapeContainers = document.querySelectorAll('.shape-container');
-let mouseX = window.innerWidth / 2;
-let mouseY = window.innerHeight / 2;
-
-document.addEventListener('mousemove', (e) => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-});
-
-function animateParallax() {
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
-  
-  const targetX = (mouseX - centerX) / centerX;
-  const targetY = (mouseY - centerY) / centerY;
-  
-  shapeContainers.forEach(container => {
-    const shape = container.querySelector('.shape');
-    
-    let depthFactor;
-    if (shape.classList.contains('tiny')) {
-      depthFactor = 8;
-    } else if (shape.classList.contains('small')) {
-      depthFactor = 15;
-    } else {
-      depthFactor = 25;
-    }
-    
-    container.style.transform = `translate(${targetX * depthFactor}px, ${targetY * depthFactor}px)`;
-  });
-  
-  requestAnimationFrame(animateParallax);
-}
-
-animateParallax();
-
-setTimeout(() => {
-  const event = new MouseEvent('mousemove', {
-    clientX: window.innerWidth / 2 + 100,
-    clientY: window.innerHeight / 2 + 100
-  });
-  document.dispatchEvent(event);
-}, 100);
-
 submitBtn.addEventListener("click", function(event) {
   event.preventDefault();
   submit();

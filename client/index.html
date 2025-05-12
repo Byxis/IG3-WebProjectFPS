@@ -6,48 +6,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/background.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/error.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
   <body class="game-body">
-    <div class="background-animation">
-      <div class="shape-container"><div class="shape triangle"></div></div>
-      <div class="shape-container"><div class="shape triangle"></div></div>
-      <div class="shape-container"><div class="shape triangle small"></div></div>
-      <div class="shape-container"><div class="shape triangle small"></div></div>
-      <div class="shape-container"><div class="shape triangle tiny"></div></div>
-      <div class="shape-container"><div class="shape triangle tiny"></div></div>
-
-      <div class="shape-container"><div class="shape circle"></div></div>
-      <div class="shape-container"><div class="shape circle"></div></div>
-      <div class="shape-container"><div class="shape circle small"></div></div>
-      <div class="shape-container"><div class="shape circle small"></div></div>
-      <div class="shape-container"><div class="shape circle tiny"></div></div>
-      <div class="shape-container"><div class="shape circle tiny"></div></div>
-
-      <div class="shape-container"><div class="shape square"></div></div>
-      <div class="shape-container"><div class="shape square"></div></div>
-      <div class="shape-container"><div class="shape square small"></div></div>
-      <div class="shape-container"><div class="shape square small"></div></div>
-      <div class="shape-container"><div class="shape square tiny"></div></div>
-      <div class="shape-container"><div class="shape square tiny"></div></div>
-      
-      <div class="shape-container"><div class="shape star"></div></div>
-      <div class="shape-container"><div class="shape star"></div></div>
-      <div class="shape-container"><div class="shape star small"></div></div>
-      <div class="shape-container"><div class="shape star small"></div></div>
-      <div class="shape-container"><div class="shape star tiny"></div></div>
-      <div class="shape-container"><div class="shape star tiny"></div></div>
-
-      <div class="shape-container"><div class="shape pentagon"></div></div>
-      <div class="shape-container"><div class="shape pentagon"></div></div>
-      <div class="shape-container"><div class="shape pentagon small"></div></div>
-      <div class="shape-container"><div class="shape pentagon small"></div></div>
-      <div class="shape-container"><div class="shape pentagon tiny"></div></div>
-      <div class="shape-container"><div class="shape pentagon tiny"></div></div>
-    </div>
-    
     <p id="lives" class="onTop">❤️❤️❤️</p>
     <p id="kills" class="onTop">0</p>
     <p id="ammos" class="onTop">30/30</p>
@@ -75,6 +40,7 @@
       <i class="fas fa-exclamation-triangle"></i>
       <span id="connection-error-text">Connection Error</span>
     </div>
+    <script src="scripts/background.js" type="module"></script>
     <script type="module" src="scripts/script.js"></script>
   </body>
 </html>
