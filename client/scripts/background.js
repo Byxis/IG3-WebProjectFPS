@@ -5,7 +5,7 @@ export class BackgroundManager {
     this.shapeContainers = [];
     this.isLoaded = false;
     this.animateParallax = this.animateParallax.bind(this);
-    this.resizeTimeout = null; // Pour le debouncing du resize
+    this.resizeTimeout = null;
     this.throttleTimeout = null;
     this.isResizing = false;
   }

@@ -4,6 +4,10 @@ import sqlHandler from "../libs/SqlHandler.ts";
 import { ErrorTypes } from "../../client/enum/ErrorTypes.js";
 import { API_URL, WSS_URL } from "../config/config.ts";
 
+/**
+ ** Middleware to refresh an expired access token using refresh token
+ * @param {Context} ctx - The Oak context
+ */
 export async function refreshTokenMiddleware(ctx: Context) {
     const token = await ctx.cookies.get('refreshToken');
     
@@ -75,6 +79,11 @@ export async function refreshTokenMiddleware(ctx: Context) {
 
 const loginAttempts = new Map();
 
+/**
+ ** Rate limiting middleware to prevent brute force attacks
+ * @param {Context} ctx - The Oak context
+ * @param {Function} next - The next middleware function
+ */
 export function rateLimiter(ctx: Context, next: () => Promise<unknown>) {
     const ip = ctx.request.ip;
     const now = Date.now();
@@ -101,6 +110,11 @@ export function rateLimiter(ctx: Context, next: () => Promise<unknown>) {
     return next();
 }
 
+/**
+ ** CSRF protection middleware
+ * @param {Context} ctx - The Oak context
+ * @param {Function} next - The next middleware function
+ */
 export const csrfProtection = async (ctx: Context, next: () => Promise<unknown>) => {
     if (ctx.request.method !== "GET") {
         const origin = ctx.request.headers.get("Origin");
@@ -117,6 +131,11 @@ export const csrfProtection = async (ctx: Context, next: () => Promise<unknown>)
     await next();
 };
 
+/**
+ ** Content Security Policy middleware
+ * @param {Context} ctx - The Oak context
+ * @param {Function} next - The next middleware function
+ */
 export const cspMiddleware = async (ctx: Context, next: () => Promise<unknown>) => {
     const nonce = crypto.randomUUID().replace(/-/g, '');
     ctx.state.cspNonce = nonce;

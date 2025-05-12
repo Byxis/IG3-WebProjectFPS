@@ -8,6 +8,10 @@ import uiManager from "./UIManager.js";
 import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
 
 export class MovementManager {
+  /**
+   ** Initializes the movement manager with necessary components for player movement and shooting.
+   * Sets up raycaster, movement state tracking, and networking verification timers.
+   */
   constructor() {
 
     this.raycaster = new THREE.Raycaster();
@@ -56,6 +60,11 @@ export class MovementManager {
     this.setupShootingControls();
   }
 
+  /**
+   ** Updates the player's movement and rotation for the current frame.
+   * @param {number} deltaTime - The time elapsed since the last frame in seconds.
+   * @returns {void}
+   */
   update(deltaTime) {
     if (!deltaTime) return;
 
@@ -68,6 +77,12 @@ export class MovementManager {
     this.smoothRotation(deltaTime);
   }
 
+  /**
+   ** Simulates player movement physics based on current input and state.
+   * Applies player movement calculations and updates the player's position, velocity and state.
+   * @param {number} deltaTime - The time elapsed since the last frame in seconds.
+   * @returns {void}
+   */
   simulateMovement(deltaTime) {
     this.playerState.position.x = sceneManager.cameraContainer.position.x;
     this.playerState.position.y = sceneManager.cameraContainer.position.y;
@@ -102,6 +117,12 @@ export class MovementManager {
     this.playerState = newState;
   }
 
+  /**
+   ** Processes player input and updates movement direction values.
+   * Handles keyboard input for movement (WASD/arrows), sprinting, and jumping.
+   * Normalizes diagonal movement and triggers network updates when input changes.
+   * @returns {void}
+   */
   handleMovementUpdate() {
     const oldForward = this.forward;
     const oldSide = this.side;
@@ -149,6 +170,12 @@ export class MovementManager {
     }
   }
 
+  /**
+   ** Applies smooth interpolation to camera rotation.
+   * Uses linear interpolation to create smooth camera movement between target and current rotations.
+   * @param {number} deltaTime - The time elapsed since the last frame in seconds.
+   * @returns {void}
+   */
   smoothRotation(deltaTime) {
     // Smooth camera rotation
     GAMESTATE.camera.pitch = THREE.MathUtils.lerp(
@@ -174,6 +201,11 @@ export class MovementManager {
     );
   }
 
+  /**
+   ** Sends the player's current movement state to the server.
+   * Transmits movement direction, sprint/jump status, rotation, and pitch via WebSocket.
+   * @returns {void}
+   */
   updateMovementKeybinds() {
     const wsocket = getWebSocket();
     if (!wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected) {
@@ -205,6 +237,11 @@ export class MovementManager {
     }
   }
   
+  /**
+   ** Periodically sends position verification data to the server.
+   * Helps prevent cheating and ensures client-server synchronization at regular intervals.
+   * @returns {void}
+   */
   checkForVerification() {
     const now = Date.now();
     if (now - this.lastVerificationTime < this.verificationInterval) {
@@ -240,6 +277,11 @@ export class MovementManager {
     }
   }
 
+  /**
+   ** Sets up event listeners for shooting mechanics.
+   * Handles mouse click events for shooting and applies appropriate event filters.
+   * @returns {void}
+   */
   setupShootingControls() {
     document.addEventListener("click", (event) => {
       if (document.pointerLockElement !== sceneManager.renderer.domElement) {
@@ -254,6 +296,11 @@ export class MovementManager {
     });
   }
 
+  /**
+   ** Handles the shooting logic when player fires a weapon.
+   * Implements cooldown, raycasting for hit detection, and sends hit information to server.
+   * @returns {void}
+   */
   shoot() {
     console.log("Shot fired");
 

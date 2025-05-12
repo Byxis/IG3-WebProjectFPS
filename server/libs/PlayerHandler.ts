@@ -38,6 +38,11 @@ export const players: {
   };
 } = {};
 
+/**
+ ** Initializes a new player in the game
+ * @param {object} dataPlayer - Player initialization data
+ * @param {WebSocket} websocket - Player's WebSocket connection
+ */
 export async function initiateNewPlayer(dataPlayer: {
   name: string;
   position: { x: number; y: number; z: number };
@@ -96,6 +101,10 @@ export async function initiateNewPlayer(dataPlayer: {
   }
 }
 
+/**
+ ** Updates player position for all connected clients
+ * @param {object} player - Player data to update
+ */
 export function updatePlayer(player: {
   name: string;
   position: { x: number; y: number; z: number };
@@ -112,6 +121,10 @@ export function updatePlayer(player: {
   });
 }
 
+/**
+ ** Removes a player from the game
+ * @param {string} playerName - Name of the player to remove
+ */
 export function removePlayer(playerName: string) {
   connections.forEach((ws) => {
     ws.send(JSON.stringify(
@@ -127,6 +140,11 @@ export function removePlayer(playerName: string) {
   delete players[playerName];
 }
 
+/**
+ ** Gets player info formatted for network transmission
+ * @param {string} name - Player name
+ * @returns {object|null} Player info or null if not found
+ */
 function getPlayerSendInfo(name: string) {
   if (players[name]) {
     return {
@@ -139,6 +157,11 @@ function getPlayerSendInfo(name: string) {
   return null;
 }
 
+/**
+ ** Checks if a player exists
+ * @param {string} name - Player name to check
+ * @returns {boolean} Whether the player exists
+ */
 export function playerExists(name: string): boolean {
   return players[name] !== undefined;
 }

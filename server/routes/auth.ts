@@ -13,7 +13,13 @@ import { ErrorType, ErrorResponse, getErrorTypeFromHttpStatus } from "../enums/E
 
 const authRoutes = new Router();
 
-// Error response utility function
+/**
+ ** Creates an error response with consistent format
+ * @param {Context} ctx - The Oak context
+ * @param {number} status - HTTP status code
+ * @param {string} message - Error message
+ * @param {Record<string, any>} [details] - Additional error details
+ */
 const errorResponse = (ctx: Context, status: number, message: string, details?: Record<string, any>) => {
   const errorType = getErrorTypeFromHttpStatus[status] || ErrorType.UNKNOWN;
   
@@ -25,7 +31,9 @@ const errorResponse = (ctx: Context, status: number, message: string, details?: 
   } as ErrorResponse;
 };
 
-// Register route
+/**
+ ** User registration handler
+ */
 authRoutes.post("/register", csrfProtection, async (ctx) => {
     const body = await ctx.request.body.json();
     const { username, password } = body;
@@ -79,7 +87,9 @@ authRoutes.post("/register", csrfProtection, async (ctx) => {
     };
 });
 
-// Login route
+/**
+ ** User login handler
+ */
 authRoutes.post("/login", csrfProtection, rateLimiter, async (ctx) => {
     const body = await ctx.request.body.json();
     const { username, password } = body;
@@ -135,7 +145,9 @@ authRoutes.post("/login", csrfProtection, rateLimiter, async (ctx) => {
     console.log("✅ User logged in successfully");
 });
 
-// Refresh token route
+/**
+ ** Token refresh handler
+ */
 authRoutes.post("/refresh", async (ctx) => {
     const token = await ctx.cookies.get('refreshToken');
     
@@ -208,7 +220,9 @@ authRoutes.post("/refresh", async (ctx) => {
     console.log("✅ Token refreshed for user:", payload.username);
 });
 
-// Logout route
+/**
+ ** User logout handler
+ */
 authRoutes.post("/logout", async (ctx) => {
   const refreshToken = await ctx.cookies.get('refreshToken');
   if (refreshToken) {

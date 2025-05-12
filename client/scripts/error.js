@@ -49,13 +49,13 @@ document.addEventListener('DOMContentLoaded', () => {
           refreshAuthToken()
             .then(refreshed => {
               if (refreshed) {
-                window.location.href = 'index.html';
+                window.location.href = 'index';
               } else {
-                window.location.href = `login.html?error=${currentErrorType}`;
+                window.location.href = `login?error=${currentErrorType}`;
               }
             })
             .catch(() => {
-              window.location.href = `login.html?error=${currentErrorType}`;
+              window.location.href = `login?error=${currentErrorType}`;
             });
           return;
         }
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkServerConnection()
           .then(result => {
             if (result.isConnected) {
-              window.location.href = 'index.html';
+              window.location.href = 'index';
             } else if (result.errorType !== currentErrorType) {
               currentErrorType = result.errorType;
               updateUrlParam('type', currentErrorType);
@@ -105,6 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   }
   
+  /**
+   ** Updates a URL parameter in the current page URL without refreshing the page
+   * @param {string} key - The URL parameter name to update
+   * @param {string} value - The value to set for the parameter
+   * @returns {void}
+   */
   function updateUrlParam(key, value) {
     const url = new URL(window.location.href);
     url.searchParams.set(key, value);
@@ -121,11 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const refreshed = await refreshAuthToken();
         if (refreshed) {
-          window.location.href = 'index.html';
+          window.location.href = 'index';
           return;
         }
         
-        window.location.href = `login.html?error=${currentErrorType}`;
+        window.location.href = `login?error=${currentErrorType}`;
         return;
       } catch (e) {
         retryButton.disabled = false;
@@ -133,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         errorDetails.textContent = 'Token refresh failed. Please try logging in again.';
         errorDetails.style.color = '#ff4655';
         setTimeout(() => {
-          window.location.href = `login.html?error=${currentErrorType}`;
+          window.location.href = `login?error=${currentErrorType}`;
         }, 2000);
         return;
       }
@@ -161,10 +167,15 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   loginButton.addEventListener('click', () => {
-    window.location.href = `login.html?error=${currentErrorType}`;
+    window.location.href = `login?error=${currentErrorType}`;
   });
 });
 
+/**
+ ** Attempts to verify the connection with the server
+ * Makes an API call to check if the server is reachable and determines the error type if any
+ * @returns {Promise<{isConnected: boolean, errorType: number|null}>} Connection status and error type
+ */
 async function checkServerConnection() {
   try {
     if (await refreshAuthToken()) {
@@ -197,6 +208,13 @@ async function checkServerConnection() {
   }
 }
 
+/**
+ ** Configures the error display elements based on the error type
+ * @param {number} type - The error type from ErrorTypes enum
+ * @param {string} attempts - Number of connection attempts made
+ * @param {string} redirectFrom - The page that redirected to the error page
+ * @returns {void}
+ */
 function configureErrorDisplay(type, attempts, redirectFrom) {
   const errorTitle = document.getElementById('error-title');
   const errorMessage = document.getElementById('error-message');

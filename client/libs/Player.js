@@ -1,6 +1,13 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
 
 export class Player {
+  /**
+   ** Creates a new player representation in the 3D world.
+   * Constructs a 3D model with body and head to represent the player.
+   * @param {string} name - The player's username.
+   * @param {Object} position - The initial position coordinates {x,y,z}.
+   * @param {number} pitch - The initial camera pitch angle.
+   */
   constructor(name, position, pitch) {
     this.name = name;
 
@@ -32,6 +39,14 @@ export class Player {
     this.playerGroup.pitch = pitch;
   }
 
+  /**
+   ** Updates the player's position, rotation and pitch angle.
+   * Synchronizes the 3D model with the latest network data.
+   * @param {Object} position - The new position coordinates {x,y,z}.
+   * @param {Object} rotation - The new rotation angles {x,y,z}.
+   * @param {number} pitch - The new camera pitch angle.
+   * @returns {void}
+   */
   updatePosition(position, rotation, pitch) {
     if (position) {
       this.playerGroup.position.set(position.x, position.y, position.z);

@@ -1,6 +1,13 @@
 import { Vector3 } from "./Class.ts";
 import { CONFIG } from "./Config.ts";
 
+/**
+ ** Simulates player movement based on current state and inputs
+ * Calculates horizontal and vertical movement with gravity
+ * @param {object} playerState - Current state of the player
+ * @param {number} deltaTime - Time elapsed since last update
+ * @returns {object} Updated player state
+ */
 export function simulatePlayerMovement(playerState: {
   position: { x: number; y: number; z: number };
   rotation: { x: number; y: number; z: number };
@@ -68,6 +75,16 @@ export function simulatePlayerMovement(playerState: {
   return newState;
 }
 
+/**
+ ** Validates if the client's reported horizontal position is physically possible
+ * Checks against maximum possible movement distance considering speed and network delay
+ * @param {object} serverPos - The server's recorded position (x,z)
+ * @param {object} clientPos - The client's reported position (x,z)
+ * @param {number} deltaTime - Time elapsed since last update
+ * @param {number} networkTimeOffset - Client-server time difference in milliseconds
+ * @param {boolean} isSprinting - Whether the player is sprinting
+ * @returns {boolean} Whether the movement is valid
+ */
 export function isHorizontalMovementValid(
   serverPos: { x: number; z: number },
   clientPos: { x: number; z: number },

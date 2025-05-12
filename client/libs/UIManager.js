@@ -4,6 +4,10 @@ import sceneManager from "./SceneManager.js";
 import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
 
 export class UIManager {
+  /**
+   ** Initializes the user interface manager.
+   * Sets up chat interface, connection status elements, and creates UI containers.
+   */
   constructor() {
     this.chatbox = document.getElementById("chatbox");
     this.chatboxMessages = document.getElementById("chatbox-messages");
@@ -22,6 +26,11 @@ export class UIManager {
     this.setupListeners();
   }
 
+  /**
+   ** Creates and configures the UI container for display elements.
+   * Sets up position, FPS, and network debug displays with appropriate styling.
+   * @returns {void}
+   */
   createUIContainer() {
     // Check if container already exists
     let uiContainer = document.getElementById("ui-container");
@@ -57,6 +66,11 @@ export class UIManager {
     }
   }
 
+  /**
+   ** Sets up event listeners for user interaction with the game.
+   * Handles pointer lock, keyboard inputs, chat interactions, and window resizing.
+   * @returns {void}
+   */
   setupListeners() {
     sceneManager.renderer.domElement.addEventListener("click", () => {
       if (!this.isChatboxActive) {
@@ -165,6 +179,11 @@ export class UIManager {
     globalThis.addEventListener("resize", () => this.handleResize());
   }
 
+  /**
+   ** Toggles developer mode to show/hide additional debugging information.
+   * Updates visibility of FPS and network debug elements based on dev mode status.
+   * @returns {void}
+   */
   toggleDevMode() {
     this.devMode = !this.devMode;
 
@@ -183,6 +202,12 @@ export class UIManager {
     console.log(`Dev mode ${this.devMode ? "enabled" : "disabled"}`);
   }
 
+  /**
+   ** Updates the position display in the UI.
+   * Shows detailed or simplified position based on dev mode status.
+   * @param {THREE.Vector3} position - The position to display.
+   * @returns {void}
+   */
   updatePosition(position) {
     const positionDisplay = document.getElementById("position-display");
     if (this.devMode) {
@@ -192,6 +217,11 @@ export class UIManager {
     }
   }
 
+  /**
+   ** Updates the FPS counter in the UI when in dev mode.
+   * @param {number} fps - The current frames per second.
+   * @returns {void}
+   */
   updateFPS(fps) {
     if (this.devMode) {
       const fpsElement = document.getElementById("fps");
@@ -199,6 +229,11 @@ export class UIManager {
     }
   }
 
+  /**
+   ** Updates the network time offset display in dev mode.
+   * @param {number} offset - The network time offset in milliseconds.
+   * @returns {void}
+   */
   updateNetworkOffset(offset) {
     if (this.devMode) {
       const netDebugElement = document.getElementById("net-debug");
@@ -206,6 +241,10 @@ export class UIManager {
     }
   }
 
+  /**
+   ** Handles window resize events by updating camera and renderer dimensions.
+   * @returns {void}
+   */
   handleResize() {
     sceneManager.camera.aspect = globalThis.innerWidth / globalThis.innerHeight;
     sceneManager.camera.updateProjectionMatrix();
@@ -215,6 +254,14 @@ export class UIManager {
     );
   }
 
+  /**
+   ** Adds a new message to the in-game chat box.
+   * Applies different styling based on user role and handles special system messages.
+   * @param {string} name - The sender's name.
+   * @param {number} role - The sender's role level (3=admin, 2=mod, 1=user).
+   * @param {string} message - The message content, can include HTML for system messages.
+   * @returns {void}
+   */
   addNewChatMessage(name, role, message) {
     const chatMessage = document.createElement("p");
 
@@ -253,16 +300,30 @@ export class UIManager {
     }, 10);
   }
 
+  /**
+   ** Displays connection status information to the user.
+   * @param {string} message - The status message to display.
+   * @returns {void}
+   */
   showConnectionStatus(message) {
     this.connectionErrorText.textContent = message;
     this.connectionError.classList.add('visible');
   }
 
+  /**
+   ** Displays a connection error message with error styling.
+   * @param {string} message - The error message to display.
+   * @returns {void}
+   */
   showConnectionError(message) {
     this.connectionErrorText.textContent = message;
     this.connectionError.classList.add('visible', 'error');
   }
 
+  /**
+   ** Hides the connection error/status message.
+   * @returns {void}
+   */
   hideConnectionError() {
     this.connectionError.classList.remove('visible', 'error');
   }

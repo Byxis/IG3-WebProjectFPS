@@ -5,13 +5,17 @@ import { staticRoutes } from "./static.ts";
 
 const router = new Router();
 
-// Base route
+/**
+ ** Base route handler
+ */
 router.get("/", (ctx) => {
   console.log("Base route accessed");
   ctx.response.body = "FPS Game Server";
 });
 
-// Ping route
+/**
+ ** Ping check endpoint
+ */
 router.get("/ping", (ctx) => {
   console.log("Ping route accessed");
   ctx.response.body = { message: "pong", timestamp: new Date().toISOString() };

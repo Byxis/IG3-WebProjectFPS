@@ -5,6 +5,10 @@ const SECRET_KEY_FILE = "./config/.jwt-secret.key";
 export const ACCESS_TOKEN_EXP = 15 * 60 * 1000; // 15 minutes
 export const REFRESH_TOKEN_EXP = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+/**
+ ** Generates a cryptographically secure key for JWT signing
+ * @returns {Promise<CryptoKey>} Generated key
+ */
 async function generateSecretKey(): Promise<CryptoKey> {
   return await crypto.subtle.generateKey(
     { name: "HMAC", hash: "SHA-512" },
@@ -13,6 +17,11 @@ async function generateSecretKey(): Promise<CryptoKey> {
   );
 }
 
+/**
+ ** Saves the secret key to a file
+ * @param {CryptoKey} key - The key to save
+ * @returns {Promise<void>}
+ */
 async function saveSecretKey(key: CryptoKey): Promise<void> {
   try {
     try {
@@ -32,6 +41,10 @@ async function saveSecretKey(key: CryptoKey): Promise<void> {
   }
 }
 
+/**
+ ** Loads the secret key from a file
+ * @returns {Promise<CryptoKey|null>} The loaded key or null if not found
+ */
 async function loadSecretKey(): Promise<CryptoKey | null> {
   try {
     try {
@@ -71,12 +84,24 @@ export const secretKey = await (async (): Promise<CryptoKey> => {
   return key;
 })();
 
+/**
+ ** Hashes a password using bcrypt
+ * @param {string} password - The plain password
+ * @returns {Promise<string>} Hashed password
+ */
 export async function getHash(password: string): Promise<string> {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
     return hash;
 }
 
+/**
+ ** Creates a JWT token
+ * @param {any} payload - The data to include in the token
+ * @param {number} expiresIn - Expiration time in milliseconds
+ * @param {string} type - Token type (default: "access")
+ * @returns {Promise<string>} JWT token
+ */
 export async function createJWT(payload: any, expiresIn: number, type: string = "access") {
   const key = secretKey;
   console.log(new Date(Date.now()))
@@ -93,10 +118,21 @@ export async function createJWT(payload: any, expiresIn: number, type: string = 
   return jwt;
 }
 
+/**
+ ** Compares a plain password with a hash
+ * @param {string} password - The plain password
+ * @param {string} hash - The password hash
+ * @returns {Promise<boolean>} True if password matches
+ */
 export async function comparePassword(password: string, hash: string): Promise<boolean> {
     return await bcrypt.compare(password, hash);
 }
 
+/**
+ ** Verifies a JWT token
+ * @param {string} token - The token to verify
+ * @returns {Promise<any>} Decoded token payload or null if invalid
+ */
 export async function verifyJWT(token: string): Promise<any> {
     try {
         if (!token || token === 'undefined' || token === 'null') {
@@ -113,6 +149,12 @@ export async function verifyJWT(token: string): Promise<any> {
     }
 }
 
+/**
+ ** Checks if a token is authorized for a user
+ * @param {Object} tokens - Token to username mapping
+ * @param {string} auth_token - Token to verify
+ * @returns {Promise<boolean>} True if token is authorized
+ */
 export const is_authorized = async (tokens, auth_token: string) => {
     if (!auth_token) {
       return false;
@@ -135,6 +177,11 @@ export const is_authorized = async (tokens, auth_token: string) => {
     return false;
 };
   
+/**
+ ** Creates a pair of access and refresh tokens
+ * @param {any} payload - The payload to include in tokens
+ * @returns {Promise<{accessToken: string, refreshToken: string}>} Token pair
+ */
 export async function createTokenPair(payload: any) {
   
   const accessToken = await createJWT(payload, ACCESS_TOKEN_EXP, "access");

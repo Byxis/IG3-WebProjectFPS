@@ -49,6 +49,10 @@ const registerError = document.getElementById('register-error');
 const submitBtn = document.getElementById('submit-btn');
 const registerBtn = document.getElementById('register-btn');
 
+/**
+ ** Updates the tab indicator position
+ * @param {HTMLElement} activeTab - The active tab element
+ */
 function positionIndicator(activeTab) {
   indicator.style.width = `${activeTab.offsetWidth * 0.8}px`;
   indicator.style.left = `${activeTab.offsetLeft + activeTab.offsetWidth * 0.1}px`;
@@ -68,6 +72,11 @@ tabs.forEach(button => {
   });
 });
 
+/**
+ ** Displays an error message
+ * @param {string} message - The error message to display
+ * @param {string} elementId - The ID of the element to show the error in
+ */
 function showError(message, elementId = 'register-error') {
   const errorElement = document.getElementById(elementId);
   if (errorElement) {
@@ -76,6 +85,10 @@ function showError(message, elementId = 'register-error') {
   }
 }
 
+/**
+ ** Hides an error message
+ * @param {string} elementId - The ID of the element containing the error
+ */
 function hideError(elementId = 'register-error') {
   const errorElement = document.getElementById(elementId);
   if (errorElement) {
@@ -83,6 +96,10 @@ function hideError(elementId = 'register-error') {
   }
 }
 
+/**
+ ** Validates the registration password
+ * @returns {boolean} Whether the password is valid
+ */
 function validatePassword() {
   if (registerPassword.value === '') {
     showError('Password cannot be empty');
@@ -102,6 +119,10 @@ function validatePassword() {
   }
 }
 
+/**
+ ** Validates the login username
+ * @returns {boolean} Whether the username is valid
+ */
 function validateLoginUsername() {
   if (loginUsername.value === '') {
     showError('Username cannot be empty');
@@ -113,6 +134,10 @@ function validateLoginUsername() {
   return true;
 }
 
+/**
+ ** Validates the registration username
+ * @returns {boolean} Whether the username is valid
+ */
 function validateRegisterUsername() {
   if (registerUsername.value === '') {
     showError('Username cannot be empty');
@@ -149,6 +174,9 @@ submitBtn.addEventListener("click", function(event) {
   submit();
 });
 
+/**
+ ** Handles the login form submission
+ */
 async function submit() {
   hideError('login-error');
   
@@ -247,6 +275,9 @@ registerBtn.addEventListener("click", function(event) {
   register();
 });
 
+/**
+ ** Handles the registration form submission
+ */
 async function register() {
   if(validateRegisterUsername() && validatePassword()) {
     let data = {

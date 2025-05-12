@@ -4,6 +4,9 @@ import { ErrorType } from "../enums/ErrorType.ts";
 
 const staticRoutes = new Router();
 
+/**
+ ** Lists all files in the shared directory
+ */
 staticRoutes.get("/shared", (ctx) => {
     console.log("📂 Listing shared files...");
     const files = [];
@@ -22,6 +25,9 @@ staticRoutes.get("/shared", (ctx) => {
     }
 });
 
+/**
+ ** Serves files from the shared directory
+ */
 staticRoutes.get("/shared/:path+", async (ctx) => {
     const path = ctx.params.path as string;
     

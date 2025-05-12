@@ -3,10 +3,20 @@ import { API_URL } from "../config/config.js";
 
 let networkTimeOffset = 0;
 
+/**
+ ** Returns the current calculated network time offset.
+ * @returns {number} The time offset between client and server in milliseconds.
+ */
 export function getNetworkTimeOffset() {
   return networkTimeOffset;
 }
 
+/**
+ ** Synchronizes the client's clock with the server.
+ * Takes multiple samples to calculate an accurate time offset between client and server.
+ * @param {number} sampleSize (= 5) - The number of time samples to collect.
+ * @returns {void}
+ */
 export function synchronizeClockWithServer(sampleSize = 5) {
   const samples = [];
   let sampleCount = 0;
@@ -56,6 +66,10 @@ export function synchronizeClockWithServer(sampleSize = 5) {
   collectSample();
 }
 
+/**
+ ** Starts periodic clock synchronization with the server.
+ * @returns {void}
+ */
 export function startNetworkSyncInterval() {
   setInterval(() => {
     synchronizeClockWithServer(5);

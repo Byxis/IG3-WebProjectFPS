@@ -3,7 +3,9 @@ import { authMiddleware } from "../middleware/authMiddleware.ts";
 
 const apiRoutes = new Router();
 
-// Endpoint to verify authentication
+/**
+ ** Authentication verification endpoint
+ */
 apiRoutes.get("/verify", authMiddleware, (ctx) => {
   ctx.response.body = { 
       valid: true,
@@ -11,7 +13,9 @@ apiRoutes.get("/verify", authMiddleware, (ctx) => {
   };
 });
 
-// Clock synchronization endpoint
+/**
+ ** Clock synchronization endpoint
+ */
 apiRoutes.get("/sync", (ctx) => {
   ctx.response.body = Date.now().toString();
 });

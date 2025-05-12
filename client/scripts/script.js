@@ -5,6 +5,9 @@ import { refreshAuthToken } from "../libs/AuthManager.js";
 import { API_URL } from "../config/config.js";
 
 initializeApp();
+/**
+ ** Initializes the application
+ */
 
 async function initializeApp() {
   try {
@@ -16,6 +19,11 @@ async function initializeApp() {
   }
 }
 
+/**
+ ** Verifies user authentication status
+ * Attempts to refresh token if needed
+ * @returns {Promise<boolean>} Authentication status
+ */
 async function checkAuth() {
   try {
     const response = await fetch(`${API_URL}/api/verify`, {

@@ -3,6 +3,12 @@ import { verifyJWT } from "../libs/JWTUtils.ts";
 import sqlHandler from "../libs/SqlHandler.ts";
 import { ErrorMessages, ErrorType } from "../enums/ErrorType.ts";
 
+/**
+ ** Authentication middleware
+ * Verifies the access token and sets user info in context
+ * @param {Context} ctx - The Oak context
+ * @param {Function} next - The next middleware function
+ */
 export async function authMiddleware(ctx: Context, next: () => Promise<unknown>) {
     const accessToken = await ctx.cookies.get('accessToken');
     

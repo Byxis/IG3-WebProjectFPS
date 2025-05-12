@@ -27,6 +27,9 @@ export class CommandHandler {
     handler: CommandHandlerFn;
   }>();
 
+  /**
+   ** Creates a new command handler with built-in commands
+   */
   constructor() {
     this.registerCommand("ban", RoleLevel.ADMIN, (args, sender) => {
       if (args.length < 1) {
@@ -440,6 +443,12 @@ export class CommandHandler {
     });
   }
 
+  /**
+   ** Registers a new command
+   * @param {string} name - Command name
+   * @param {RoleLevel} minRole - Minimum role level required
+   * @param {CommandHandlerFn} handler - Command handler function
+   */
   public registerCommand(
     name: string,
     minRole: RoleLevel,
@@ -448,6 +457,13 @@ export class CommandHandler {
     this.commands.set(name.toLowerCase(), { minRole, handler });
   }
 
+  /**
+   ** Executes a command
+   * @param {string} commandLine - Full command text including arguments
+   * @param {string} sender - Username of command sender
+   * @param {number} senderRole - Role level of sender
+   * @returns {Promise<CommandResult>} Command execution result
+   */
   public async executeCommand(
     commandLine: string,
     sender: string,
@@ -487,6 +503,11 @@ export class CommandHandler {
     }
   }
 
+  /**
+   ** Parses a command string into name and arguments
+   * @param {string} commandLine - Command string to parse
+   * @returns {object} Command name and arguments
+   */
   private parseCommand(
     commandLine: string,
   ): { cmdName: string; args: string[] } {
@@ -495,10 +516,20 @@ export class CommandHandler {
     return { cmdName, args };
   }
 
+  /**
+   ** Checks if a command exists
+   * @param {string} name - Command name
+   * @returns {boolean} True if command exists
+   */
   public hasCommand(name: string): boolean {
     return this.commands.has(name.toLowerCase());
   }
 
+  /**
+   ** Parses a duration string into expiry date
+   * @param {string} durationStr - Duration string (e.g. "5m", "2h")
+   * @returns {object} Formatted duration string and expiry date
+   */
   private parseDuration(
     durationStr: string,
   ): { durationStr: string; expiryDate?: Date } {

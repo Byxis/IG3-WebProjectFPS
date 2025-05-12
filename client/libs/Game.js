@@ -64,15 +64,29 @@ export class Game {
     }
   }
   
+  /**
+   ** Updates game physics at fixed time intervals
+   * @param {number} deltaTime - The time step in seconds
+   * @returns {void}
+   */
   fixedUpdate(deltaTime) {
     GAMESTATE.physics.lastTime = performance.now();
     movementManager.update(deltaTime);
   }
   
+  /**
+   ** Renders the current game state
+   * @returns {void}
+   */
   render() {
     sceneManager.renderer.render(sceneManager.scene, sceneManager.camera);
   }
 
+  /**
+   ** Starts the game loop
+   * Initializes the game loop if not already running and sets up the animation frame
+   * @returns {void}
+   */
   start() {
     if (!this.running) {
       this.running = true;
@@ -81,10 +95,21 @@ export class Game {
     }
   }
   
+  /**
+   ** Stops the game loop
+   * @returns {void}
+   */
   stop() {
     this.running = false;
   }
 
+  /**
+   ** Adds a new player to the game
+   * @param {string} name - Player's username
+   * @param {Object} position - Player's initial position coordinates
+   * @param {number} pitch - Player's camera pitch angle
+   * @returns {void}
+   */
   addNewPlayer(name, position, pitch) {
     // Don't add the local player to the scene
     if (name === localStorage.getItem("username")) {
@@ -94,6 +119,13 @@ export class Game {
     sceneManager.scene.add(this.players[name].playerGroup);
   }
 
+  /**
+   ** Remove a player in the game
+   * @param {string} name - Player's username
+   * @param {Object} position - Player's initial position coordinates
+   * @param {number} pitch - Player's camera pitch angle
+   * @returns {void}
+   */
   removePlayer(name) {
     // The local player is not in the scene, so we don't need to remove it
     if (this.players[name] == null) {
@@ -103,6 +135,14 @@ export class Game {
     delete this.players[name];
   }
 
+  /**
+   ** Updates the position of a player
+   * @param {string} name - Player's username
+   * @param {Object} position - Player's new position coordinates
+   * @param {Object} rotation - Player's new rotation coordinates
+   * @param {number} pitch - Player's camera pitch angle
+   * @returns {void}
+   */
   updatePlayerPosition(name, position, rotation, pitch) {
     if (this.players[name] == null) {
       this.addNewPlayer(name, position, pitch);
@@ -111,6 +151,10 @@ export class Game {
     this.players[name].updatePosition(position, rotation, pitch);
   }
 
+  /**
+   ** Verifies the player's position and sends it to the server
+   * @returns {void}
+   */
   verifyPosition() {
     const wsocket = getWebSocket();
     

@@ -11,7 +11,11 @@ import { ErrorType } from "./enums/ErrorType.ts";
 
 export const connections: WebSocket[] = [];
 
-// Setup WebSocket server with authentication middleware
+/**
+ ** Sets up the WebSocket server with authentication
+ * @param {ServerPhysics} serverPhysics - The server physics instance for game updates
+ * @returns {Function} Middleware function for handling WebSocket connections
+ */
 export function setupWebSocketServer(serverPhysics: ServerPhysics) {
     return async (ctx: Context, next: () => Promise<unknown>) => {
         if (ctx.request.url.pathname !== "/ws") {
@@ -37,7 +41,11 @@ export function setupWebSocketServer(serverPhysics: ServerPhysics) {
     }
 }
 
-// Setup WebSocket handlers
+/**
+ ** Sets up event handlers for a WebSocket connection
+ * @param {WebSocket} ws - The WebSocket connection
+ * @param {ServerPhysics} serverPhysics - The server physics instance
+ */
 function setupWebSocketHandlers(ws: WebSocket, serverPhysics: ServerPhysics) {
   setTimeout(() => {
     try {
@@ -155,7 +163,12 @@ function setupWebSocketHandlers(ws: WebSocket, serverPhysics: ServerPhysics) {
   };
 }
 
-// Handle chat messages
+/**
+ ** Handles incoming chat messages and commands
+ * Processes commands and broadcasts regular messages to all players
+ * @param {any} data - The message data
+ * @param {WebSocket} ws - The sender's WebSocket connection
+ */
 async function handleChatMessage(data: any, ws: WebSocket) {
   let playerId = -1;
   if (!(await sqlHandler.doUserExists(data.name))) {
@@ -345,7 +358,11 @@ async function handleChatMessage(data: any, ws: WebSocket) {
   }
 }
 
-// Notify all players except the sender if specified
+/**
+ ** Sends a message to all connected clients except the excluded one
+ * @param {string} message - The message to send
+ * @param {WebSocket} [excludeConnection] - Optional connection to exclude
+ */
 function notifyAll(message: string, excludeConnection?: WebSocket) {
   for (const connection of connections) {
     if (connection === excludeConnection) continue;

@@ -1,3 +1,9 @@
+/**
+ ** Prints a hierarchical representation of scene objects to the console.
+ * Displays object type, name and position for debugging purposes.
+ * @param {THREE.Scene} scene - The scene to debug.
+ * @returns {void}
+ */
 export function debugSceneObjects(scene) {
   console.log("=== DÉBUT DE LA HIÉRARCHIE DE LA SCÈNE ===");
 
@@ -22,6 +28,12 @@ export function debugSceneObjects(scene) {
   console.log("=== FIN DE LA HIÉRARCHIE DE LA SCÈNE ===");
 }
 
+/**
+ ** Prints a detailed hierarchical representation of scene objects including material and geometry details.
+ * Provides in-depth information about meshes including material type, color, geometry type, and visibility.
+ * @param {THREE.Scene} scene - The scene to debug.
+ * @returns {void}
+ */
 export function advancedDebugSceneObjects(scene) {
   console.log("=== DÉBUT DE LA HIÉRARCHIE DE LA SCÈNE ===");
 

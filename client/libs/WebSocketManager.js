@@ -20,10 +20,19 @@ export const wsState = {
   reconnectAttempts: 0
 };
 
+/**
+ ** Returns the current WebSocket instance.
+ * @returns {WebSocket|null} The current WebSocket connection or null if not established.
+ */
 export function getWebSocket() {
   return wsocket;
 }
 
+/**
+ ** Establishes a WebSocket connection to the server.
+ * Verifies authentication before connecting and handles connection errors.
+ * @returns {Promise<void>}
+ */
 export async function connectWebSocket() {
   if (wsState.isConnecting) {
     return;
@@ -75,6 +84,11 @@ export async function connectWebSocket() {
   }
 }
 
+/**
+ ** Sets up event handlers for the WebSocket connection.
+ * Handles connection open, close, error events and incoming messages.
+ * @returns {void}
+ */
 function setupWebSocketHandlers() {
   wsocket.onopen = function() {
     console.log("WebSocket connection established");
@@ -138,6 +152,11 @@ function setupWebSocketHandlers() {
   wsocket.onmessage = handleWebSocketMessage;
 }
 
+/**
+ ** Attempts to reconnect to the WebSocket server after connection failure.
+ * Implements backoff strategy and refreshes auth token on certain attempts.
+ * @returns {void}
+ */
 async function attemptReconnection() {
   wsState.reconnectAttempts++;
   
@@ -162,6 +181,11 @@ async function attemptReconnection() {
   }
 }
 
+/**
+ ** Displays a connection error message to the user.
+ * @param {string} message - The error message to display.
+ * @returns {void}
+ */
 function showConnectionError(message) {
   const errorElement = document.getElementById("connection-error");
   const errorTextElement = document.getElementById("connection-error-text");
@@ -174,6 +198,12 @@ function showConnectionError(message) {
   }
 }
 
+/**
+ ** Updates the reconnection status message displayed to the user.
+ * @param {string} message - The status message to display.
+ * @param {boolean} isError - Whether to display the message as an error.
+ * @returns {void}
+ */
 function updateReconnectionStatus(message, isError = false) {
   const errorElement = document.getElementById("connection-error");
   const errorTextElement = document.getElementById("connection-error-text");
@@ -191,6 +221,10 @@ function updateReconnectionStatus(message, isError = false) {
   }
 }
 
+/**
+ ** Hides the connection error message and resets reconnection attempts.
+ * @returns {void}
+ */
 export function hideConnectionError() {
   const errorElement = document.getElementById("connection-error");
   if (errorElement) {
@@ -199,6 +233,12 @@ export function hideConnectionError() {
   }
 }
 
+/**
+ ** Processes incoming WebSocket messages based on message type.
+ * Dispatches messages to appropriate handlers for player updates, chat, and system commands.
+ * @param {MessageEvent} event - The WebSocket message event.
+ * @returns {void}
+ */
 function handleWebSocketMessage(event) {
   try {
     const data = JSON.parse(event.data);
@@ -290,6 +330,11 @@ function handleWebSocketMessage(event) {
   }
 }
 
+/**
+ ** Handles user logout by sending a request to the server and redirecting to login page.
+ * Clears local storage credentials and handles errors during logout process.
+ * @returns {void}
+ */
 function handleLogout() {
   fetch(`${API_URL}/logout`, {
     method: "POST",
@@ -299,7 +344,7 @@ function handleLogout() {
     if (response.ok) {
       console.log("Logout successful");
       localStorage.removeItem('username');
-      window.location.href = 'login.html';
+      window.location.href = 'login';
     } else {
       console.error("Logout error:", response.statusText);
       alert("Logout failed. Please try again.");
