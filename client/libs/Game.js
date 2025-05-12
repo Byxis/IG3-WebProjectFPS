@@ -16,11 +16,11 @@ export class Game {
     this.accumulator = 0;
     this.lastFrameTime = performance.now();
     this.running = false;
-    
+
     // Position verification
     this.lastVerifyTime = 0;
     this.verifyInterval = 1000;
-    
+
     // FPS calculation
     this.frameCount = 0;
     this.lastFPSUpdate = performance.now();
@@ -32,38 +32,40 @@ export class Game {
     const currentTime = performance.now();
     let frameTime = currentTime - this.lastFrameTime;
     this.lastFrameTime = currentTime;
-    
+
     if (frameTime > 200) {
       frameTime = 200;
     }
-    
+
     this.frameCount++;
     if (currentTime - this.lastFPSUpdate >= this.fpsUpdateInterval) {
-      this.currentFPS = Math.round(this.frameCount * 1000 / (currentTime - this.lastFPSUpdate));
+      this.currentFPS = Math.round(
+        this.frameCount * 1000 / (currentTime - this.lastFPSUpdate),
+      );
       uiManager.updateFPS(this.currentFPS);
-      
+
       this.frameCount = 0;
       this.lastFPSUpdate = currentTime;
     }
-    
+
     this.accumulator += frameTime;
     while (this.accumulator >= this.fixedTimeStep) {
       this.fixedUpdate(this.fixedTimeStep / 1000);
       this.accumulator -= this.fixedTimeStep;
     }
-    
+
     this.render();
-    
+
     if (currentTime - this.lastVerifyTime > this.verifyInterval) {
       this.lastVerifyTime = currentTime;
       this.verifyPosition();
     }
-    
+
     if (this.running) {
       requestAnimationFrame(() => this.update());
     }
   }
-  
+
   /**
    ** Updates game physics at fixed time intervals
    * @param {number} deltaTime - The time step in seconds
@@ -73,7 +75,7 @@ export class Game {
     GAMESTATE.physics.lastTime = performance.now();
     movementManager.update(deltaTime);
   }
-  
+
   /**
    ** Renders the current game state
    * @returns {void}
@@ -94,7 +96,7 @@ export class Game {
       requestAnimationFrame(() => this.update());
     }
   }
-  
+
   /**
    ** Stops the game loop
    * @returns {void}
@@ -157,11 +159,13 @@ export class Game {
    */
   verifyPosition() {
     const wsocket = getWebSocket();
-    
-    if (!wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected) {
+
+    if (
+      !wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected
+    ) {
       return;
     }
-    
+
     const positionData = {
       type: MessageTypeEnum.VERIFY_POSITION,
       timestamp: Date.now(),
@@ -180,7 +184,7 @@ export class Game {
         pitch: GAMESTATE.camera.pitch,
       },
     };
-    
+
     try {
       wsocket.send(JSON.stringify(positionData));
     } catch (error) {

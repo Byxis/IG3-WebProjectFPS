@@ -24,7 +24,7 @@ export function synchronizeClockWithServer(sampleSize = 5) {
   function collectSample() {
     const start = Date.now();
 
-    fetch(API_URL+"/api/sync", {
+    fetch(API_URL + "/api/sync", {
       method: "GET",
       mode: "cors",
       credentials: "include",
@@ -56,7 +56,7 @@ export function synchronizeClockWithServer(sampleSize = 5) {
             newNetworkTimeOffset += samples[i].offset;
           }
           networkTimeOffset = newNetworkTimeOffset / samples.length;
-          
+
           uiManager.updateNetworkOffset(networkTimeOffset);
         }
       })

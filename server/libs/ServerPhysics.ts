@@ -45,7 +45,7 @@ export class ServerPhysics {
   /**
    ** Updates a player's position and validates it
    * @param {string} name - Player name
-   * @param {object} position - New position
+   * @param {{x: number, y: number, z: number}} position - New position
    * @returns {object} Result with correction status and corrected position if needed
    */
   updatePlayerPosition(
@@ -103,10 +103,10 @@ export class ServerPhysics {
   ): boolean {
     const player = players[name];
     if (!player) return false;
-    
+
     const now = performance.now();
     const deltaTime = (now - player.lastUpdateTime) / 1000;
-    
+
     return Physics.isHorizontalMovementValid(
       players[name].position,
       newPosition,

@@ -13,7 +13,6 @@ export class MovementManager {
    * Sets up raycaster, movement state tracking, and networking verification timers.
    */
   constructor() {
-
     this.raycaster = new THREE.Raycaster();
     this.shootCooldown = 500;
     this.lastShootTime = 0;
@@ -21,10 +20,10 @@ export class MovementManager {
     this.forward = 0;
     this.side = 0;
     this.isJumping = false;
-    
+
     // WebSocket retry mechanism
     this.maxSocketRetries = 10;
-    
+
     // Verification timer for rare position sync
     this.lastVerificationTime = 0;
     this.verificationInterval = 2000; // Every 2 seconds is enough for safety checks
@@ -173,10 +172,10 @@ export class MovementManager {
   /**
    ** Applies smooth interpolation to camera rotation.
    * Uses linear interpolation to create smooth camera movement between target and current rotations.
-   * @param {number} deltaTime - The time elapsed since the last frame in seconds.
+   * @param {number} _deltaTime - The time elapsed since the last frame in seconds.
    * @returns {void}
    */
-  smoothRotation(deltaTime) {
+  smoothRotation(_deltaTime) {
     // Smooth camera rotation
     GAMESTATE.camera.pitch = THREE.MathUtils.lerp(
       GAMESTATE.camera.pitch,
@@ -208,10 +207,12 @@ export class MovementManager {
    */
   updateMovementKeybinds() {
     const wsocket = getWebSocket();
-    if (!wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected) {
+    if (
+      !wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected
+    ) {
       return;
     }
-    
+
     const now = Date.now();
     try {
       wsocket.send(JSON.stringify({
@@ -236,7 +237,7 @@ export class MovementManager {
       console.error("Failed to send movement update:", error);
     }
   }
-  
+
   /**
    ** Periodically sends position verification data to the server.
    * Helps prevent cheating and ensures client-server synchronization at regular intervals.
@@ -247,14 +248,16 @@ export class MovementManager {
     if (now - this.lastVerificationTime < this.verificationInterval) {
       return;
     }
-    
+
     this.lastVerificationTime = now;
-    
+
     const wsocket = getWebSocket();
-    if (!wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected) {
+    if (
+      !wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected
+    ) {
       return;
     }
-    
+
     try {
       wsocket.send(JSON.stringify({
         type: MessageTypeEnum.VERIFY_POSITION,
@@ -344,13 +347,14 @@ export class MovementManager {
 
       if (hitPlayerName) {
         console.log(
-          `Hit player ${hitPlayerName} at distance ${
-            hit.distance.toFixed(2)
-          }`,
+          `Hit player ${hitPlayerName} at distance ${hit.distance.toFixed(2)}`,
         );
 
         const wsocket = getWebSocket();
-        if (wsocket && wsocket.readyState === WebSocket.OPEN && wsState.isConnected) {
+        if (
+          wsocket && wsocket.readyState === WebSocket.OPEN &&
+          wsState.isConnected
+        ) {
           wsocket.send(JSON.stringify({
             type: MessageTypeEnum.PLAYER_SHOT,
             shooter: localStorage.getItem("username"),

@@ -1,6 +1,10 @@
 import { Context } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { authMiddleware } from "./middleware/authMiddleware.ts";
-import { initiateNewPlayer, removePlayer, players } from "./libs/PlayerHandler.ts";
+import {
+  initiateNewPlayer,
+  players,
+  removePlayer,
+} from "./libs/PlayerHandler.ts";
 import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
 import sqlHandler from "./libs/SqlHandler.ts";
@@ -9,7 +13,31 @@ import { CommandEffectType } from "./enums/CommandEffectType.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
 import { ErrorType } from "./enums/ErrorType.ts";
 
-export const connections: WebSocket[] = [];
+// Custom WebSocket type with username
+interface CustomWebSocket extends WebSocket {
+  username?: string;
+}
+
+// Interface for chat message data
+interface ChatMessageData {
+  type: string;
+  name: string;
+  message: string;
+  password?: string;
+  player?: unknown;
+  position?: unknown;
+  movement?: {
+    forward: number;
+    side: number;
+    isSprinting: boolean;
+    isJumping: boolean;
+    rotation: { x: number; y: number; z: number };
+    pitch: number;
+  };
+  networkTimeOffset?: number;
+}
+
+export const connections: CustomWebSocket[] = [];
 
 /**
  ** Sets up the WebSocket server with authentication
@@ -17,45 +45,53 @@ export const connections: WebSocket[] = [];
  * @returns {Function} Middleware function for handling WebSocket connections
  */
 export function setupWebSocketServer(serverPhysics: ServerPhysics) {
-    return async (ctx: Context, next: () => Promise<unknown>) => {
-        if (ctx.request.url.pathname !== "/ws") {
-            return await next();
-        }
-
-        await authMiddleware(ctx, async () => {
-            if (!ctx.isUpgradable) {
-                ctx.throw(ErrorType.BAD_REQUEST)
-                return;
-            }
-    
-            console.log(`WebSocket upgrade request from user: ${ctx.state.user?.username}`);
-            const ws = ctx.upgrade();
-
-            connections.push(ws);
-            console.log(`New authenticated connection for user: ${ctx.state.user?.username}`);
-
-            (ws as any).username = ctx.state.user?.username;
-
-            setupWebSocketHandlers(ws, serverPhysics);
-        });
+  return async (ctx: Context, next: () => Promise<unknown>) => {
+    if (ctx.request.url.pathname !== "/ws") {
+      return await next();
     }
+
+    await authMiddleware(ctx, async () => {
+      if (!ctx.isUpgradable) {
+        ctx.throw(ErrorType.BAD_REQUEST);
+        return;
+      }
+
+      console.log(
+        `WebSocket upgrade request from user: ${ctx.state.user?.username}`,
+      );
+      const ws = ctx.upgrade() as CustomWebSocket;
+
+      connections.push(ws);
+      console.log(
+        `New authenticated connection for user: ${ctx.state.user?.username}`,
+      );
+
+      ws.username = ctx.state.user?.username;
+
+      setupWebSocketHandlers(ws, serverPhysics);
+      await next();
+    });
+  };
 }
 
 /**
  ** Sets up event handlers for a WebSocket connection
- * @param {WebSocket} ws - The WebSocket connection
+ * @param {CustomWebSocket} ws - The WebSocket connection
  * @param {ServerPhysics} serverPhysics - The server physics instance
  */
-function setupWebSocketHandlers(ws: WebSocket, serverPhysics: ServerPhysics) {
+function setupWebSocketHandlers(
+  ws: CustomWebSocket,
+  serverPhysics: ServerPhysics,
+) {
   setTimeout(() => {
     try {
       ws.send(JSON.stringify({
         type: MessageTypeEnum.SEND_CHAT_MESSAGE,
         name: "Système",
-        message: `Bienvenue, ${(ws as any).username}! Connection établie.`,
+        message: `Bienvenue, ${ws.username}! Connection établie.`,
         role: 3,
       }));
-      console.log(`Welcome message sent to ${(ws as any).username}`);
+      console.log(`Welcome message sent to ${ws.username}`);
     } catch (error) {
       console.error("Failed to send welcome message:", error);
     }
@@ -63,7 +99,7 @@ function setupWebSocketHandlers(ws: WebSocket, serverPhysics: ServerPhysics) {
 
   ws.onerror = (error) => {
     const index = connections.indexOf(ws);
-    console.error(`WebSocket error for user ${(ws as any).username}:`, error);
+    console.error(`WebSocket error for user ${ws.username}:`, error);
 
     if (index !== -1) {
       connections.splice(index, 1);
@@ -74,19 +110,27 @@ function setupWebSocketHandlers(ws: WebSocket, serverPhysics: ServerPhysics) {
   ws.onmessage = async (event) => {
     try {
       const message = event.data;
-      const data = JSON.parse(message);
+      const data = JSON.parse(message) as ChatMessageData;
       const type = MessageTypeEnum[data.type as keyof typeof MessageTypeEnum];
 
       switch (type) {
         case MessageTypeEnum.ADD_NEW_PLAYER: {
-          initiateNewPlayer(data.player, ws);
+          initiateNewPlayer(
+            data.player as {
+              name: string;
+              position: { x: number; y: number; z: number };
+              rotation: { x: number; y: number; z: number };
+              pitch: number;
+            },
+            ws,
+          );
           break;
         }
 
         case MessageTypeEnum.VERIFY_POSITION: {
           const result = serverPhysics.updatePlayerPosition(
             data.name,
-            data.position,
+            data.position as { x: number; y: number; z: number },
           );
           if (
             result.corrected &&
@@ -106,13 +150,13 @@ function setupWebSocketHandlers(ws: WebSocket, serverPhysics: ServerPhysics) {
         case MessageTypeEnum.UPDATE_PLAYER_KEYBINDS: {
           serverPhysics.updatePlayerMovement(
             data.name,
-            data.movement.forward,
-            data.movement.side,
-            data.movement.isSprinting,
-            data.movement.isJumping,
-            data.movement.rotation,
-            data.movement.pitch,
-            data.networkTimeOffset,
+            data.movement?.forward || 0,
+            data.movement?.side || 0,
+            data.movement?.isSprinting || false,
+            data.movement?.isJumping || false,
+            data.movement?.rotation || { x: 0, y: 0, z: 0 },
+            data.movement?.pitch || 0,
+            data.networkTimeOffset || 0,
           );
           break;
         }
@@ -149,7 +193,10 @@ function setupWebSocketHandlers(ws: WebSocket, serverPhysics: ServerPhysics) {
         }
       }
     } catch (error) {
-      console.error(`Error processing WebSocket message from ${(ws as any).username}:`, error);
+      console.error(
+        `Error processing WebSocket message from ${ws.username}:`,
+        error,
+      );
     }
   };
 
@@ -159,20 +206,22 @@ function setupWebSocketHandlers(ws: WebSocket, serverPhysics: ServerPhysics) {
     if (index !== -1) {
       connections.splice(index, 1);
     }
-    console.log(`- websocket disconnected for user ${(ws as any).username} (${connections.length} connections remaining)`);
+    console.log(
+      `- websocket disconnected for user ${ws.username} (${connections.length} connections remaining)`,
+    );
   };
 }
 
 /**
  ** Handles incoming chat messages and commands
  * Processes commands and broadcasts regular messages to all players
- * @param {any} data - The message data
- * @param {WebSocket} ws - The sender's WebSocket connection
+ * @param {ChatMessageData} data - The message data
+ * @param {CustomWebSocket} ws - The sender's WebSocket connection
  */
-async function handleChatMessage(data: any, ws: WebSocket) {
+async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
   let playerId = -1;
   if (!(await sqlHandler.doUserExists(data.name))) {
-    const passwordHash = await bcrypt.hash(data.password);
+    const passwordHash = await bcrypt.hash(data.password || "");
     await sqlHandler.createUser(data.name, passwordHash);
   }
   playerId = await sqlHandler.getUserByName(data.name);
@@ -305,17 +354,21 @@ async function handleChatMessage(data: any, ws: WebSocket) {
       }
 
       case CommandEffectType.LOGOUT: {
-        console.log(`Traitement de la commande LOGOUT pour ${result.effect.target}`);
+        console.log(
+          `Traitement de la commande LOGOUT pour ${result.effect.target}`,
+        );
 
         if (ws && ws.readyState === WebSocket.OPEN) {
-          console.log(`Envoi du message LOGOUT_COMMAND directement à l'expéditeur`);
+          console.log(
+            `Envoi du message LOGOUT_COMMAND directement à l'expéditeur`,
+          );
           ws.send(JSON.stringify({
             type: MessageTypeEnum.LOGOUT_COMMAND,
             message: "Vous avez été déconnecté.",
           }));
-          
+
           notifyAll(`${result.effect.target} s'est déconnecté.`, ws);
-          
+
           setTimeout(() => {
             if (result.effect.target) {
               removePlayer(result.effect.target);
@@ -361,9 +414,9 @@ async function handleChatMessage(data: any, ws: WebSocket) {
 /**
  ** Sends a message to all connected clients except the excluded one
  * @param {string} message - The message to send
- * @param {WebSocket} [excludeConnection] - Optional connection to exclude
+ * @param {CustomWebSocket} [excludeConnection] - Optional connection to exclude
  */
-function notifyAll(message: string, excludeConnection?: WebSocket) {
+function notifyAll(message: string, excludeConnection?: CustomWebSocket) {
   for (const connection of connections) {
     if (connection === excludeConnection) continue;
 

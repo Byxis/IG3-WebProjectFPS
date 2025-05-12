@@ -211,9 +211,13 @@ export class UIManager {
   updatePosition(position) {
     const positionDisplay = document.getElementById("position-display");
     if (this.devMode) {
-      positionDisplay.innerText = `X: ${position.x.toFixed(4)} Y: ${position.y.toFixed(4)} Z: ${position.z.toFixed(4)}`;
+      positionDisplay.innerText = `X: ${position.x.toFixed(4)} Y: ${
+        position.y.toFixed(4)
+      } Z: ${position.z.toFixed(4)}`;
     } else {
-      positionDisplay.innerText = `Position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}, ${position.z.toFixed(1)})`;
+      positionDisplay.innerText = `Position: (${position.x.toFixed(1)}, ${
+        position.y.toFixed(1)
+      }, ${position.z.toFixed(1)})`;
     }
   }
 
@@ -307,7 +311,7 @@ export class UIManager {
    */
   showConnectionStatus(message) {
     this.connectionErrorText.textContent = message;
-    this.connectionError.classList.add('visible');
+    this.connectionError.classList.add("visible");
   }
 
   /**
@@ -317,7 +321,7 @@ export class UIManager {
    */
   showConnectionError(message) {
     this.connectionErrorText.textContent = message;
-    this.connectionError.classList.add('visible', 'error');
+    this.connectionError.classList.add("visible", "error");
   }
 
   /**
@@ -325,7 +329,7 @@ export class UIManager {
    * @returns {void}
    */
   hideConnectionError() {
-    this.connectionError.classList.remove('visible', 'error');
+    this.connectionError.classList.remove("visible", "error");
   }
 }
 

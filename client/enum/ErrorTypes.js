@@ -7,9 +7,10 @@ export const ErrorTypes = {
   BANNED: 410,
   RATE_LIMITED: 429,
   SERVER_ERROR: 500,
-  
+
   // Custom application errors
   SERVER_UNREACHABLE: 600,
   AUTH_FAILED: 601,
-  UNKNOWN: 699
+  TOO_MANY_REQUESTS: 602,
+  UNKNOWN: 699,
 };

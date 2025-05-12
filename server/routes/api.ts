@@ -7,9 +7,9 @@ const apiRoutes = new Router();
  ** Authentication verification endpoint
  */
 apiRoutes.get("/verify", authMiddleware, (ctx) => {
-  ctx.response.body = { 
-      valid: true,
-      user: ctx.state.user 
+  ctx.response.body = {
+    valid: true,
+    user: ctx.state.user,
   };
 });
 

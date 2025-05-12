@@ -9,26 +9,28 @@ export enum ErrorType {
   RATE_LIMITED = 429,
   SERVER_ERROR = 500,
   SERVICE_UNAVAILABLE = 503,
-  
+
   // Custom application errors
   SERVER_UNREACHABLE = 600,
   AUTH_FAILED = 601,
-  UNKNOWN = 699
+  TOO_MANY_REQUESTS = 602,
+  UNKNOWN = 699,
 }
 
 export const ErrorMessages: Record<ErrorType, string> = {
-  [ErrorType.SERVER_UNREACHABLE]: 'Cannot connect to the server',
-  [ErrorType.AUTH_REQUIRED]: 'Authentication required',
-  [ErrorType.AUTH_FAILED]: 'Authentication failed',
-  [ErrorType.ACCESS_DENIED]: 'Access denied',
-  [ErrorType.BANNED]: 'Your account is banned',
-  [ErrorType.RATE_LIMITED]: 'Rate limit exceeded',
-  [ErrorType.SERVER_ERROR]: 'Internal server error',
-  [ErrorType.SERVICE_UNAVAILABLE]: 'Service unavailable',
-  [ErrorType.BAD_REQUEST]: 'Bad request',
-  [ErrorType.NOT_FOUND]: 'Resource not found',
-  [ErrorType.CONFLICT]: 'Resource conflict',
-  [ErrorType.UNKNOWN]: 'Unknown error'
+  [ErrorType.SERVER_UNREACHABLE]: "Cannot connect to the server",
+  [ErrorType.AUTH_REQUIRED]: "Authentication required",
+  [ErrorType.AUTH_FAILED]: "Authentication failed",
+  [ErrorType.ACCESS_DENIED]: "Access denied",
+  [ErrorType.BANNED]: "Your account is banned",
+  [ErrorType.RATE_LIMITED]: "Rate limit exceeded",
+  [ErrorType.SERVER_ERROR]: "Internal server error",
+  [ErrorType.SERVICE_UNAVAILABLE]: "Service unavailable",
+  [ErrorType.BAD_REQUEST]: "Bad request",
+  [ErrorType.NOT_FOUND]: "Resource not found",
+  [ErrorType.CONFLICT]: "Resource conflict",
+  [ErrorType.UNKNOWN]: "Unknown error",
+  [ErrorType.TOO_MANY_REQUESTS]: "Too many requests",
 };
 
 export function getErrorTypeFromHttpStatus(status: number): ErrorType {
@@ -38,20 +40,22 @@ export function getErrorTypeFromHttpStatus(status: number): ErrorType {
       return errorType;
     }
   }
-  
+
   if (status >= 600 && status < 700) {
-    const errorValues = Object.values(ErrorType).filter(val => typeof val === 'number');
-    const matchedError = errorValues.find(val => val === status);
+    const errorValues = Object.values(ErrorType).filter((val) =>
+      typeof val === "number"
+    );
+    const matchedError = errorValues.find((val) => val === status);
     if (matchedError !== undefined) {
       return matchedError as ErrorType;
     }
   }
-  
+
   return ErrorType.UNKNOWN;
 }
 
 export type ErrorResponse = {
   error: ErrorType;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 };

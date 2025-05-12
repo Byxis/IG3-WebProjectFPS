@@ -351,7 +351,7 @@ export class SqlHandler {
     if (result.length > 0) {
       return result[0][0] as string;
     }
-    return ""; 
+    return "";
   }
 
   /**
@@ -654,7 +654,7 @@ export class SqlHandler {
     try {
       this.db.query(
         "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)",
-        [userId, token, expiresAt]
+        [userId, token, expiresAt],
       );
       return true;
     } catch (error) {
@@ -673,7 +673,7 @@ export class SqlHandler {
     try {
       const result = this.db.query(
         "SELECT token_id FROM refresh_tokens WHERE user_id = ? AND token = ? AND expires_at > datetime('now')",
-        [userId, token]
+        [userId, token],
       );
       return result.length > 0;
     } catch (error) {
@@ -718,7 +718,9 @@ export class SqlHandler {
    */
   cleanExpiredTokens(): number {
     try {
-      const result = this.db.query("DELETE FROM refresh_tokens WHERE expires_at <= datetime('now')");
+      const result = this.db.query(
+        "DELETE FROM refresh_tokens WHERE expires_at <= datetime('now')",
+      );
       return result.length;
     } catch (error) {
       console.error("Error cleaning expired tokens:", error);

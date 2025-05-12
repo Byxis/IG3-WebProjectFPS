@@ -14,7 +14,7 @@ export const connections: WebSocket[] = [];
 
 console.log("✅ Server started ✅\n");
 
-const gameLoop = new GameLoop(60, (deltaTime) => {
+const gameLoop = new GameLoop(60, () => {
   serverPhysics.updateAll();
 });
 gameLoop.start();
@@ -34,13 +34,13 @@ app.use(cspMiddleware);
 
 app.use(async (ctx, next) => {
   await next();
-  
+
   const contentType = ctx.response.headers.get("Content-Type");
   if (contentType && contentType.includes("text/html") && ctx.state.cspNonce) {
     if (typeof ctx.response.body === "string") {
       ctx.response.body = ctx.response.body.replace(
-        /<script>/g, 
-        `<script nonce="${ctx.state.cspNonce}">`
+        /<script>/g,
+        `<script nonce="${ctx.state.cspNonce}">`,
       );
     }
   }
@@ -72,11 +72,11 @@ if (Deno.args.length >= 3) {
 
 console.log(`Oak back server running on port ${options.port} 🚀`);
 
-let debugMode = false;
-if (debugMode || Deno.args.includes("--debug"))
-{
+if (Deno.args.includes("--debug")) {
   app.use(async (ctx, next) => {
-    console.log(`Request received: ${ctx.request.method} ${ctx.request.url.pathname} from ${ctx.request.ip}`);
+    console.log(
+      `Request received: ${ctx.request.method} ${ctx.request.url.pathname} from ${ctx.request.ip}`,
+    );
     const start = Date.now();
     await next();
     const ms = Date.now() - start;

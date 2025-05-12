@@ -10,7 +10,7 @@
   --container-bg: rgba(18, 18, 18, 0.8);
   --animation-timing: 0.3s ease;
   --gradient: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-  --font-family: 'Poppins', sans-serif;
+  --font-family: "Poppins", sans-serif;
 }
 
 .login-body {

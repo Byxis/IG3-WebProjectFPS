@@ -18,7 +18,7 @@ export const wsState = {
   isConnecting: false,
   hasError: false,
   errorReason: "",
-  reconnectAttempts: 0
+  reconnectAttempts: 0,
 };
 
 /**
@@ -39,7 +39,11 @@ export async function connectWebSocket() {
     return;
   }
 
-  if (wsocket && (wsocket.readyState === WebSocket.CONNECTING || wsocket.readyState === WebSocket.OPEN)) {
+  if (
+    wsocket &&
+    (wsocket.readyState === WebSocket.CONNECTING ||
+      wsocket.readyState === WebSocket.OPEN)
+  ) {
     return;
   }
 
@@ -49,9 +53,11 @@ export async function connectWebSocket() {
   }
 
   wsState.isConnecting = true;
-  
+
   if (wsState.reconnectAttempts > 0) {
-    uiManager.showConnectionStatus(`Reconnecting... Attempt ${wsState.reconnectAttempts}`);
+    uiManager.showConnectionStatus(
+      `Reconnecting... Attempt ${wsState.reconnectAttempts}`,
+    );
   } else {
     uiManager.showConnectionStatus("Establishing connection...");
   }
@@ -59,16 +65,20 @@ export async function connectWebSocket() {
   try {
     // Verify authentication before connecting
     const isAuthenticated = await verifyAuthentication();
-    
+
     if (!isAuthenticated) {
-      console.log("Authentication failed, cannot establish WebSocket connection");
+      console.log(
+        "Authentication failed, cannot establish WebSocket connection",
+      );
       wsState.isConnecting = false;
       wsState.hasError = true;
       wsState.errorReason = "Authentication failed";
-      uiManager.showConnectionError("Authentication failed. Refreshing page...");
+      uiManager.showConnectionError(
+        "Authentication failed. Refreshing page...",
+      );
       // Redirect to login after a short delay
       setTimeout(() => {
-        window.location.href = `login?error=${ErrorTypes.AUTH_FAILED}`;
+        globalThis.location.href = `login?error=${ErrorTypes.AUTH_FAILED}`;
       }, 2000);
       return;
     }
@@ -90,27 +100,27 @@ export async function connectWebSocket() {
  * @returns {void}
  */
 function setupWebSocketHandlers() {
-  wsocket.onopen = function() {
+  wsocket.onopen = function () {
     console.log("WebSocket connection established");
     wsState.isConnected = true;
     wsState.isConnecting = false;
     wsState.hasError = false;
     wsState.errorReason = "";
-    
+
     wsState.reconnectAttempts = 0;
-    
+
     if (reconnectTimer) {
       clearTimeout(reconnectTimer);
       reconnectTimer = null;
     }
-    
+
     hideConnectionError();
 
-    if (!window.gameInstance) {
-      window.gameInstance = new Game();
-      window.gameInstance.start();
+    if (!globalThis.gameInstance) {
+      globalThis.gameInstance = new Game();
+      globalThis.gameInstance.start();
     }
-    
+
     setTimeout(() => {
       if (wsocket && wsocket.readyState === WebSocket.OPEN) {
         wsocket.send(JSON.stringify({
@@ -132,16 +142,16 @@ function setupWebSocketHandlers() {
     synchronizeClockWithServer();
   };
 
-  wsocket.onclose = function(event) {
+  wsocket.onclose = function () {
     wsState.isConnected = false;
     wsState.isConnecting = false;
 
     showConnectionError(`Connection lost`);
-    
+
     attemptReconnection();
   };
 
-  wsocket.onerror = function(event) {
+  wsocket.onerror = function () {
     console.error("WebSocket error occurred");
     wsState.isConnected = false;
     wsState.isConnecting = false;
@@ -159,16 +169,16 @@ function setupWebSocketHandlers() {
  */
 async function attemptReconnection() {
   wsState.reconnectAttempts++;
-  
+
   if (wsState.reconnectAttempts <= MAX_RECONNECTION_ATTEMPTS) {
     const message = `Reconnecting... Attempt ${wsState.reconnectAttempts}`;
-    
-    updateReconnectionStatus(message); 
+
+    updateReconnectionStatus(message);
 
     if (wsState.reconnectAttempts % 2 === 0) { // Every second attempt
       try {
         await refreshAuthToken();
-      } catch (e) {
+      } catch (_e) {
         console.log("Failed to refresh token during reconnection attempt");
       }
     }
@@ -177,7 +187,8 @@ async function attemptReconnection() {
       connectWebSocket();
     }, RECONNECTION_DELAY);
   } else {
-    window.location.href = `error.html?type=${ErrorTypes.CONNECTION_ERROR}&attempts=${wsState.reconnectAttempts}&from=game`;
+    globalThis.location.href =
+      `error.html?type=${ErrorTypes.CONNECTION_ERROR}&attempts=${wsState.reconnectAttempts}&from=game`;
   }
 }
 
@@ -189,7 +200,7 @@ async function attemptReconnection() {
 function showConnectionError(message) {
   const errorElement = document.getElementById("connection-error");
   const errorTextElement = document.getElementById("connection-error-text");
-  
+
   if (errorElement && errorTextElement) {
     errorTextElement.textContent = message;
     errorElement.style.display = "flex";
@@ -207,11 +218,11 @@ function showConnectionError(message) {
 function updateReconnectionStatus(message, isError = false) {
   const errorElement = document.getElementById("connection-error");
   const errorTextElement = document.getElementById("connection-error-text");
-  
+
   if (errorElement && errorTextElement) {
     errorTextElement.textContent = message;
     errorElement.style.display = "flex";
-    
+
     // Toggle error class based on isError parameter
     if (isError) {
       errorElement.classList.add("error");
@@ -242,16 +253,18 @@ export function hideConnectionError() {
 function handleWebSocketMessage(event) {
   try {
     const data = JSON.parse(event.data);
-    const player = data.player;      
-    
+    const player = data.player;
+
     switch (data.type) {
       case MessageTypeEnum.NEW_PLAYER: {
-        if (window.gameInstance && player && player.name && 
-            window.gameInstance.players[player.name] != null) {
+        if (
+          globalThis.gameInstance && player && player.name &&
+          globalThis.gameInstance.players[player.name] != null
+        ) {
           return;
         }
-        if (window.gameInstance && player) {
-          window.gameInstance.addNewPlayer(
+        if (globalThis.gameInstance && player) {
+          globalThis.gameInstance.addNewPlayer(
             player.name,
             player.position,
             player.pitch,
@@ -261,15 +274,15 @@ function handleWebSocketMessage(event) {
       }
 
       case MessageTypeEnum.REMOVE_PLAYER: {
-        if (window.gameInstance && player) {
-          window.gameInstance.removePlayer(player.name);
+        if (globalThis.gameInstance && player) {
+          globalThis.gameInstance.removePlayer(player.name);
         }
         break;
       }
 
       case MessageTypeEnum.UPDATE_PLAYER: {
-        if (window.gameInstance && player) {
-          window.gameInstance.updatePlayerPosition(
+        if (globalThis.gameInstance && player) {
+          globalThis.gameInstance.updatePlayerPosition(
             player.name,
             player.position,
             player.rotation,
@@ -326,7 +339,12 @@ function handleWebSocketMessage(event) {
       }
     }
   } catch (error) {
-    console.error("Error processing WebSocket message:", error, "Raw message:", event.data);
+    console.error(
+      "Error processing WebSocket message:",
+      error,
+      "Raw message:",
+      event.data,
+    );
   }
 }
 
@@ -340,18 +358,18 @@ function handleLogout() {
     method: "POST",
     credentials: "include",
   })
-  .then((response) => {
-    if (response.ok) {
-      console.log("Logout successful");
-      localStorage.removeItem('username');
-      window.location.href = 'login';
-    } else {
-      console.error("Logout error:", response.statusText);
-      alert("Logout failed. Please try again.");
-    }
-  })
-  .catch((error) => {
-    console.error("Logout error:", error);
-    alert("Server connection error. Please try again later.");
-  });
+    .then((response) => {
+      if (response.ok) {
+        console.log("Logout successful");
+        localStorage.removeItem("username");
+        globalThis.location.href = "login";
+      } else {
+        console.error("Logout error:", response.statusText);
+        alert("Logout failed. Please try again.");
+      }
+    })
+    .catch((error) => {
+      console.error("Logout error:", error);
+      alert("Server connection error. Please try again later.");
+    });
 }

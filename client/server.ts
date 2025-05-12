@@ -23,7 +23,7 @@ app.use(async (ctx) => {
       });
       return;
     }
-    
+
     await ctx.send({
       root: ROOT,
       index: "index.html",

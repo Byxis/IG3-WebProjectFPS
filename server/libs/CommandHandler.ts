@@ -325,7 +325,11 @@ export class CommandHandler {
               }`;
             return {
               message: `Statistiques du joueur ${playerName}: <br>${statsMsg}`,
-              effect: { type: CommandEffectType.NONE, target: playerName, reason: "" },
+              effect: {
+                type: CommandEffectType.NONE,
+                target: playerName,
+                reason: "",
+              },
             };
           }
           return {
