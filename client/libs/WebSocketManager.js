@@ -5,6 +5,7 @@ import { API_URL, WSS_URL } from "../config/config.js";
 import { synchronizeClockWithServer } from "./NetworkSynchronizer.js";
 import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
 import { ErrorTypes } from "../enum/ErrorTypes.js";
+import { verifyAuthentication } from "./AuthManager.js";
 
 let wsocket = null;
 let reconnectTimer = null;
@@ -65,7 +66,6 @@ export async function connectWebSocket() {
       wsState.hasError = true;
       wsState.errorReason = "Authentication failed";
       uiManager.showConnectionError("Authentication failed. Refreshing page...");
-      
       // Redirect to login after a short delay
       setTimeout(() => {
         window.location.href = `login?error=${ErrorTypes.AUTH_FAILED}`;

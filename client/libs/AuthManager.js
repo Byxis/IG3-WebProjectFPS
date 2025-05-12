@@ -41,7 +41,6 @@ export async function verifyAuthentication() {
     if (response.ok) {
       return true;
     }
-    
     return await refreshAuthToken();
     
   } catch (error) {
