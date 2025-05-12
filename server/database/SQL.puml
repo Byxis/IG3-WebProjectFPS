@@ -70,6 +70,14 @@ table( mutes ) {
   foreign_key( muted_by ): INTEGER
 }
 
+table( refresh_tokens ) {
+  primary_key( token_id ): INTEGER
+  foreign_key( user_id ): INTEGER
+  column( token ): TEXT
+  column( created_at ): TIMESTAMP
+  column( expires_at ): TIMESTAMP
+}
+
 ' Relationships
 users ||--o{ player_matches
 users ||--o{ chat_messages
@@ -79,10 +87,10 @@ users ||--o{ bans : banned user
 users ||--o{ bans : banned by
 users ||--o{ mutes : muted user
 users ||--o{ mutes : muted by
+users ||--o{ refresh_tokens
 
 matches ||--o{ player_matches
 matches ||--o{ chat_messages
 
 roles ||--o{ users
-
 @enduml

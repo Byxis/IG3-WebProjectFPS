@@ -1,17 +1,18 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
-import { CONFIG, GAMESTATE } from "http://localhost:3000/shared/Config.js";
-import { simulatePlayerMovement } from "http://localhost:3000/shared/Physics.js";
-import { Vector3 as SharedVector3 } from "http://localhost:3000/shared/Class.js";
-import { getNetworkTimeOffset, getWebSocket } from "../script.js";
+import { CONFIG, GAMESTATE } from "https://localhost:3000/shared/Config.js";
+import { simulatePlayerMovement } from "https://localhost:3000/shared/Physics.js";
+import { getWebSocket, wsState } from "./WebSocketManager.js";
+import { getNetworkTimeOffset } from "./NetworkSynchronizer.js";
 import sceneManager from "./SceneManager.js";
-import { MessageTypeEnum } from "http://localhost:3000/shared/MessageTypeEnum.js";
+import uiManager from "./UIManager.js";
+import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
 
 export class MovementManager {
+  /**
+   ** Initializes the movement manager with necessary components for player movement and shooting.
+   * Sets up raycaster, movement state tracking, and networking verification timers.
+   */
   constructor() {
-    this.moveDirection = new SharedVector3();
-    this.sideDirection = new SharedVector3();
-    this.targetVelocity = new SharedVector3();
-
     this.raycaster = new THREE.Raycaster();
     this.shootCooldown = 500;
     this.lastShootTime = 0;
@@ -20,9 +21,12 @@ export class MovementManager {
     this.side = 0;
     this.isJumping = false;
 
+    // WebSocket retry mechanism
     this.maxSocketRetries = 10;
-    this.socketRetries = 0;
-    this.socketRetryInterval = 1000;
+
+    // Verification timer for rare position sync
+    this.lastVerificationTime = 0;
+    this.verificationInterval = 2000; // Every 2 seconds is enough for safety checks
 
     // Player state
     this.playerState = {
@@ -55,26 +59,30 @@ export class MovementManager {
     this.setupShootingControls();
   }
 
+  /**
+   ** Updates the player's movement and rotation for the current frame.
+   * @param {number} deltaTime - The time elapsed since the last frame in seconds.
+   * @returns {void}
+   */
   update(deltaTime) {
     if (!deltaTime) return;
 
     this.handleMovementUpdate();
     this.simulateMovement(deltaTime);
+    this.checkForVerification();
 
-    document.getElementById("coords").innerText = `X: ${
-      sceneManager.cameraContainer.position.x.toFixed(4)
-    } 
-      Y: ${sceneManager.cameraContainer.position.y.toFixed(4)} 
-      Z: ${sceneManager.cameraContainer.position.z.toFixed(4)}`;
-
-    const fps = Math.round(1 / deltaTime);
-    document.getElementById("fps").innerText = `FPS: ${fps}`;
+    uiManager.updatePosition(sceneManager.cameraContainer.position);
 
     this.smoothRotation(deltaTime);
   }
 
+  /**
+   ** Simulates player movement physics based on current input and state.
+   * Applies player movement calculations and updates the player's position, velocity and state.
+   * @param {number} deltaTime - The time elapsed since the last frame in seconds.
+   * @returns {void}
+   */
   simulateMovement(deltaTime) {
-    // Update player state with current values
     this.playerState.position.x = sceneManager.cameraContainer.position.x;
     this.playerState.position.y = sceneManager.cameraContainer.position.y;
     this.playerState.position.z = sceneManager.cameraContainer.position.z;
@@ -82,7 +90,6 @@ export class MovementManager {
     this.playerState.rotation.y = sceneManager.cameraContainer.rotation.y;
     this.playerState.pitch = GAMESTATE.camera.pitch;
 
-    // Update movement state
     this.playerState.movement = {
       forward: this.forward,
       side: this.side,
@@ -90,10 +97,8 @@ export class MovementManager {
       isJumping: this.isJumping,
     };
 
-    // Use shared movement logic
     const newState = simulatePlayerMovement(this.playerState, deltaTime);
 
-    // Apply the new position from the returned state
     sceneManager.cameraContainer.position.set(
       newState.position.x,
       newState.position.y,
@@ -105,14 +110,18 @@ export class MovementManager {
       newState.velocity.z,
     );
 
-    // Update vertical states
     GAMESTATE.physics.verticalVelocity = newState.verticalVelocity;
     GAMESTATE.physics.isJumping = newState.isJumping;
 
-    // Keep our local state updated with the simulation results
     this.playerState = newState;
   }
 
+  /**
+   ** Processes player input and updates movement direction values.
+   * Handles keyboard input for movement (WASD/arrows), sprinting, and jumping.
+   * Normalizes diagonal movement and triggers network updates when input changes.
+   * @returns {void}
+   */
   handleMovementUpdate() {
     const oldForward = this.forward;
     const oldSide = this.side;
@@ -155,13 +164,17 @@ export class MovementManager {
     ) {
       this.updateMovementKeybinds();
     } else if (sceneManager.getPitchHasChanged()) {
-      //* Maybe we should set a timer to send the pitch update,
-      //* so we don't spam the server with updates
       this.updateMovementKeybinds();
       sceneManager.setPitchHasChanged(false);
     }
   }
 
+  /**
+   ** Applies smooth interpolation to camera rotation.
+   * Uses linear interpolation to create smooth camera movement between target and current rotations.
+   * @param {number} _deltaTime - The time elapsed since the last frame in seconds.
+   * @returns {void}
+   */
   smoothRotation(_deltaTime) {
     // Smooth camera rotation
     GAMESTATE.camera.pitch = THREE.MathUtils.lerp(
@@ -187,46 +200,91 @@ export class MovementManager {
     );
   }
 
+  /**
+   ** Sends the player's current movement state to the server.
+   * Transmits movement direction, sprint/jump status, rotation, and pitch via WebSocket.
+   * @returns {void}
+   */
   updateMovementKeybinds() {
     const wsocket = getWebSocket();
-    if (wsocket == null) return;
-    if (wsocket.readyState !== 1) {
-      console.log(
-        `Socket not ready, retrying in ${this.socketRetryInterval} ms`,
-      );
-      this.socketRetries++;
-      if (this.socketRetries > this.maxSocketRetries) {
-        console.log("Max socket retries reached, stopping movement updates");
-        this.socketRetries = 0;
-      } else {
-        setTimeout(
-          () => this.updateMovementKeybinds(),
-          this.socketRetryInterval,
-        );
-      }
+    if (
+      !wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected
+    ) {
       return;
     }
-    const networkTimeOffset = getNetworkTimeOffset();
 
-    wsocket.send(JSON.stringify({
-      type: MessageTypeEnum.UPDATE_PLAYER_KEYBINDS,
-      name: localStorage.getItem("username"),
-      networkTimeOffset: networkTimeOffset,
-      movement: {
-        forward: this.forward,
-        side: this.side,
-        isSprinting: this.isSprinting,
-        isJumping: this.isJumping,
+    const now = Date.now();
+    try {
+      wsocket.send(JSON.stringify({
+        type: MessageTypeEnum.UPDATE_PLAYER_KEYBINDS,
+        name: localStorage.getItem("username"),
+        timestamp: now,
+        networkTimeOffset: getNetworkTimeOffset(),
+        movement: {
+          forward: this.forward,
+          side: this.side,
+          isSprinting: this.isSprinting,
+          isJumping: this.isJumping,
+          rotation: {
+            x: sceneManager.cameraContainer.rotation.x,
+            y: sceneManager.cameraContainer.rotation.y,
+            z: sceneManager.cameraContainer.rotation.z,
+          },
+          pitch: GAMESTATE.camera.pitch,
+        },
+      }));
+    } catch (error) {
+      console.error("Failed to send movement update:", error);
+    }
+  }
+
+  /**
+   ** Periodically sends position verification data to the server.
+   * Helps prevent cheating and ensures client-server synchronization at regular intervals.
+   * @returns {void}
+   */
+  checkForVerification() {
+    const now = Date.now();
+    if (now - this.lastVerificationTime < this.verificationInterval) {
+      return;
+    }
+
+    this.lastVerificationTime = now;
+
+    const wsocket = getWebSocket();
+    if (
+      !wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected
+    ) {
+      return;
+    }
+
+    try {
+      wsocket.send(JSON.stringify({
+        type: MessageTypeEnum.VERIFY_POSITION,
+        name: localStorage.getItem("username"),
+        timestamp: now,
+        position: {
+          x: sceneManager.cameraContainer.position.x,
+          y: sceneManager.cameraContainer.position.y,
+          z: sceneManager.cameraContainer.position.z,
+        },
         rotation: {
           x: sceneManager.cameraContainer.rotation.x,
           y: sceneManager.cameraContainer.rotation.y,
           z: sceneManager.cameraContainer.rotation.z,
         },
         pitch: GAMESTATE.camera.pitch,
-      },
-    }));
+      }));
+    } catch (error) {
+      console.error("Failed to send position verification:", error);
+    }
   }
 
+  /**
+   ** Sets up event listeners for shooting mechanics.
+   * Handles mouse click events for shooting and applies appropriate event filters.
+   * @returns {void}
+   */
   setupShootingControls() {
     document.addEventListener("click", (event) => {
       if (document.pointerLockElement !== sceneManager.renderer.domElement) {
@@ -241,8 +299,13 @@ export class MovementManager {
     });
   }
 
+  /**
+   ** Handles the shooting logic when player fires a weapon.
+   * Implements cooldown, raycasting for hit detection, and sends hit information to server.
+   * @returns {void}
+   */
   shoot() {
-    console.log("Shot !");
+    console.log("Shot fired");
 
     const now = performance.now();
     if (now - this.lastShootTime < this.shootCooldown) {
@@ -281,25 +344,29 @@ export class MovementManager {
       }
 
       const hitPlayerName = hitObject.parent.name;
-      console.log(hitPlayerName);
 
       if (hitPlayerName) {
         console.log(
-          `Joueur touché: ${hitPlayerName} à une distance de ${
-            hit.distance.toFixed(2)
-          }`,
+          `Hit player ${hitPlayerName} at distance ${hit.distance.toFixed(2)}`,
         );
 
-        getWebSocket().send(JSON.stringify({
-          type: MessageTypeEnum.PLAYER_SHOT,
-          shooter: localStorage.getItem("username"),
-          target: hitPlayerName,
-          hitPoint: {
-            x: hit.point.x,
-            y: hit.point.y,
-            z: hit.point.z,
-          },
-        }));
+        const wsocket = getWebSocket();
+        if (
+          wsocket && wsocket.readyState === WebSocket.OPEN &&
+          wsState.isConnected
+        ) {
+          wsocket.send(JSON.stringify({
+            type: MessageTypeEnum.PLAYER_SHOT,
+            shooter: localStorage.getItem("username"),
+            target: hitPlayerName,
+            timestamp: Date.now(),
+            hitPoint: {
+              x: hit.point.x,
+              y: hit.point.y,
+              z: hit.point.z,
+            },
+          }));
+        }
       }
     }
   }

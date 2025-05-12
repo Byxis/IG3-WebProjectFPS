@@ -1,0 +1,3 @@
+# JWT Secret Key
+config/.jwt-secret.key
+server/database/database.db

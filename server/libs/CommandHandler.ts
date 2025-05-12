@@ -1,19 +1,10 @@
 import { playerExists, RoleLevel } from "./PlayerHandler.ts";
 import { players } from "./PlayerHandler.ts";
 import sqlHandler from "./SqlHandler.ts";
-
-export enum EffectType {
-  NONE = "none",
-  KILL = "kill",
-  BAN = "ban",
-  MUTE = "mute",
-  UNBAN = "unban",
-  UNMUTE = "unmute",
-  PRIVATE_MESSAGE = "private_message",
-}
+import { CommandEffectType } from "../enums/CommandEffectType.ts";
 
 export interface CommandEffect {
-  type: EffectType;
+  type: CommandEffectType;
   target: string;
   reason: string;
   expiryDate?: Date;
@@ -36,12 +27,15 @@ export class CommandHandler {
     handler: CommandHandlerFn;
   }>();
 
+  /**
+   ** Creates a new command handler with built-in commands
+   */
   constructor() {
     this.registerCommand("ban", RoleLevel.ADMIN, (args, sender) => {
       if (args.length < 1) {
         return {
           message: "Usage: /ban <playerName> [duration] [reason]",
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
@@ -49,7 +43,7 @@ export class CommandHandler {
       if (!playerExists(playerName)) {
         return {
           message: `Erreur: Le joueur ${playerName} n'existe pas`,
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
@@ -74,7 +68,7 @@ export class CommandHandler {
         message:
           `Le joueur ${playerName} a été banni ${durationText} par ${sender} pour la raison: ${reason}`,
         effect: {
-          type: EffectType.BAN,
+          type: CommandEffectType.BAN,
           target: playerName,
           reason,
           expiryDate: durationResult.expiryDate,
@@ -91,7 +85,7 @@ export class CommandHandler {
             return {
               message: `${sender} s'est suicidé`,
               effect: {
-                type: EffectType.KILL,
+                type: CommandEffectType.KILL,
                 target: sender,
                 reason: "Suicide",
               },
@@ -101,7 +95,7 @@ export class CommandHandler {
           if (args.length < 1) {
             return {
               message: "Usage pour modérateur/admin: /kill <playerName>",
-              effect: { type: EffectType.NONE, target: "", reason: "" },
+              effect: { type: CommandEffectType.NONE, target: "", reason: "" },
             };
           }
 
@@ -109,14 +103,14 @@ export class CommandHandler {
           if (!playerExists(playerName)) {
             return {
               message: `Erreur: Le joueur ${playerName} n'existe pas`,
-              effect: { type: EffectType.NONE, target: "", reason: "" },
+              effect: { type: CommandEffectType.NONE, target: "", reason: "" },
             };
           }
 
           return {
             message: `Le joueur ${playerName} a été tué par ${sender}`,
             effect: {
-              type: EffectType.KILL,
+              type: CommandEffectType.KILL,
               target: playerName,
               reason: "Tué par modérateur",
             },
@@ -126,14 +120,14 @@ export class CommandHandler {
             return {
               message:
                 "En tant que joueur, vous ne pouvez utiliser /kill que pour vous suicider",
-              effect: { type: EffectType.NONE, target: "", reason: "" },
+              effect: { type: CommandEffectType.NONE, target: "", reason: "" },
             };
           }
 
           return {
             message: `${sender} s'est suicidé`,
             effect: {
-              type: EffectType.KILL,
+              type: CommandEffectType.KILL,
               target: sender,
               reason: "Suicide",
             },
@@ -146,7 +140,7 @@ export class CommandHandler {
       if (args.length < 1) {
         return {
           message: "Usage: /mute <playerName> [duration] [reason]",
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
@@ -154,7 +148,7 @@ export class CommandHandler {
       if (!playerExists(playerName)) {
         return {
           message: `Erreur: Le joueur ${playerName} n'existe pas`,
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
@@ -179,7 +173,7 @@ export class CommandHandler {
         message:
           `Le joueur ${playerName} a été rendu muet ${durationText} par ${sender} pour la raison: ${reason}`,
         effect: {
-          type: EffectType.MUTE,
+          type: CommandEffectType.MUTE,
           target: playerName,
           reason,
           expiryDate: durationResult.expiryDate,
@@ -191,7 +185,7 @@ export class CommandHandler {
       if (args.length < 1) {
         return {
           message: "Usage: /unban <playerName>",
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
@@ -201,7 +195,7 @@ export class CommandHandler {
       if (userId <= 0) {
         return {
           message: `Erreur: Le joueur ${playerName} n'existe pas`,
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
@@ -209,7 +203,7 @@ export class CommandHandler {
       if (!banStatus.banned) {
         return {
           message: `Le joueur ${playerName} n'est pas banni actuellement`,
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
@@ -218,7 +212,7 @@ export class CommandHandler {
       return {
         message: `Le joueur ${playerName} a été débanni par ${sender}`,
         effect: {
-          type: EffectType.UNBAN,
+          type: CommandEffectType.UNBAN,
           target: playerName,
           reason: "Débannissement",
         },
@@ -232,7 +226,7 @@ export class CommandHandler {
         if (args.length < 1) {
           return {
             message: "Usage: /unmute <playerName>",
-            effect: { type: EffectType.NONE, target: "", reason: "" },
+            effect: { type: CommandEffectType.NONE, target: "", reason: "" },
           };
         }
 
@@ -242,7 +236,7 @@ export class CommandHandler {
         if (userId <= 0) {
           return {
             message: `Erreur: Le joueur ${playerName} n'existe pas`,
-            effect: { type: EffectType.NONE, target: "", reason: "" },
+            effect: { type: CommandEffectType.NONE, target: "", reason: "" },
           };
         }
 
@@ -250,7 +244,7 @@ export class CommandHandler {
         if (!muteStatus.muted) {
           return {
             message: `Le joueur ${playerName} n'est pas muet actuellement`,
-            effect: { type: EffectType.NONE, target: "", reason: "" },
+            effect: { type: CommandEffectType.NONE, target: "", reason: "" },
           };
         }
 
@@ -259,7 +253,7 @@ export class CommandHandler {
         return {
           message: `Le joueur ${playerName} a été démuté par ${sender}`,
           effect: {
-            type: EffectType.UNMUTE,
+            type: CommandEffectType.UNMUTE,
             target: playerName,
             reason: "Démutage",
           },
@@ -299,7 +293,7 @@ export class CommandHandler {
           return {
             message: `Statistiques du joueur ${sender}: <br>${statsMsg}`,
             effect: {
-              type: EffectType.NONE,
+              type: CommandEffectType.NONE,
               target: sender,
               reason: "Suicide",
             },
@@ -331,12 +325,16 @@ export class CommandHandler {
               }`;
             return {
               message: `Statistiques du joueur ${playerName}: <br>${statsMsg}`,
-              effect: { type: EffectType.NONE, target: playerName, reason: "" },
+              effect: {
+                type: CommandEffectType.NONE,
+                target: playerName,
+                reason: "",
+              },
             };
           }
           return {
             message: `Erreur: Le joueur ${playerName} n'existe pas`,
-            effect: { type: EffectType.NONE, target: "", reason: "" },
+            effect: { type: CommandEffectType.NONE, target: "", reason: "" },
           };
         }
 
@@ -369,7 +367,7 @@ export class CommandHandler {
           }`;
         return {
           message: `Statistiques du joueur ${playerName}: <br>${statsMsg}`,
-          effect: { type: EffectType.NONE, target: sender, reason: "" },
+          effect: { type: CommandEffectType.NONE, target: sender, reason: "" },
         };
       },
     );
@@ -383,7 +381,7 @@ export class CommandHandler {
       }
       return {
         message: helpText,
-        effect: { type: EffectType.NONE, target: "", reason: "" },
+        effect: { type: CommandEffectType.NONE, target: "", reason: "" },
       };
     });
 
@@ -391,7 +389,7 @@ export class CommandHandler {
       if (args.length < 2) {
         return {
           message: "Usage: /msg <playerName> <message>",
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
@@ -401,7 +399,7 @@ export class CommandHandler {
       if (messageText.length > 255) {
         return {
           message: "Erreur: Le message est trop long (max 255 caractères)",
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
@@ -409,14 +407,14 @@ export class CommandHandler {
         return {
           message:
             `Erreur: Le joueur ${targetPlayer} n'existe pas ou n'est pas connecté`,
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
       if (targetPlayer === sender) {
         return {
           message: "Vous ne pouvez pas vous envoyer de message à vous-même",
-          effect: { type: EffectType.NONE, target: "", reason: "" },
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
 
@@ -430,14 +428,31 @@ export class CommandHandler {
       return {
         message: `MP à ${targetPlayer} : ${messageText}`,
         effect: {
-          type: EffectType.PRIVATE_MESSAGE,
+          type: CommandEffectType.PRIVATE_MESSAGE,
           target: targetPlayer,
           reason: messageText,
         },
       };
     });
+
+    this.registerCommand("logout", RoleLevel.USER, (_, sender) => {
+      return {
+        message: `${sender} s'est déconnecté.`,
+        effect: {
+          type: CommandEffectType.LOGOUT,
+          target: sender,
+          reason: "Déconnexion volontaire",
+        },
+      };
+    });
   }
 
+  /**
+   ** Registers a new command
+   * @param {string} name - Command name
+   * @param {RoleLevel} minRole - Minimum role level required
+   * @param {CommandHandlerFn} handler - Command handler function
+   */
   public registerCommand(
     name: string,
     minRole: RoleLevel,
@@ -446,6 +461,13 @@ export class CommandHandler {
     this.commands.set(name.toLowerCase(), { minRole, handler });
   }
 
+  /**
+   ** Executes a command
+   * @param {string} commandLine - Full command text including arguments
+   * @param {string} sender - Username of command sender
+   * @param {number} senderRole - Role level of sender
+   * @returns {Promise<CommandResult>} Command execution result
+   */
   public async executeCommand(
     commandLine: string,
     sender: string,
@@ -457,14 +479,14 @@ export class CommandHandler {
     if (!command) {
       return {
         message: `Commande inconnue: ${cmdName}`,
-        effect: { type: EffectType.NONE, target: "", reason: "" },
+        effect: { type: CommandEffectType.NONE, target: "", reason: "" },
       };
     }
 
     if (senderRole < command.minRole) {
       return {
         message: "Vous n'avez pas la permission d'utiliser cette commande",
-        effect: { type: EffectType.NONE, target: "", reason: "" },
+        effect: { type: CommandEffectType.NONE, target: "", reason: "" },
       };
     }
 
@@ -480,11 +502,16 @@ export class CommandHandler {
       );
       return {
         message: `Erreur: ${errorMessage}`,
-        effect: { type: EffectType.NONE, target: "", reason: "" },
+        effect: { type: CommandEffectType.NONE, target: "", reason: "" },
       };
     }
   }
 
+  /**
+   ** Parses a command string into name and arguments
+   * @param {string} commandLine - Command string to parse
+   * @returns {object} Command name and arguments
+   */
   private parseCommand(
     commandLine: string,
   ): { cmdName: string; args: string[] } {
@@ -493,10 +520,20 @@ export class CommandHandler {
     return { cmdName, args };
   }
 
+  /**
+   ** Checks if a command exists
+   * @param {string} name - Command name
+   * @returns {boolean} True if command exists
+   */
   public hasCommand(name: string): boolean {
     return this.commands.has(name.toLowerCase());
   }
 
+  /**
+   ** Parses a duration string into expiry date
+   * @param {string} durationStr - Duration string (e.g. "5m", "2h")
+   * @returns {object} Formatted duration string and expiry date
+   */
   private parseDuration(
     durationStr: string,
   ): { durationStr: string; expiryDate?: Date } {

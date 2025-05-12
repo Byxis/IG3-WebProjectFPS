@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>WebWarfare - error</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/background.css">
+    <link rel="stylesheet" href="css/error.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+  </head>
+  <body class="login-body">
+    <div class="error-container container">
+      <div class="logo">
+        <h1>WEB <span>WARFARE</span></h1>
+        <div class="logo-underline"></div>
+      </div>
+      <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h2 class="error-title" id="error-title">Connection Error</h2>
+      <p class="error-message" id="error-message">
+        We're having trouble connecting to the game server. This could be due to
+        server maintenance or network issues.
+      </p>
+      <p id="error-details" class="details"></p>
+      <div class="error-buttons">
+        <button class="error-btn retry-btn" id="retry-btn">
+          <i class="fas fa-sync-alt"></i> Retry
+        </button>
+        <button class="error-btn login-btn" id="login-btn">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+      </div>
+      <div class="countdown" id="auto-retry">
+        Automatically retrying in <span id="countdown">10</span> seconds...
+      </div>
+    </div>
+
+    <script src="scripts/background.js" type="module"></script>
+    <script type="module" src="scripts/error.js"></script>
+  </body>
+</html>

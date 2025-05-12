@@ -1,7 +1,11 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
-import { CONFIG, GAMESTATE } from "http://localhost:3000/shared/Config.js";
+import { CONFIG, GAMESTATE } from "https://localhost:3000/shared/Config.js";
 
 export class SceneManager {
+  /**
+   ** Initializes the scene manager and sets up the 3D environment.
+   * Creates scene, camera, renderer, and basic test objects.
+   */
   constructor() {
     this.setupScene();
     this.setupCamera();
@@ -11,6 +15,11 @@ export class SceneManager {
     this.hasPitchChanged = false;
   }
 
+  /**
+   ** Sets up the Three.js scene with lights and basic environment.
+   * Creates ambient and directional lights, a ground plane, and coordinate axes.
+   * @returns {void}
+   */
   setupScene() {
     this.scene = new THREE.Scene();
 
@@ -35,9 +44,11 @@ export class SceneManager {
     this.scene.add(axesHelper);
   }
 
+  /**
+   ** Configures the camera and its container for player perspective.
+   * @returns {void}
+   */
   setupCamera() {
-    // Create a camera and add it to the scene
-
     this.camera = new THREE.PerspectiveCamera(
       CONFIG.FOV,
       globalThis.innerWidth / globalThis.innerHeight,
@@ -45,30 +56,42 @@ export class SceneManager {
       CONFIG.FAR,
     );
 
-    // Create a container for the camera to allow rotation
     this.cameraContainer = new THREE.Object3D();
     this.scene.add(this.cameraContainer);
     this.cameraContainer.add(this.camera);
     this.cameraContainer.position.z = 5;
   }
 
+  /**
+   ** Creates and configures the WebGL renderer.
+   * Sets renderer size based on window dimensions and appends it to the DOM.
+   * @returns {void}
+   */
   setupRenderer() {
-    // Create a renderer and add it to the DOM
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
     document.body.appendChild(this.renderer.domElement);
   }
 
+  /**
+   ** Creates a test cube for development purposes.
+   * Adds a simple green cube to the scene for reference.
+   * @returns {void}
+   */
   setupTestCube() {
-    // Create a test cube and add it to the scene (To be removed later)
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     const cube = new THREE.Mesh(geometry, material);
     this.scene.add(cube);
   }
 
+  /**
+   ** Handles mouse movement for camera rotation.
+   * Updates camera rotation based on mouse movement when pointer is locked.
+   * @param {MouseEvent} event - The mouse movement event.
+   * @returns {void}
+   */
   handleMouseMove(event) {
-    // Check if the pointer is locked and if so, rotate the camera
     if (document.pointerLockElement === this.renderer.domElement) {
       const deltaX = event.movementX * CONFIG.MOUSE_SENSITIVITY;
       const deltaY = event.movementY * CONFIG.MOUSE_SENSITIVITY;
@@ -82,14 +105,29 @@ export class SceneManager {
     }
   }
 
+  /**
+   ** Sets the pitch change tracking flag.
+   * Used to determine when to send rotation updates to the server.
+   * @param {boolean} value - Whether the pitch has changed.
+   * @returns {void}
+   */
   setPitchHasChanged(value) {
     this.hasPitchChanged = value;
   }
 
+  /**
+   ** Gets the current state of the pitch change tracking flag.
+   * @returns {boolean} Whether the pitch has changed since the last check.
+   */
   getPitchHasChanged() {
     return this.hasPitchChanged;
   }
 
+  /**
+   ** Sets up mouse event handling.
+   * Binds the mouse move handler to maintain proper context.
+   * @returns {void}
+   */
   setupMouse() {
     this.boundHandleMouseMove = this.handleMouseMove.bind(this);
   }

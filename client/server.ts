@@ -8,6 +8,22 @@ const ROOT = `${Deno.cwd()}/`;
 
 app.use(async (ctx) => {
   try {
+    if (ctx.request.url.pathname === "/login") {
+      await ctx.send({
+        root: ROOT,
+        path: "login.html",
+      });
+      return;
+    }
+
+    if (ctx.request.url.pathname === "/error") {
+      await ctx.send({
+        root: ROOT,
+        path: "error.html",
+      });
+      return;
+    }
+
     await ctx.send({
       root: ROOT,
       index: "index.html",
@@ -33,7 +49,6 @@ if (Deno.args.length >= 3) {
   const certContent = await Deno.readTextFile(Deno.args[1]);
   const keyContent = await Deno.readTextFile(Deno.args[2]);
 
-  // For Oak v12.6.1, use cert and key instead of certFile and keyFile
   options = {
     port: Number(Deno.args[0]),
     secure: true,

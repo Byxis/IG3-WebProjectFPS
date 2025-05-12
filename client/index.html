@@ -2,17 +2,33 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>FPS Project</title>
+    <title>WebWarfare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/background.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/error.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
   </head>
-  <body>
-    <p id="name" class="onTop">player</p>
+  <body class="game-body">
     <p id="lives" class="onTop">❤️❤️❤️</p>
     <p id="kills" class="onTop">0</p>
     <p id="ammos" class="onTop">30/30</p>
-    <p id="coords" class="onTop">X: 0, Y: 0, Z: 0</p>
-    <p id="fps" class="onTop">FPS: 60</p>
-    <p id="net-debug" class="onTop"></p>
+
+    <div id="ui-container" class="onTop">
+      <div id="position-display">Position: (0.0, 0.0, 0.0)</div>
+      <div id="fps" style="display: none">FPS: 60</div>
+      <div id="net-debug" style="display: none">Offset: 0.00ms</div>
+    </div>
+
     <div id="chatbox" class="onTop">
       <div id="chatbox-messages"></div>
       <input
@@ -26,6 +42,11 @@
       <div id="crosshair-outer"></div>
       <div id="crosshair-inner"></div>
     </div>
+    <div id="connection-error">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span id="connection-error-text">Connection Error</span>
+    </div>
+    <script src="scripts/background.js" type="module"></script>
     <script type="module" src="scripts/script.js"></script>
   </body>
 </html>

@@ -2,6 +2,17 @@ import * as Physics from "../../shared/Physics.ts";
 import { players, updatePlayer } from "./PlayerHandler.ts";
 
 export class ServerPhysics {
+  /**
+   ** Updates a player's movement input state
+   * @param {string} name - Player name
+   * @param {number} forward - Forward movement (-1 to 1)
+   * @param {number} side - Side movement (-1 to 1)
+   * @param {boolean} isSprinting - Whether player is sprinting
+   * @param {boolean} isJumping - Whether player is jumping
+   * @param {object} rotation - Player rotation
+   * @param {number} pitch - Camera pitch
+   * @param {number} networkTimeOffset - Client-server time difference
+   */
   updatePlayerMovement(
     name: string,
     forward: number,
@@ -31,12 +42,19 @@ export class ServerPhysics {
     }
   }
 
+  /**
+   ** Updates a player's position and validates it
+   * @param {string} name - Player name
+   * @param {{x: number, y: number, z: number}} position - New position
+   * @returns {object} Result with correction status and corrected position if needed
+   */
   updatePlayerPosition(
     name: string,
     position: { x: number; y: number; z: number },
   ) {
     if (players[name]) {
       let corrected = false;
+
       if (this.isMovementValid(name, position)) {
         players[name].position.x = position.x;
         players[name].position.z = position.z;
@@ -73,6 +91,12 @@ export class ServerPhysics {
     return { corrected: false };
   }
 
+  /**
+   ** Checks if a player's movement is valid
+   * @param {string} name - Player name
+   * @param {object} newPosition - New position to validate
+   * @returns {boolean} Whether the movement is valid
+   */
   private isMovementValid(
     name: string,
     newPosition: { x: number; y: number; z: number },
@@ -80,21 +104,28 @@ export class ServerPhysics {
     const player = players[name];
     if (!player) return false;
 
+    const now = performance.now();
+    const deltaTime = (now - player.lastUpdateTime) / 1000;
+
     return Physics.isHorizontalMovementValid(
       players[name].position,
       newPosition,
-      1 / 60,
+      deltaTime,
       player.networkTimeOffset,
       players[name].movement.isSprinting,
     );
   }
 
-  updateAll() {
+  /**
+   ** Updates all players based on their movement state
+   * @param {number} [deltaTime] - Optional time since last update
+   */
+  updateAll(deltaTime?: number) {
     const now = performance.now();
 
     for (const [name, player] of Object.entries(players)) {
-      const deltaTime = (now - player.lastUpdateTime) / 1000;
-      const updatedPlayer = Physics.simulatePlayerMovement(player, deltaTime);
+      const dt = deltaTime || (now - player.lastUpdateTime) / 1000;
+      const updatedPlayer = Physics.simulatePlayerMovement(player, dt);
       updatedPlayer.lastUpdateTime = now;
 
       players[name] = updatedPlayer;
@@ -102,6 +133,11 @@ export class ServerPhysics {
     }
   }
 
+  /**
+   ** Gets a player's position
+   * @param {string} name - Player name
+   * @returns {object|null} Player position or null if not found
+   */
   getPlayerPosition(name: string) {
     if (players[name]) {
       return {
@@ -113,6 +149,11 @@ export class ServerPhysics {
     return null;
   }
 
+  /**
+   ** Checks if it's time to send position update to client
+   * @param {string} name - Player name
+   * @returns {boolean} Whether update should be sent
+   */
   isSendUpdateAvailable(name: string): boolean {
     if (players[name]) {
       const now = performance.now();
@@ -122,6 +163,10 @@ export class ServerPhysics {
     return true;
   }
 
+  /**
+   ** Records the time a position update was sent
+   * @param {string} name - Player name
+   */
   setSendUpdate(name: string) {
     if (players[name]) {
       players[name].lastUpdateSended = performance.now();

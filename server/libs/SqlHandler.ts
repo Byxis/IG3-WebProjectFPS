@@ -3,11 +3,19 @@ import { DB, Row } from "https://deno.land/x/sqlite/mod.ts";
 export class SqlHandler {
   private db: DB;
 
+  /**
+   ** Creates a new SqlHandler instance
+   * @param {string} dbPath - Path to the SQLite database file
+   */
   constructor(dbPath: string = "server/database/database.db") {
     this.db = new DB(dbPath);
     this.initDatabase();
   }
 
+  /**
+   ** Initializes the database schema
+   * Creates tables and indexes if they don't exist
+   */
   private initDatabase(): void {
     this.db.execute(`
         CREATE TABLE IF NOT EXISTS roles (
@@ -103,6 +111,17 @@ export class SqlHandler {
       );
     `);
 
+    this.db.execute(`
+      CREATE TABLE IF NOT EXISTS refresh_tokens (
+        token_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+      );
+    `);
+
     this.db.execute(
       `CREATE INDEX IF NOT EXISTS idx_player_matches_user ON player_matches(user_id);`,
     );
@@ -151,12 +170,27 @@ export class SqlHandler {
     this.db.execute(
       `CREATE INDEX IF NOT EXISTS idx_mutes_date ON mutes(mute_date);`,
     );
+    this.db.execute(
+      `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);`,
+    );
+    this.db.execute(
+      `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);`,
+    );
+    this.db.execute(
+      `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at);`,
+    );
 
     this.db.execute(`
       INSERT OR IGNORE INTO roles (role_name) VALUES ('user'), ('moderator'), ('admin');
     `);
   }
 
+  /**
+   ** Creates a new user in the database
+   * @param {string} username - The username
+   * @param {string} passwordHash - The hashed password
+   * @returns {Row[]} SQL query result
+   */
   createUser(username: string, passwordHash: string): Row[] {
     console.log(username);
     return this.db.query(
@@ -165,6 +199,11 @@ export class SqlHandler {
     );
   }
 
+  /**
+   ** Checks if a username exists in the database
+   * @param {string} username - The username to check
+   * @returns {boolean} True if the user exists
+   */
   doUserExists(username: string): boolean {
     const result = this.db.query(
       "SELECT user_id FROM users WHERE username = ?",
@@ -173,6 +212,11 @@ export class SqlHandler {
     return result.length > 0;
   }
 
+  /**
+   ** Checks if a user ID exists in the database
+   * @param {number} userId - The user ID to check
+   * @returns {boolean} True if the user ID exists
+   */
   doUserIdExists(userId: number): boolean {
     const result = this.db.query(
       "SELECT user_id FROM users WHERE user_id = ?",
@@ -181,6 +225,11 @@ export class SqlHandler {
     return result.length > 0;
   }
 
+  /**
+   ** Gets a user ID by username
+   * @param {string} username - The username to look up
+   * @returns {number} User ID or -1 if not found
+   */
   getUserByName(username: string): number {
     const result = this.db.query(
       "SELECT user_id FROM users WHERE username = ?",
@@ -192,6 +241,11 @@ export class SqlHandler {
     return -1;
   }
 
+  /**
+   ** Gets a user's role by user ID
+   * @param {number} userId - The user ID
+   * @returns {number} Role ID or -1 if not found
+   */
   getUserRole(userId: number): number {
     const result = this.db.query(
       "SELECT player_role FROM users WHERE user_id = ?",
@@ -203,6 +257,11 @@ export class SqlHandler {
     return -1;
   }
 
+  /**
+   ** Gets a user's game statistics
+   * @param {string} username - The username
+   * @returns {object} User statistics
+   */
   getUserStats(username: string): {
     kills: number;
     deaths: number;
@@ -235,6 +294,12 @@ export class SqlHandler {
     };
   }
 
+  /**
+   ** Changes a user's role
+   * @param {number} userId - The user ID
+   * @param {number} roleId - The new role ID
+   * @returns {boolean} Success status
+   */
   changeUserRole(userId: number, roleId: number): boolean {
     const result = this.db.query(
       "UPDATE users SET player_role = ? WHERE user_id = ?",
@@ -243,6 +308,11 @@ export class SqlHandler {
     return result.length > 0;
   }
 
+  /**
+   ** Updates the last login time for a user
+   * @param {number} userId - The user ID
+   * @returns {boolean} Success status
+   */
   updateUserLoginTime(userId: number): boolean {
     const result = this.db.query(
       "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?",
@@ -251,14 +321,46 @@ export class SqlHandler {
     return result.length > 0;
   }
 
-  updateUserToken(userId: number, token: string): boolean {
+  /**
+   ** Updates a user's password
+   * @param {number} userId - The user ID
+   * @param {string} newPasswordHash - The new password hash
+   * @returns {boolean} Success status
+   */
+  updateUserPassword(
+    userId: number,
+    newPasswordHash: string,
+  ): boolean {
     const result = this.db.query(
-      "UPDATE users SET token = ? WHERE user_id = ?",
-      [token, userId],
+      "UPDATE users SET password_hash = ? WHERE user_id = ?",
+      [newPasswordHash, userId],
     );
     return result.length > 0;
   }
 
+  /**
+   ** Gets a user's password hash
+   * @param {number} id - The user ID
+   * @returns {string} Password hash or empty string if not found
+   */
+  getUserPasswordHash(id: number): string {
+    const result = this.db.query(
+      "SELECT password_hash FROM users WHERE user_id = ?",
+      [id],
+    );
+    if (result.length > 0) {
+      return result[0][0] as string;
+    }
+    return "";
+  }
+
+  /**
+   ** Adds time played to a user's record
+   * @param {number} userId - The user ID
+   * @param {Date} from - Start time
+   * @param {Date} to - End time
+   * @returns {boolean} Success status
+   */
   addTimePlayed(userId: number, from: Date, to: Date): boolean {
     const time = Math.floor((to.getTime() - from.getTime()) / 1000);
     if (time < 0) return false;
@@ -269,12 +371,27 @@ export class SqlHandler {
     return result.length > 0;
   }
 
+  /**
+   ** Creates a new match
+   * @returns {Row[]} SQL query result with match ID
+   */
   createMatch(): Row[] {
     return this.db.query(
       "INSERT INTO matches (status) VALUES ('active') RETURNING match_id",
     );
   }
 
+  /**
+   ** Records player data for a match
+   * @param {number} userId - The user ID
+   * @param {number} matchId - The match ID
+   * @param {number} kills - Number of kills
+   * @param {number} deaths - Number of deaths
+   * @param {number} headshots - Number of headshots
+   * @param {number} bodyshots - Number of bodyshots
+   * @param {number} missedshots - Number of missed shots
+   * @returns {Row[]} SQL query result
+   */
   recordPlayerMatchData(
     userId: number,
     matchId: number,
@@ -292,6 +409,11 @@ export class SqlHandler {
     );
   }
 
+  /**
+   ** Checks if a match exists
+   * @param {number} matchId - The match ID to check
+   * @returns {boolean} True if the match exists
+   */
   doMatchExists(matchId: number): boolean {
     const result = this.db.query(
       "SELECT match_id FROM matches WHERE match_id = ?",
@@ -300,6 +422,11 @@ export class SqlHandler {
     return result.length > 0;
   }
 
+  /**
+   ** Marks a match as ended
+   * @param {number} matchId - The match ID
+   * @returns {boolean} Success status
+   */
   endMatch(matchId: number): boolean {
     const result = this.db.query(
       "UPDATE matches SET end_time = CURRENT_TIMESTAMP, status = 'completed' WHERE match_id = ?",
@@ -308,6 +435,13 @@ export class SqlHandler {
     return result.length > 0;
   }
 
+  /**
+   ** Adds a chat message to a match
+   * @param {number} senderId - The sender's user ID
+   * @param {number} matchId - The match ID
+   * @param {string} messageText - The message text
+   * @returns {Row[]} SQL query result
+   */
   addChatMessage(
     senderId: number,
     matchId: number,
@@ -329,6 +463,11 @@ export class SqlHandler {
     );
   }
 
+  /**
+   ** Gets chat messages for a match
+   * @param {number} matchId - The match ID
+   * @returns {Array<{name: string, message: string, role: number}>} Array of message objects
+   */
   getChatMessages(
     matchId: number,
   ): { name: string; message: string; role: number }[] {
@@ -349,6 +488,13 @@ export class SqlHandler {
     });
   }
 
+  /**
+   ** Sends a private message between users
+   * @param {number} senderId - The sender's user ID
+   * @param {number} receiverId - The receiver's user ID
+   * @param {string} messageText - The message text
+   * @returns {Row[]} SQL query result
+   */
   sendPrivateMessage(
     senderId: number,
     receiverId: number,
@@ -360,6 +506,11 @@ export class SqlHandler {
     );
   }
 
+  /**
+   ** Gets private messages for a user
+   * @param {number} userId - The user ID
+   * @returns {Row[]} SQL query result with messages
+   */
   getPrivateMessages(userId: number): Row[] {
     return this.db.query(
       `SELECT * FROM private_messages 
@@ -369,6 +520,14 @@ export class SqlHandler {
     );
   }
 
+  /**
+   ** Adds a ban record for a user
+   * @param {number} userId - The user ID to ban
+   * @param {string} reason - The ban reason
+   * @param {number} bannedBy - Admin user ID who enacted the ban
+   * @param {Date} [expiryDate] - Optional ban expiry date (null for permanent ban)
+   * @returns {Row[]} SQL query result
+   */
   addBan(
     userId: number,
     reason: string,
@@ -382,6 +541,11 @@ export class SqlHandler {
     );
   }
 
+  /**
+   ** Checks if a user is banned
+   * @param {number} userId - The user ID to check
+   * @returns {object} Ban status, reason and expiry date
+   */
   isBanned(
     userId: number,
   ): { banned: boolean; reason?: string; expiry?: Date } {
@@ -405,6 +569,14 @@ export class SqlHandler {
     return { banned: false };
   }
 
+  /**
+   ** Adds a mute record for a user
+   * @param {number} userId - The user ID to mute
+   * @param {string} reason - The mute reason
+   * @param {number} mutedBy - Admin user ID who enacted the mute
+   * @param {Date} [expiryDate] - Optional mute expiry date (null for permanent mute)
+   * @returns {Row[]} SQL query result
+   */
   addMute(
     userId: number,
     reason: string,
@@ -418,6 +590,11 @@ export class SqlHandler {
     );
   }
 
+  /**
+   ** Checks if a user is muted
+   * @param {number} userId - The user ID to check
+   * @returns {object} Mute status, reason and expiry date
+   */
   isMuted(userId: number): { muted: boolean; reason?: string; expiry?: Date } {
     const result = this.db.query(
       `SELECT reason, expiry_date 
@@ -439,6 +616,11 @@ export class SqlHandler {
     return { muted: false };
   }
 
+  /**
+   ** Removes a ban from a user
+   * @param {number} userId - The user ID to unban
+   * @returns {boolean} Success status
+   */
   removeBan(userId: number): boolean {
     const result = this.db.query(
       "UPDATE bans SET expiry_date = CURRENT_TIMESTAMP WHERE user_id = ? AND (expiry_date IS NULL OR expiry_date > CURRENT_TIMESTAMP)",
@@ -447,6 +629,11 @@ export class SqlHandler {
     return result.length > 0;
   }
 
+  /**
+   ** Removes a mute from a user
+   * @param {number} userId - The user ID to unmute
+   * @returns {boolean} Success status
+   */
   removeMute(userId: number): boolean {
     const result = this.db.query(
       "UPDATE mutes SET expiry_date = CURRENT_TIMESTAMP WHERE user_id = ? AND (expiry_date IS NULL OR expiry_date > CURRENT_TIMESTAMP)",
@@ -455,6 +642,95 @@ export class SqlHandler {
     return result.length > 0;
   }
 
+  /**
+   ** Stores a refresh token
+   * @param {number} userId - The user ID
+   * @param {string} token - The refresh token
+   * @param {number} expiresIn - Expiration time in milliseconds
+   * @returns {boolean} Success status
+   */
+  storeRefreshToken(userId: number, token: string, expiresIn: number): boolean {
+    const expiresAt = new Date(Date.now() + expiresIn).toISOString();
+    try {
+      this.db.query(
+        "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)",
+        [userId, token, expiresAt],
+      );
+      return true;
+    } catch (error) {
+      console.error("Error storing refresh token:", error);
+      return false;
+    }
+  }
+
+  /**
+   ** Verifies a refresh token
+   * @param {number} userId - The user ID
+   * @param {string} token - The refresh token
+   * @returns {boolean} True if token is valid
+   */
+  verifyRefreshToken(userId: number, token: string): boolean {
+    try {
+      const result = this.db.query(
+        "SELECT token_id FROM refresh_tokens WHERE user_id = ? AND token = ? AND expires_at > datetime('now')",
+        [userId, token],
+      );
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error verifying refresh token:", error);
+      return false;
+    }
+  }
+
+  /**
+   ** Removes a specific refresh token
+   * @param {string} token - The token to remove
+   * @returns {boolean} Success status
+   */
+  removeRefreshToken(token: string): boolean {
+    try {
+      this.db.query("DELETE FROM refresh_tokens WHERE token = ?", [token]);
+      return true;
+    } catch (error) {
+      console.error("Error removing refresh token:", error);
+      return false;
+    }
+  }
+
+  /**
+   ** Removes all refresh tokens for a user
+   * @param {number} userId - The user ID
+   * @returns {boolean} Success status
+   */
+  removeAllUserRefreshTokens(userId: number): boolean {
+    try {
+      this.db.query("DELETE FROM refresh_tokens WHERE user_id = ?", [userId]);
+      return true;
+    } catch (error) {
+      console.error("Error removing user refresh tokens:", error);
+      return false;
+    }
+  }
+
+  /**
+   ** Removes expired refresh tokens
+   * @returns {number} Number of tokens removed
+   */
+  cleanExpiredTokens(): number {
+    try {
+      const result = this.db.query(
+        "DELETE FROM refresh_tokens WHERE expires_at <= datetime('now')",
+      );
+      return result.length;
+    } catch (error) {
+      console.error("Error cleaning expired tokens:", error);
+      return 0;
+    }
+  }
+
+  /**
+   ** Closes the database connection
+   */
   close(): void {
     this.db.close();
   }
