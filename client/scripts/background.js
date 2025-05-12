@@ -5,6 +5,9 @@ export class BackgroundManager {
     this.shapeContainers = [];
     this.isLoaded = false;
     this.animateParallax = this.animateParallax.bind(this);
+    this.resizeTimeout = null; // Pour le debouncing du resize
+    this.throttleTimeout = null;
+    this.isResizing = false;
   }
   
   /**
@@ -21,8 +24,14 @@ export class BackgroundManager {
       
       this.shapeContainers = document.querySelectorAll('.shape-container');
       document.addEventListener('mousemove', this.handleMouseMove.bind(this));
+      window.addEventListener('resize', this.handleResize.bind(this));
+      window.addEventListener('orientationchange', this.handleResize.bind(this));
       
       this.isLoaded = true;
+      
+      this.shapeContainers.forEach(container => {
+        container.style.transition = 'left 0.5s ease-out, top 0.5s ease-out';
+      });
       
       this.randomizeShapePositions();
       this.animateParallax();
@@ -43,9 +52,10 @@ export class BackgroundManager {
    ** Randomizes the positions of shape containers within a grid layout.
    * Divides the viewport into a grid and places shapes strategically for optimal coverage.
    * Applies random animation delays between 0 and 2 seconds to each shape.
+   * @param {boolean} useTransition - Whether to use CSS transitions for smooth movement.
    * @returns {void}
    */
-  randomizeShapePositions() {
+  randomizeShapePositions(useTransition = false) {
     if (!this.isLoaded || !this.shapeContainers.length) {
       return;
     }
@@ -67,7 +77,17 @@ export class BackgroundManager {
     
     this.shuffleArray(gridPositions);
     
+    this.prevWidth = viewportWidth;
+    this.prevHeight = viewportHeight;
+    
     this.shapeContainers.forEach((container, index) => {
+      if (!useTransition) {
+        container.style.transition = 'none';
+        container.offsetHeight;
+      } else {
+        container.style.transition = 'left 0.5s ease-out, top 0.5s ease-out';
+      }
+      
       if (index < gridPositions.length) {
         const position = gridPositions[index];
         const baseX = position.col * cellWidth;
@@ -92,7 +112,67 @@ export class BackgroundManager {
         const randomDelay = Math.random() * 2;
         container.style.animationDelay = `${randomDelay}s`;
       }
+      
+      if (!useTransition) {
+        setTimeout(() => {
+          container.style.transition = 'left 0.5s ease-out, top 0.5s ease-out';
+        }, 50);
+      }
     });
+  }
+  
+  /**
+   ** Ajuste rapidement les positions pendant le redimensionnement actif.
+   * Version simplifiée et plus rapide que randomizeShapePositions.
+   * @returns {void}
+   */
+  adjustPositionsForResize() {
+    if (!this.isLoaded || !this.shapeContainers.length) {
+      return;
+    }
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    this.shapeContainers.forEach(container => {
+      const currentLeft = parseInt(container.style.left);
+      const currentTop = parseInt(container.style.top);
+      
+      const percentX = currentLeft / this.prevWidth || 0.5;
+      const percentY = currentTop / this.prevHeight || 0.5;
+      
+      container.style.left = `${percentX * viewportWidth}px`;
+      container.style.top = `${percentY * viewportHeight}px`;
+    });
+    
+    this.prevWidth = viewportWidth;
+    this.prevHeight = viewportHeight;
+  }
+  
+  /**
+   ** Handles window resize events with a hybrid approach for smooth transitions.
+   * Uses throttling during active resize and debouncing for final positioning.
+   * @returns {void}
+   */
+  handleResize() {
+    this.isResizing = true;
+    
+    if (!this.throttleTimeout) {
+      this.throttleTimeout = setTimeout(() => {
+        this.adjustPositionsForResize();
+        this.throttleTimeout = null;
+        
+        if (this.isResizing) {
+          this.handleResize();
+        }
+      }, 100);
+    }
+    
+    clearTimeout(this.resizeTimeout);
+    this.resizeTimeout = setTimeout(() => {
+      this.isResizing = false;
+      this.randomizeShapePositions(true);
+    }, 200);
   }
   
   /**
