@@ -56,13 +56,22 @@ export class Game {
 
     this.render();
 
-    if (currentTime - this.lastVerifyTime > this.verifyInterval) {
-      this.lastVerifyTime = currentTime;
-      this.verifyPosition();
-    }
+    this.checkPositionVerification(currentTime);
 
     if (this.running) {
       requestAnimationFrame(() => this.update());
+    }
+  }
+
+  /**
+   ** Checks if it's time to send position verification to the server
+   * @param {number} currentTime - Current timestamp from performance.now()
+   * @returns {void}
+   */
+  checkPositionVerification(currentTime) {
+    if (currentTime - this.lastVerifyTime > this.verifyInterval) {
+      this.lastVerifyTime = currentTime;
+      this.verifyPosition();
     }
   }
 
@@ -192,3 +201,6 @@ export class Game {
     }
   }
 }
+
+const game = new Game();
+export default game;

@@ -6,6 +6,7 @@ import { synchronizeClockWithServer } from "./NetworkSynchronizer.js";
 import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
 import { ErrorTypes } from "../enum/ErrorTypes.js";
 import { verifyAuthentication } from "./AuthManager.js";
+import game from "./Game.js";
 
 let wsocket = null;
 let reconnectTimer = null;
@@ -116,10 +117,7 @@ function setupWebSocketHandlers() {
 
     hideConnectionError();
 
-    if (!globalThis.gameInstance) {
-      globalThis.gameInstance = new Game();
-      globalThis.gameInstance.start();
-    }
+    game.start();
 
     setTimeout(() => {
       if (wsocket && wsocket.readyState === WebSocket.OPEN) {
@@ -258,13 +256,13 @@ function handleWebSocketMessage(event) {
     switch (data.type) {
       case MessageTypeEnum.NEW_PLAYER: {
         if (
-          globalThis.gameInstance && player && player.name &&
-          globalThis.gameInstance.players[player.name] != null
+          player && player.name &&
+          game.players[player.name] != null
         ) {
           return;
         }
-        if (globalThis.gameInstance && player) {
-          globalThis.gameInstance.addNewPlayer(
+        if (player) {
+          game.addNewPlayer(
             player.name,
             player.position,
             player.pitch,
@@ -274,15 +272,15 @@ function handleWebSocketMessage(event) {
       }
 
       case MessageTypeEnum.REMOVE_PLAYER: {
-        if (globalThis.gameInstance && player) {
-          globalThis.gameInstance.removePlayer(player.name);
+        if (player) {
+          game.removePlayer(player.name);
         }
         break;
       }
 
       case MessageTypeEnum.UPDATE_PLAYER: {
-        if (globalThis.gameInstance && player) {
-          globalThis.gameInstance.updatePlayerPosition(
+        if (player) {
+          game.updatePlayerPosition(
             player.name,
             player.position,
             player.rotation,
