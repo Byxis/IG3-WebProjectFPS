@@ -46,8 +46,37 @@ let options: ListenOptions = {
 };
 
 if (Deno.args.length >= 3) {
-  const certContent = await Deno.readTextFile(Deno.args[1]);
-  const keyContent = await Deno.readTextFile(Deno.args[2]);
+  try {
+    const certContent = await Deno.readTextFile(Deno.args[1]);
+    const keyContent = await Deno.readTextFile(Deno.args[2]);
+
+    options = {
+      port: Number(Deno.args[0]),
+      secure: true,
+      cert: certContent,
+      key: keyContent,
+    } as ListenOptions;
+    console.log(`SSL conf ready from files (use https)`);
+  } catch (error) {
+    console.error("Error reading certificate files:", error);
+  }
+} 
+else if (Deno.env.get("CERT_CONTENT") && Deno.env.get("KEY_CONTENT")) {
+  let certContent = Deno.env.get("CERT_CONTENT")!;
+  let keyContent = Deno.env.get("KEY_CONTENT")!;
+  
+  // Try to decode base64 if necessary
+  try {
+    // Check if content appears to be base64 encoded
+    if (!certContent.includes("-----BEGIN")) {
+      certContent = atob(certContent);
+    }
+    if (!keyContent.includes("-----BEGIN")) {
+      keyContent = atob(keyContent);
+    }
+  } catch (e) {
+    console.error("Error decoding base64 certificate:", e);
+  }
 
   options = {
     port: Number(Deno.args[0]),
@@ -55,18 +84,11 @@ if (Deno.args.length >= 3) {
     cert: certContent,
     key: keyContent,
   } as ListenOptions;
-  console.log(`SSL conf ready (use https)`);
-} else {
-  options = {
-    port: Number(Deno.args[0]),
-  };
+  console.log(`SSL conf ready from environment variables (use https)`);
 }
 
 console.log(
   `Oak static server running on port ${options.port} for the files in ${ROOT}`,
 );
 
-console.log(
-  `Oak static server running on port ${options.port} for the files in ${ROOT}`,
-);
 await app.listen(options);
