@@ -23,7 +23,8 @@ const app = new Application();
 
 app.use(
   oakCors({
-    origin: "https://localhost:8080",
+    // Updated to accept requests from your domain
+    origin: /^https?:\/\/(localhost|127\.0\.0\.1|app\.webwarfare\.igpolytech\.fr)(:\d+)?$/,
     optionsSuccessStatus: 200,
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
