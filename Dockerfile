@@ -11,5 +11,4 @@ RUN if [ -f client/deps.ts ]; then deno cache client/deps.ts; fi
 RUN if [ -f server/deps.ts ]; then deno cache server/deps.ts; fi
 
 # Exposer les ports nécessaires (bonne pratique, même si Dokku gère le mapping)
-EXPOSE 8080
-EXPOSE 3000
+EXPOSE 443
