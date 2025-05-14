@@ -34,17 +34,15 @@ app.use(async (ctx) => {
   }
 });
 
-if (Deno.args.length < 1 && !Deno.env.get("PORT")) {
+if (Deno.args.length < 1) {
   console.log(
     `Usage: $ deno run --allow-net --allow-read=./ server.ts PORT [CERT_PATH KEY_PATH]`,
   );
   Deno.exit();
 }
 
-const port = Deno.env.get("PORT") || Deno.args[0] || "8080";
-
 let options: ListenOptions = {
-  port: Number(port),
+  port: Number(Deno.args[0]),
 };
 
 if (Deno.args.length >= 3) {
@@ -53,7 +51,7 @@ if (Deno.args.length >= 3) {
     const keyContent = await Deno.readTextFile(Deno.args[2]);
 
     options = {
-      port: Number(port),
+      port: Number(Deno.args[0]),
       secure: true,
       cert: certContent,
       key: keyContent,
@@ -81,7 +79,7 @@ else if (Deno.env.get("CERT_CONTENT") && Deno.env.get("KEY_CONTENT")) {
   }
 
   options = {
-    port: Number(port),
+    port: Number(Deno.args[0]),
     secure: true,
     cert: certContent,
     key: keyContent,
