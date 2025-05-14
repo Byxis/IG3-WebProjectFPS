@@ -1,10 +1,10 @@
-FROM denoland/deno:2.2.6
+FROM denoland/deno:1.40.2
 
 WORKDIR /app
 COPY . .
 
-WORKDIR /app/client
+RUN cd client && deno cache server.ts
 
-EXPOSE 8000
+ENV PORT=8080
 
-CMD ["deno", "run", "--allow-read", "--allow-net", "--allow-env", "--watch", "server.ts", "8000"]
+CMD cd client && deno run --allow-read --allow-net server.ts ${PORT}
