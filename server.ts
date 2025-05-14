@@ -61,7 +61,7 @@ if (Deno.args.length >= 3) {
     console.error("Error reading certificate files:", error);
   }
 } 
-else if (Deno.env.get("CERT_CONTENT") && Deno.env.get("KEY_CONTENT")) {
+else if (Deno.env.get("CERT_CONTENT") && Deno.env.get("KEY_CONTENT") && false) {
   let certContent = Deno.env.get("CERT_CONTENT")!;
   let keyContent = Deno.env.get("KEY_CONTENT")!;
   
