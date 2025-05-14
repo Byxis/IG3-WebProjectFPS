@@ -1,0 +1,84 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Create and switch to deploy branch
+        run: |
+          git checkout -b deploy-front
+
+      - name: Restructure repository
+        run: |
+          # Save client files
+          mkdir -p /tmp/client-content
+          cp -r client/* /tmp/client-content/ 2>/dev/null || true
+            
+          # Remove everything except git files in current directory
+          find . -mindepth 1 -not -path "./.git*" -not -path "./.github*" -delete
+            
+          # Paste client files to current directory
+          cp -r /tmp/client-content/* . 2>/dev/null || true
+          cp -r /tmp/client-content/.[!.]* . 2>/dev/null || true
+
+      - name: Add deployment files
+        run: |
+          # Create Procfile
+          cat > Procfile << 'EOF'
+          web: ./.heroku/bin/deno run --allow-env --allow-read --allow-net server.ts $PORT
+          EOF
+
+          # Create .buildpacks
+          cat > .buildpacks << 'EOF'
+          https://github.com/chibat/heroku-buildpack-deno.git
+          EOF
+
+          # Create Dockerfile
+          cat > Dockerfile << 'EOF'
+          FROM denoland/deno:latest
+          WORKDIR /app
+
+          COPY --from=builder /app .
+
+          CMD ["deno", "run", "--allow-read", "--allow-net", "--allow-env", "server.ts"]
+          EOF
+
+          echo "Deployment files created successfully"
+
+      - name: Replace URLs in files
+        run: |
+          # Replace localhost:8080 by webwarfare.cluster-ig3.igpolytech.fr
+          find . -type f -not -path "*/node_modules/*" -not -path "*/\.git/*" -exec sed -i 's/localhost:8080/webwarfare.cluster-ig3.igpolytech.fr/g' {} \;
+
+          # Replace localhost:3000 by webwarfare-back.cluster-ig3.igpolytech.fr
+          find . -type f -not -path "*/node_modules/*" -not -path "*/\.git/*" -exec sed -i 's/localhost:3000/webwarfare-back.cluster-ig3.igpolytech.fr/g' {} \;
+
+          echo "URL replacements completed"
+
+      - name: Commit changes
+        run: |
+          git add .
+          git commit -m "Deploy frontend: Client folder restructured, URLs updated, and deployment files added"
+
+      - name: Push to deploy-front branch
+        run: |
+          git push origin deploy-front --force
+
+      - name: Push to external repository
+        run: |
+          git push WebWarfare deploy-front:main --force
