@@ -50,6 +50,12 @@ jobs:
           EOF
 
           echo "Deployment files created successfully"
+      - name: Update server configuration
+        run: |
+          # Remove empty cert and key properties from options object
+          sed -i 's/options = {\n    port: Number(Deno.args\[0\]),\n    secure: true,\n    cert: "",\n    key: "",\n  };/options = {\n    port: Number(Deno.args[0]),\n    secure: true,\n  };/g' server/back_server.ts
+
+          echo "Server configuration updated"
       - name: Replace URLs in files
         run: |
           # Replace localhost:8080 by webwarfare.cluster-ig3.igpolytech.fr
