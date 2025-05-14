@@ -1,6 +1,6 @@
 FROM denoland/deno:1.38.3
 
-WORKDIR /app/client
+WORKDIR /app
 
 # Copier tous les fichiers du projet
 COPY . .
