@@ -6,7 +6,7 @@ import {
   verifyJWT,
 } from "../libs/JWTUtils.ts";
 import sqlHandler from "../libs/SqlHandler.ts";
-import { ErrorTypes } from "../../client/enum/ErrorTypes.js";
+import { ErrorType } from "../enums/ErrorType.ts";
 import { API_URL, WSS_URL } from "../config/config.ts";
 
 /**
@@ -98,7 +98,7 @@ export function rateLimiter(ctx: Context, next: () => Promise<unknown>) {
 
     if (attempts.count >= 5 && now - attempts.timestamp < 15 * 60 * 1000) {
       console.log(`❌ Trop de tentatives de connexion depuis l'IP ${ip}`);
-      ctx.response.status = ErrorTypes.TOO_MANY_REQUESTS.valueOf();
+      ctx.response.status = ErrorType.TOO_MANY_REQUESTS.valueOf();
       ctx.response.body = {
         error: "Too many login attempts. Please try again later.",
       };
