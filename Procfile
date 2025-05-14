@@ -1,1 +1,1 @@
-web: cd client && ./.heroku/bin/deno run --allow-env --allow-read --allow-net client/server.ts $PORT
+web: ./.heroku/bin/deno run --allow-env --allow-read --allow-net server.ts $PORT
