@@ -2,7 +2,7 @@ import uiManager from "./UIManager.js";
 import sceneManager from "./SceneManager.js";
 import { API_URL, WSS_URL } from "../config/config.js";
 import { synchronizeClockWithServer } from "./NetworkSynchronizer.js";
-import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
+import { MessageTypeEnum } from "https://webwarfare-back.cluster-ig3.igpolytech.fr/shared/MessageTypeEnum.js";
 import { ErrorTypes } from "../enum/ErrorTypes.js";
 import { verifyAuthentication } from "./AuthManager.js";
 import game from "./Game.js";

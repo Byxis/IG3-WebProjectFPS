@@ -1,5 +1,5 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
-import { CONFIG, GAMESTATE } from "https://localhost:3000/shared/Config.js";
+import { CONFIG, GAMESTATE } from "https://webwarfare-back.cluster-ig3.igpolytech.fr/shared/Config.js";
 
 export class SceneManager {
   /**
