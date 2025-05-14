@@ -70,9 +70,10 @@ if (Deno.args.length >= 3) {
   console.log(`SSL conf ready (use https) 🔐`);
 } else {
   options = {
-    // Force secure to true, Dokku proxy will handle SSL
     port: Number(Deno.args[0]),
     secure: true,
+    cert: "",
+    key: "",
   };
 }
 
