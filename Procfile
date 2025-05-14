@@ -1,1 +1,1 @@
-web: cd client && deno run --allow-read --allow-net server.ts $PORT
+web: cd client && deno run --allow-read --allow-net --allow-env --watch server.ts ${PORT}
