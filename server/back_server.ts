@@ -55,6 +55,7 @@ if (Deno.args.length < 1) {
 
 let options: ListenOptions = {
   port: Number(Deno.args[0]),
+  secure: true,
 };
 
 if (Deno.args.length >= 3) {
