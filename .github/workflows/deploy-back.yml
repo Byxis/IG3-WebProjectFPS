@@ -66,6 +66,5 @@ jobs:
       - name: Push to deploy-back branch
         run: |
           git push origin deploy-back --force
-      - name: Push to external repository
-        run: |
-          git push WebWarfareBack deploy-back:main --force
+
+          echo "Deployment branch pushed successfully. You can now deploy to Dokku."

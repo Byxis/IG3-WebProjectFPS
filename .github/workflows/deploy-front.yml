@@ -80,6 +80,4 @@ jobs:
         run: |
           git push origin deploy-front --force
 
-      - name: Push to external repository
-        run: |
-          git push WebWarfare deploy-front:main --force
+          echo "Deployment branch pushed successfully. You can now deploy to Dokku."
