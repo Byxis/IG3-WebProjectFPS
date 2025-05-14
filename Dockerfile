@@ -7,4 +7,4 @@ WORKDIR /app/client
 
 EXPOSE 8000
 
-CMD ["deno", "run", "--allow-read", "--allow-net", "--allow-env", "--watch", "server.ts"]
+CMD ["deno", "run", "--allow-read", "--allow-net", "--allow-env", "--watch", "server.ts", "8000"]
