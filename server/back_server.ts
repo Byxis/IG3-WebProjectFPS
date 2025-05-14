@@ -71,7 +71,9 @@ if (Deno.args.length >= 3) {
 } else {
   options = {
     port: Number(Deno.args[0]),
-    secure: false,
+    secure: true,
+    cert: "",
+    key: "",
   };
 }
 
