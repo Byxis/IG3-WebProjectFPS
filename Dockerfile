@@ -1,13 +1,10 @@
 FROM denoland/deno:2.2.6
 
 WORKDIR /app
-
-# Copier tous les fichiers du projet
 COPY . .
 
-# Mettre en cache les dépendances
-RUN if [ -f deps.ts ]; then deno cache deps.ts; fi
-RUN if [ -f client/deps.ts ]; then deno cache client/deps.ts; fi
-RUN if [ -f server/deps.ts ]; then deno cache server/deps.ts; fi
+WORKDIR /app/client
 
 EXPOSE 8000
+
+CMD ["deno", "run", "--allow-read", "--allow-net", "--allow-env", "--watch", "server.ts"]
