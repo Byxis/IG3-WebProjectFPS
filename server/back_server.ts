@@ -68,6 +68,11 @@ if (Deno.args.length >= 3) {
     key: key,
   };
   console.log(`SSL conf ready (use https) 🔐`);
+} else {
+  options = {
+    port: Number(Deno.args[0]),
+    secure: false,
+  };
 }
 
 console.log(`Oak back server running on port ${options.port} 🚀`);
