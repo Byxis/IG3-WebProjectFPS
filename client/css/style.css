@@ -71,6 +71,33 @@ canvas {
   backdrop-filter: blur(5px);
   border-radius: 8px;
   box-shadow: var(--box-shadow);
+  transition: color 0.3s ease;
+}
+
+#ammos::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: var(--reload-progress, 0%);
+  background: white;
+  border-radius: 0 0 8px 8px;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.1s ease;
+}
+
+#ammos.reloading {
+  color: var(--accent-color);
+}
+
+#ammos.reloading::after {
+  opacity: 1;
+  transform: scaleX(1);
+  width: 100%;
+  transition: width var(--reload-duration) linear, opacity 0.3s ease;
 }
 
 #coords {
@@ -180,4 +207,9 @@ canvas {
 #chatbox-messages p {
   direction: ltr;
   text-align: left;
+}
+
+/* Reload animation */
+:root {
+  --reload-duration: 3000ms;
 }

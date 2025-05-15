@@ -358,6 +358,43 @@ export class UIManager {
       ammoElement.textContent = `${current}/${max}`;
     }
   }
+
+  /**
+   ** Starts the reload animation
+   * @param {number} duration - Reload duration in milliseconds
+   */
+  startReloadAnimation(duration) {
+    const ammoElement = document.getElementById('ammos');
+    if (ammoElement) {
+      ammoElement.classList.add('reloading');
+      document.documentElement.style.setProperty('--reload-duration', `${duration}ms`);
+    }
+  }
+
+  /**
+   ** Updates reload progress (for manual progress updates)
+   * @param {number} progress - Progress from 0 to 1
+   */
+  updateReloadProgress(progress) {
+    const ammoElement = document.getElementById('ammos');
+    if (ammoElement && ammoElement.classList.contains('reloading')) {
+      ammoElement.style.setProperty('--reload-progress', `${progress * 100}%`);
+    }
+  }
+
+  /**
+   ** Completes the reload animation
+   */
+  completeReloadAnimation() {
+    const ammoElement = document.getElementById('ammos');
+    if (ammoElement) {
+      ammoElement.style.setProperty('--reload-progress', '100%');
+      setTimeout(() => {
+        ammoElement.classList.remove('reloading');
+        ammoElement.style.removeProperty('--reload-progress');
+      }, 200);
+    }
+  }
 }
 
 const uiManager = new UIManager();

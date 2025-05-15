@@ -6,6 +6,7 @@ import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.j
 import { ErrorTypes } from "../enum/ErrorTypes.js";
 import { verifyAuthentication } from "./AuthManager.js";
 import game from "./Game.js";
+import movementManager from "./MovementManager.js";
 
 let wsocket = null;
 let reconnectTimer = null;
@@ -348,6 +349,29 @@ function handleWebSocketMessage(event) {
         if (data.player) {
           game.handlePlayerRespawn(data.player);
         }
+        break;
+      }
+
+      case MessageTypeEnum.AMMO_UPDATE: {
+        if (data.ammo !== undefined) {
+          movementManager.ammo = data.ammo;
+          movementManager.maxAmmo = data.maxAmmo || CONFIG.MAX_AMMO;
+          uiManager.updateAmmo(data.ammo, data.maxAmmo || CONFIG.MAX_AMMO);
+        }
+        break;
+      }
+      
+      case MessageTypeEnum.RELOAD_START: {
+        movementManager.isReloading = true;
+        movementManager.reloadStartTime = performance.now();
+        movementManager.reloadDuration = data.reloadTime || CONFIG.RELOAD_TIME;
+        uiManager.startReloadAnimation(movementManager.reloadDuration);
+        break;
+      }
+      
+      case MessageTypeEnum.RELOAD_COMPLETE: {
+        movementManager.isReloading = false;
+        uiManager.completeReloadAnimation();
         break;
       }
 

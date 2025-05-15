@@ -5,6 +5,7 @@ import {
   players,
   removePlayer,
   validateShot,
+  startReload,
 } from "./libs/PlayerHandler.ts";
 import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
@@ -198,10 +199,24 @@ function setupWebSocketHandlers(
         case MessageTypeEnum.PLAYER_SHOT: {
           if (data.target && data.distance) {
             validateShot(data.shooter, data.target, data.distance);
-          } else {
-            if (players[data.shooter]) {
+          } else if (players[data.shooter]) {
+            if (players[data.shooter].ammo > 0 && !players[data.shooter].isReloading) {
+              players[data.shooter].ammo--;
               players[data.shooter].missedshots++;
+
+              connectionManager.sendToConnection(data.shooter, {
+                type: MessageTypeEnum.AMMO_UPDATE,
+                ammo: players[data.shooter].ammo,
+                maxAmmo: CONFIG.MAX_AMMO,
+              });
             }
+          }
+          break;
+        }
+
+        case MessageTypeEnum.RELOAD_START: {
+          if (data.name) {
+            startReload(data.name);
           }
           break;
         }

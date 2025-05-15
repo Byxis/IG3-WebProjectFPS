@@ -16,6 +16,9 @@ export const players: {
     headshots: number;
     bodyshots: number;
     missedshots: number;
+    ammo: number;
+    isReloading: boolean;
+    reloadTimeout: number | null;
     websocket: WebSocket;
     position: { x: number; y: number; z: number };
     rotation: { x: number; y: number; z: number };
@@ -57,6 +60,9 @@ export async function initiateNewPlayer(dataPlayer: {
     headshots: stats.headshots,
     bodyshots: stats.bodyshots,
     missedshots: stats.missedshots,
+    ammo: CONFIG.STARTING_AMMO,
+    isReloading: false,
+    reloadTimeout: null,
     websocket: websocket,
     position: { ...dataPlayer.position },
     rotation: { ...dataPlayer.rotation },
@@ -75,6 +81,7 @@ export async function initiateNewPlayer(dataPlayer: {
       isJumping: false,
     },
   };
+  
   players[dataPlayer.name] = player;
 
   connectionManager.broadcast({
@@ -94,6 +101,12 @@ export async function initiateNewPlayer(dataPlayer: {
   connectionManager.sendToConnection(dataPlayer.name, {
     type: MessageTypeEnum.HEALTH_UPDATE,
     health: player.health,
+  });
+
+  connectionManager.sendToConnection(dataPlayer.name, {
+    type: MessageTypeEnum.AMMO_UPDATE,
+    ammo: player.ammo,
+    maxAmmo: CONFIG.MAX_AMMO
   });
 }
 
@@ -264,6 +277,107 @@ function respawnPlayer(playerName: string): void {
 }
 
 /**
+ ** Decreases player's ammo count after a shot
+ * @param {string} playerName - Name of the player who shot
+ * @returns {boolean} Whether the shot was allowed (had ammo)
+ */
+export function decreasePlayerAmmo(playerName: string): boolean {
+  if (!players[playerName]) return false;
+  if (players[playerName].isReloading || players[playerName].isDead) {
+    return false;
+  }
+  if (players[playerName].ammo <= 0) {
+    return false;
+  }
+  
+  players[playerName].ammo--;
+  
+  connectionManager.sendToConnection(playerName, {
+    type: MessageTypeEnum.AMMO_UPDATE,
+    ammo: players[playerName].ammo,
+    maxAmmo: CONFIG.MAX_AMMO
+  });
+  
+  return true;
+}
+
+/**
+ ** Starts the reload process for a player
+ * @param {string} playerName - Name of the player reloading
+ * @returns {boolean} Whether reload was started
+ */
+export function startReload(playerName: string): boolean {
+  if (!players[playerName]) return false;
+  
+  if (players[playerName].isReloading || 
+      players[playerName].isDead || 
+      players[playerName].ammo >= CONFIG.MAX_AMMO) {
+    return false;
+  }
+  
+  players[playerName].isReloading = true;
+  
+  connectionManager.sendToConnection(playerName, {
+    type: MessageTypeEnum.RELOAD_START,
+    reloadTime: CONFIG.RELOAD_TIME
+  });
+  
+  players[playerName].reloadTimeout = setTimeout(() => {
+    completeReload(playerName);
+  }, CONFIG.RELOAD_TIME);
+  
+  return true;
+}
+
+/**
+ ** Completes the reload process for a player
+ * @param {string} playerName - Name of the player reloading
+ * @returns {boolean} Whether reload was completed successfully
+ */
+export function completeReload(playerName: string): boolean {
+  if (!players[playerName]) return false;
+  
+  players[playerName].isReloading = false;
+  
+  if (players[playerName].reloadTimeout !== null) {
+    clearTimeout(players[playerName].reloadTimeout);
+    players[playerName].reloadTimeout = null;
+  }
+  
+  players[playerName].ammo = CONFIG.MAX_AMMO;
+  
+  connectionManager.sendToConnection(playerName, {
+    type: MessageTypeEnum.RELOAD_COMPLETE
+  });
+  
+  connectionManager.sendToConnection(playerName, {
+    type: MessageTypeEnum.AMMO_UPDATE,
+    ammo: players[playerName].ammo,
+    maxAmmo: CONFIG.MAX_AMMO
+  });
+  
+  return true;
+}
+
+/**
+ ** Cancels an in-progress reload
+ * @param {string} playerName - Name of the player
+ * @returns {boolean} Whether reload was successfully canceled
+ */
+export function cancelReload(playerName: string): boolean {
+  if (!players[playerName] || !players[playerName].isReloading) return false;
+  
+  players[playerName].isReloading = false;
+  
+  if (players[playerName].reloadTimeout !== null) {
+    clearTimeout(players[playerName].reloadTimeout);
+    players[playerName].reloadTimeout = null;
+  }
+  
+  return true;
+}
+
+/**
  ** Validates a shot and applies damage if valid
  * @param {string} shooter - Name of player who shot
  * @param {string} target - Name of player who was hit
@@ -276,6 +390,14 @@ export function validateShot(
   distance: number,
 ): boolean {
   if (!players[shooter] || !players[target]) return false;
+  
+  if (players[shooter].ammo <= 0 || players[shooter].isReloading) {
+    return false;
+  }
+  
+  if (!decreasePlayerAmmo(shooter)) {
+    return false;
+  }
 
   let damage = CONFIG.BASE_DAMAGE;
   if (distance > CONFIG.DAMAGE_FALLOFF_START) {
