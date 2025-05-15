@@ -1,7 +1,8 @@
-import { playerExists, RoleLevel } from "./PlayerHandler.ts";
+import { playerExists } from "./PlayerHandler.ts";
 import { players } from "./PlayerHandler.ts";
 import sqlHandler from "./SqlHandler.ts";
 import { CommandEffectType } from "../enums/CommandEffectType.ts";
+import { RoleLevel } from "../enums/RoleLevel.ts";
 
 export interface CommandEffect {
   type: CommandEffectType;

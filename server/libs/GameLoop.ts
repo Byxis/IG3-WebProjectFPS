@@ -1,3 +1,4 @@
+
 export class GameLoop {
   private targetFPS: number;
   private fixedTimeStep: number;

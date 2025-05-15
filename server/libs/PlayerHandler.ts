@@ -1,12 +1,9 @@
 import { CONFIG } from "../../shared/Config.ts";
-import { connections } from "../back_server.ts";
+import { connectionManager } from "./ConnectionManager.ts";
 import sqlHandler from "./SqlHandler.ts";
+import { RoleLevel } from "../enums/RoleLevel.ts";
 
-export enum RoleLevel {
-  USER = 1,
-  MODERATOR = 2,
-  ADMIN = 3,
-}
+export { RoleLevel };
 
 export const players: {
   [name: string]: {
@@ -79,24 +76,18 @@ export async function initiateNewPlayer(dataPlayer: {
   };
   players[dataPlayer.name] = player;
 
-  connections.forEach((ws) => {
-    ws.send(JSON.stringify(
-      {
-        type: "NEW_PLAYER",
-        player: getPlayerSendInfo(player.name),
-      },
-    ));
+  connectionManager.broadcast({
+    type: "NEW_PLAYER",
+    player: getPlayerSendInfo(player.name),
   });
 
   // Send to the new player all the other players
   for (const playerName in players) {
     if (playerName !== dataPlayer.name) {
-      websocket.send(JSON.stringify(
-        {
-          type: "NEW_PLAYER",
-          player: getPlayerSendInfo(playerName),
-        },
-      ));
+      connectionManager.broadcast({
+        type: "NEW_PLAYER",
+        player: getPlayerSendInfo(playerName),
+      });
     }
   }
 }
@@ -111,13 +102,9 @@ export function updatePlayer(player: {
   rotation: { x: number; y: number; z: number };
   pitch: number;
 }) {
-  connections.forEach((ws) => {
-    ws.send(JSON.stringify(
-      {
-        type: "UPDATE_PLAYER",
-        player: getPlayerSendInfo(player.name),
-      },
-    ));
+  connectionManager.broadcast({
+    type: "UPDATE_PLAYER",
+    player: getPlayerSendInfo(player.name),
   });
 }
 
@@ -126,15 +113,11 @@ export function updatePlayer(player: {
  * @param {string} playerName - Name of the player to remove
  */
 export function removePlayer(playerName: string) {
-  connections.forEach((ws) => {
-    ws.send(JSON.stringify(
-      {
-        type: "REMOVE_PLAYER",
-        player: {
-          name: playerName,
-        },
-      },
-    ));
+  connectionManager.broadcast({
+    type: "REMOVE_PLAYER",
+    player: {
+      name: playerName,
+    },
   });
 
   delete players[playerName];

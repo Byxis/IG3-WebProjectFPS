@@ -10,7 +10,6 @@ import { cspMiddleware } from "./middleware/securityMiddleware.ts";
 import { GameLoop } from "./libs/GameLoop.ts";
 
 const serverPhysics = new ServerPhysics();
-export const connections: WebSocket[] = [];
 
 console.log("✅ Server started ✅\n");
 
