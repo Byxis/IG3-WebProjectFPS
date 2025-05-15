@@ -330,6 +330,27 @@ function handleWebSocketMessage(event) {
         break;
       }
 
+      case MessageTypeEnum.HEALTH_UPDATE: {
+        if (data.health !== undefined) {
+          uiManager.updateHealth(data.health);
+        }
+        break;
+      }
+
+      case MessageTypeEnum.DEATH_EVENT: {
+        if (data.player) {
+          game.handlePlayerDeath(data.player);
+        }
+        break;
+      }
+
+      case MessageTypeEnum.RESPAWN_EVENT: {
+        if (data.player) {
+          game.handlePlayerRespawn(data.player);
+        }
+        break;
+      }
+
       default: {
         console.log("Message type not recognized:", data.type);
         break;

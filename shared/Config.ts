@@ -15,14 +15,21 @@ export const CONFIG = {
   FOV: 75,
   NEAR: 0.1,
   FAR: 1000,
+  CAMERA_HEIGHT: 1.7,
 
   // Smoothing movement
   MOVEMENT_LERP: 0.1,
   ROTATION_LERP: 0.3,
 
   // Player settings
-  STARTING_LIVES: 3,
+  STARTING_HEALTH: 100,
   STARTING_AMMO: 30,
+  
+  // Combat settings
+  BASE_DAMAGE: 25,
+  DAMAGE_FALLOFF_START: 10,
+  DAMAGE_FALLOFF_END: 50,
+  MIN_DAMAGE_PERCENT: 0.4,
 };
 
 export const GAMESTATE = {

@@ -200,6 +200,32 @@ export class Game {
       console.error("Error sending position verification:", error);
     }
   }
+
+  /**
+   ** Handles player death event
+   * @param {string} playerName - Name of the player who died
+   * @returns {void}
+   */
+  handlePlayerDeath(playerName) {
+    const player = this.players[playerName];
+    if (!player) return;
+    
+    if (playerName !== localStorage.getItem("username")) {
+      player.playDeathAnimation();
+    }
+  }
+
+  /**
+   ** Handles player respawn event
+   * @param {string} playerName - Name of the player who respawned
+   * @returns {void}
+   */
+  handlePlayerRespawn(playerName) {
+    const player = this.players[playerName];
+    if (!player) return;
+    
+    player.respawn();
+  }
 }
 
 const game = new Game();

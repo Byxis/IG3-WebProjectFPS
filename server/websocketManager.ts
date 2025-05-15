@@ -4,6 +4,7 @@ import {
   initiateNewPlayer,
   players,
   removePlayer,
+  validateShot,
 } from "./libs/PlayerHandler.ts";
 import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
@@ -36,6 +37,9 @@ interface ChatMessageData {
     pitch: number;
   };
   networkTimeOffset?: number;
+  shooter?: string;
+  target?: string;
+  distance?: number;
 }
 
 /**
@@ -188,6 +192,17 @@ function setupWebSocketHandlers(
 
         case MessageTypeEnum.SEND_CHAT_MESSAGE: {
           handleChatMessage(data, ws);
+          break;
+        }
+
+        case MessageTypeEnum.PLAYER_SHOT: {
+          if (data.target && data.distance) {
+            validateShot(data.shooter, data.target, data.distance);
+          } else {
+            if (players[data.shooter]) {
+              players[data.shooter].missedshots++;
+            }
+          }
           break;
         }
 

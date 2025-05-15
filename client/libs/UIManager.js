@@ -331,6 +331,33 @@ export class UIManager {
   hideConnectionError() {
     this.connectionError.classList.remove("visible", "error");
   }
+
+  /**
+   ** Updates the health display in the UI
+   * @param {number} health - Current health value
+   */
+  updateHealth(health) {
+    const healthElement = document.getElementById('lives');
+    if (healthElement) {
+      const maxHealth = 100;
+      const heartCount = Math.ceil((health / maxHealth) * 4);
+      const hearts = '❤️'.repeat(Math.max(0, heartCount));
+      healthElement.textContent = `${hearts} ${health}`;
+    }
+  }
+
+  /**
+   ** Updates the ammo display in the UI.
+   * @param {number} current - The current ammo count.
+   * @param {number} max - The maximum ammo count.
+   * @returns {void}
+   */
+  updateAmmo(current, max) {
+    const ammoElement = document.getElementById('ammos');
+    if (ammoElement) {
+      ammoElement.textContent = `${current}/${max}`;
+    }
+  }
 }
 
 const uiManager = new UIManager();

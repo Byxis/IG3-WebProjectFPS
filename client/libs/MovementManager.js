@@ -14,7 +14,7 @@ export class MovementManager {
    */
   constructor() {
     this.raycaster = new THREE.Raycaster();
-    this.shootCooldown = 500;
+    this.shootCooldown = 250;
     this.lastShootTime = 0;
 
     this.forward = 0;
@@ -55,6 +55,9 @@ export class MovementManager {
         isJumping: false,
       },
     };
+
+    // Add ammo tracking
+    this.ammo = CONFIG.STARTING_AMMO;
 
     this.setupShootingControls();
   }
@@ -311,6 +314,12 @@ export class MovementManager {
     if (now - this.lastShootTime < this.shootCooldown) {
       return;
     }
+    
+    if (this.ammo <= 0) {
+      console.log("Out of ammo");
+      return;
+    }
+    
     this.lastShootTime = now;
 
     const cameraPosition = sceneManager.camera.getWorldPosition(
@@ -323,51 +332,69 @@ export class MovementManager {
 
     const scene = sceneManager.scene;
     const targets = [];
-
+    
     scene.traverse((object) => {
       if (
-        object.isMesh && object.parent && object.parent.name &&
+        object.isMesh && object.parent && 
+        object.parent.name && 
         object.parent.name !== localStorage.getItem("username")
       ) {
         targets.push(object);
       }
     });
 
-    const intersects = this.raycaster.intersectObjects(targets, true);
+    const wsocket = getWebSocket();
+    if (
+      wsocket && wsocket.readyState === WebSocket.OPEN &&
+      wsState.isConnected
+    ) {
+      this.ammo--;
+      uiManager.updateAmmo(this.ammo, CONFIG.STARTING_AMMO);
+      
+      const shotData = {
+        type: MessageTypeEnum.PLAYER_SHOT,
+        shooter: localStorage.getItem("username"),
+        timestamp: Date.now(),
+        position: {
+          x: cameraPosition.x,
+          y: cameraPosition.y,
+          z: cameraPosition.z,
+        },
+        direction: {
+          x: cameraDirection.x,
+          y: cameraDirection.y,
+          z: cameraDirection.z,
+        }
+      };
 
-    if (intersects.length > 0) {
-      const hit = intersects[0];
-      let hitObject = hit.object;
+      const intersects = this.raycaster.intersectObjects(targets, true);
+      
+      if (intersects.length > 0) {
+        const hit = intersects[0];
+        let hitObject = hit.object;
+        let playerGroup = hitObject;
+        while (playerGroup && (!playerGroup.name || !playerGroup.parent || playerGroup.parent.type !== "Scene")) {
+          playerGroup = playerGroup.parent;
+        }
+        
+        const hitPlayerName = playerGroup ? playerGroup.name : null;
 
-      while (hitObject.parent && !hitObject.parent.name) {
-        hitObject = hitObject.parent;
-      }
-
-      const hitPlayerName = hitObject.parent.name;
-
-      if (hitPlayerName) {
-        console.log(
-          `Hit player ${hitPlayerName} at distance ${hit.distance.toFixed(2)}`,
-        );
-
-        const wsocket = getWebSocket();
-        if (
-          wsocket && wsocket.readyState === WebSocket.OPEN &&
-          wsState.isConnected
-        ) {
-          wsocket.send(JSON.stringify({
-            type: MessageTypeEnum.PLAYER_SHOT,
-            shooter: localStorage.getItem("username"),
-            target: hitPlayerName,
-            timestamp: Date.now(),
-            hitPoint: {
-              x: hit.point.x,
-              y: hit.point.y,
-              z: hit.point.z,
-            },
-          }));
+        if (hitPlayerName) {
+          console.log(
+            `Hit player ${hitPlayerName} at distance ${hit.distance.toFixed(2)}`
+          );
+          
+          shotData.target = hitPlayerName;
+          shotData.hitPoint = {
+            x: hit.point.x,
+            y: hit.point.y,
+            z: hit.point.z,
+          };
+          shotData.distance = hit.distance;
         }
       }
+      
+      wsocket.send(JSON.stringify(shotData));
     }
   }
 }

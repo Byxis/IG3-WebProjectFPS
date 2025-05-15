@@ -734,6 +734,38 @@ export class SqlHandler {
   close(): void {
     this.db.close();
   }
+
+  /**
+   ** Update player stats
+   * @param {string} playerName - The player's name
+   * @param {number} kills - The number of kills
+   * @param {number} deaths - The number of deaths
+   * @param {number} headshots - The number of headshots
+   * @param {number} bodyshots - The number of bodyshots
+   * @param {number} missedshots - The number of missed shots
+   */
+  updateUserStats(playerName: string, kills: number, deaths: number, headshots: number, bodyshots: number, missedshots: number): boolean {
+    const matchId = 1; //TODO: get the match ID from the game state
+    try {
+      this.db.query(
+        `INSERT INTO player_matches (user_id, match_id, kills, deaths, headshots, bodyshots, missedshots)
+         VALUES (
+            (SELECT user_id FROM users WHERE username = ?),
+            ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(user_id, match_id) DO UPDATE SET
+            kills = player_matches.kills + excluded.kills,
+            deaths = player_matches.deaths + excluded.deaths,
+            headshots = player_matches.headshots + excluded.headshots,
+            bodyshots = player_matches.bodyshots + excluded.bodyshots,
+            missedshots = player_matches.missedshots + excluded.missedshots`,
+        [playerName, matchId, kills, deaths, headshots, bodyshots, missedshots],
+      );
+      return true;
+    } catch (error) {
+      console.error("Error updating user stats:", error);
+      return false;
+    }
+  }
 }
 
 const sqlHandler = new SqlHandler();
