@@ -341,6 +341,11 @@ function handleWebSocketMessage(event) {
       case MessageTypeEnum.DEATH_EVENT: {
         if (data.player) {
           game.handlePlayerDeath(data.player);
+          console.log("Player died:", data.player.name);
+          if (data.player === localStorage.getItem("username")) {
+            uiManager.showDeathOverlay();
+          }
+
         }
         break;
       }
@@ -348,6 +353,9 @@ function handleWebSocketMessage(event) {
       case MessageTypeEnum.RESPAWN_EVENT: {
         if (data.player) {
           game.handlePlayerRespawn(data.player);
+          if (data.player === localStorage.getItem("username")) {
+            uiManager.hideDeathOverlay();
+          }
         }
         break;
       }

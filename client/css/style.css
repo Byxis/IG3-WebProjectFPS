@@ -209,6 +209,51 @@ canvas {
   text-align: left;
 }
 
+/* Death overlay */
+#death-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 0, 0, 0.3);
+  z-index: 900;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  animation: fadeIn 0.3s ease-in;
+}
+
+#death-message {
+  font-size: 48px;
+  color: white;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+#respawn-timer {
+  font-size: 36px;
+  color: white;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.fade-out {
+  animation: fadeOut 0.5s ease-out;
+}
+
 /* Reload animation */
 :root {
   --reload-duration: 3000ms;

@@ -15,6 +15,7 @@ import { CommandEffectType } from "./enums/CommandEffectType.ts";
 import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
 import { ErrorType } from "./enums/ErrorType.ts";
 import { connectionManager } from "./libs/ConnectionManager.ts";
+import { CONFIG } from "../shared/Config.ts";
 
 // Custom WebSocket type with username
 interface CustomWebSocket extends WebSocket {
@@ -197,9 +198,14 @@ function setupWebSocketHandlers(
         }
 
         case MessageTypeEnum.PLAYER_SHOT: {
-          if (data.target && data.distance) {
+          if (!data.shooter || !players[data.shooter])
+          {
+            console.error("Player not found:", data.shooter);
+            break;
+          }
+          if (data.target && data.distance && players[data.target]) {
             validateShot(data.shooter, data.target, data.distance);
-          } else if (players[data.shooter]) {
+          } else if (data.shooter && players[data.shooter]) {
             if (players[data.shooter].ammo > 0 && !players[data.shooter].isReloading) {
               players[data.shooter].ammo--;
               players[data.shooter].missedshots++;

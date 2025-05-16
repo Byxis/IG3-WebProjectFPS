@@ -139,6 +139,15 @@ export class MovementManager {
    * @returns {void}
    */
   handleMovementUpdate() {
+    // If player is dead, don't process movement
+    if (uiManager.isPlayerCurrentlyDead()) {
+      this.forward = 0;
+      this.side = 0;
+      this.isSprinting = false;
+      this.isJumping = false;
+      return;
+    }
+
     const oldForward = this.forward;
     const oldSide = this.side;
     const oldIsSprinting = this.isSprinting;
@@ -368,6 +377,11 @@ export class MovementManager {
    * @returns {void}
    */
   shoot() {
+    // If player is dead, don't allow shooting
+    if (uiManager.isPlayerCurrentlyDead()) {
+      return;
+    }
+
     console.log("Shot fired");
 
     const now = performance.now();

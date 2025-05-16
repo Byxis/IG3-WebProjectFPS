@@ -81,6 +81,23 @@ class ConnectionManager {
   hasConnection(username: string): boolean {
     return this.connections.has(username);
   }
+
+  /**
+   ** Vérify username from connection
+    * @param username - The username to check
+    * @returns username if it exists and is valid, otherwise the username of the connection
+   */
+  verifyUsername(username: string): string | undefined {
+    if (this.connections.has(username) && this.connections.get(username)?.username === username) {
+      return username;
+    }
+    for (const [name, conn] of this.connections) {
+      if (conn === this.connections.get(username)) {
+        return name;
+      }
+    }
+    return undefined;
+  }
 }
 
 export const connectionManager = new ConnectionManager();
