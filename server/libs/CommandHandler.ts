@@ -3,6 +3,7 @@ import { players } from "./PlayerHandler.ts";
 import sqlHandler from "./SqlHandler.ts";
 import { CommandEffectType } from "../enums/CommandEffectType.ts";
 import { RoleLevel } from "../enums/RoleLevel.ts";
+import { matchManager } from "./MatchManager.ts";
 
 export interface CommandEffect {
   type: CommandEffectType;
@@ -265,38 +266,34 @@ export class CommandHandler {
     this.registerCommand(
       "stats",
       RoleLevel.USER,
-      (args, sender) => {
+      (args, sender) => {        
         if (args.length === 0) {
-          const statsMsg =
-            `Kills: ${players[sender].kills} (Streak:${
-              players[sender].killStreak
-            })<br>` +
-            `Deaths: ${players[sender].deaths} (Ratio: ${
-              players[sender].deaths > 0
-                ? (players[sender].kills / players[sender].deaths).toFixed(2)
-                : players[sender].kills
+          const stats = sqlHandler.getUserStats(sender);
+          const statsMsg = `Kills: ${stats.kills} (Killstreak : ${players[sender].killStreak})<br>` +
+            `Deaths: ${stats.deaths} (Ratio: ${
+              stats.deaths > 0
+          ? (stats.kills / stats.deaths).toFixed(2)
+          : stats.kills
             })<br>` +
             `Headshots accuracy: ${
-              players[sender].bodyshots + players[sender].headshots > 0
-                ? (players[sender].headshots /
-                  (players[sender].bodyshots + players[sender].headshots))
-                  .toFixed(2)
-                : 0
+              stats.bodyshots + stats.headshots > 0
+          ? (stats.headshots / (stats.bodyshots + stats.headshots))
+            .toFixed(2)
+          : 0
             }<br>` +
             `Shots accuracy: ${
-              players[sender].missedshots + players[sender].bodyshots +
-                    players[sender].headshots > 0
-                ? ((players[sender].bodyshots + players[sender].headshots) /
-                  (players[sender].missedshots + players[sender].bodyshots +
-                    players[sender].headshots)).toFixed(2)
-                : 0
+              stats.missedshots + stats.bodyshots + stats.headshots > 0
+          ? ((stats.bodyshots + stats.headshots) /
+            (stats.missedshots + stats.bodyshots + stats.headshots))
+            .toFixed(2)
+          : 0
             }`;
           return {
             message: `Statistiques du joueur ${sender}: <br>${statsMsg}`,
             effect: {
               type: CommandEffectType.NONE,
               target: sender,
-              reason: "Suicide",
+              reason: "",
             },
           };
         }

@@ -3,6 +3,7 @@ import { connectionManager } from "./ConnectionManager.ts";
 import sqlHandler from "./SqlHandler.ts";
 import { RoleLevel } from "../enums/RoleLevel.ts";
 import { MessageTypeEnum } from "../../shared/MessageTypeEnum.ts";
+import { matchManager } from "./MatchManager.ts";
 
 export { RoleLevel };
 
@@ -108,6 +109,8 @@ export async function initiateNewPlayer(dataPlayer: {
     ammo: player.ammo,
     maxAmmo: CONFIG.MAX_AMMO
   });
+
+  matchManager.playerJoined();
 }
 
 /**
@@ -204,21 +207,19 @@ export function damagePlayer(playerName: string, damage: number, shooterName: st
  * @param {string} killerName - Name of player who killed them
  */
 function handlePlayerDeath(playerName: string, killerName: string): void {
-
-  // Update stats
   if (killerName && players[killerName] && playerName !== killerName) {
     players[killerName].kills++;
     players[killerName].killStreak++;
+  
+    matchManager.updatePlayerMatchStats(killerName, { kills: 1 });
   }
 
   if (players[playerName]) {
     players[playerName].deaths++;
     players[playerName].killStreak = 0;
     players[playerName].isDead = true;
+    matchManager.updatePlayerMatchStats(playerName, { deaths: 1 });
   }
-
-  // Update player stats in database
-  sqlHandler.updateUserStats(playerName, players[playerName].kills, players[playerName].deaths, players[playerName].headshots, players[playerName].bodyshots, players[playerName].missedshots);
 
   connectionManager.broadcast({
     type: MessageTypeEnum.DEATH_EVENT,
@@ -395,6 +396,10 @@ export function validateShot(
     return false;
   }
   
+  if (!matchManager.canRegisterActions(shooter)) {
+    return false;
+  }
+  
   if (!decreasePlayerAmmo(shooter)) {
     return false;
   }
@@ -410,6 +415,7 @@ export function validateShot(
   const killed = damagePlayer(target, damage, shooter);
 
   players[shooter].bodyshots++;
-
+  
+  matchManager.updatePlayerMatchStats(shooter, { bodyshots: 1 });
   return true;
 }
