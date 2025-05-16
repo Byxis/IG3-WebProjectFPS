@@ -23,7 +23,7 @@ export class ServerPhysics {
     pitch: number,
     networkTimeOffset: number,
   ) {
-    if (players[name]) {
+    if (players[name] && !players[name].isDead) {
       if (forward !== 0 || side !== 0) {
         const length = Math.sqrt(forward * forward + side * side);
         forward /= length;
