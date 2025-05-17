@@ -114,10 +114,9 @@ canvas {
 #lives,
 #ammos,
 #coords,
-#net-debug,
 #name {
   margin: 10px;
-  padding: 0;
+  padding: 10px;
 }
 
 #ui-container {
@@ -150,6 +149,11 @@ canvas {
   background-color: var(--input-bg);
   color: var(--text-light);
   font-family: var(--font-family);
+}
+
+#chatbox p {
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
 #chatbox-input:focus {
