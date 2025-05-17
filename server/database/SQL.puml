@@ -1,96 +1,108 @@
-@startuml
-!define primary_key(x) <b><color:#b8861b><&key></color> x</b>
-!define foreign_key(x) <color:#aaaaaa><&key></color> x
-!define column(x) <color:#efefef><&media-record></color> x
-!define table(x) entity x << (T, white) >>
+@startuml Database Schema
 
-table( users ) {
-  primary_key( user_id ): INTEGER
-  column( username ): TEXT
-  column( password_hash ): TEXT
-  column( created_at ): TIMESTAMP
-  column( last_login ): TIMESTAMP
-  column( time_played): INTEGER
-  foreign_key( player_role): INTEGER
+!define primary_key(x) <color:#e74c3c><&key></color> x
+!define foreign_key(x) <color:#3498db><&key></color> x
+!define column(x) <color:#2c3e50><&media-record></color> x
+!define table(x) class x << (T) >>
+
+note "Web Warfare Database Schema" as N1
+
+package "User Management" {
+  table( users ) {
+    primary_key( user_id ): INTEGER
+    column( username ): TEXT UNIQUE
+    column( password_hash ): TEXT
+    column( created_at ): TIMESTAMP
+    column( last_login ): TIMESTAMP
+    column( time_played ): INTEGER
+    foreign_key( player_role ): INTEGER
+  }
+
+  table( roles ) {
+    primary_key( role_id ): INTEGER
+    column( role_name ): TEXT UNIQUE
+  }
+
+  table( refresh_tokens ) {
+    primary_key( token_id ): INTEGER
+    foreign_key( user_id ): INTEGER
+    column( token ): TEXT
+    column( created_at ): TIMESTAMP
+    column( expires_at ): TIMESTAMP
+  }
 }
 
-table( matches ) {
-  primary_key( match_id ): INTEGER
-  column( start_time ): TIMESTAMP
-  column( end_time ): TIMESTAMP
-  column( status ): TEXT
+package "Match System" {
+  table( matches ) {
+    primary_key( match_id ): INTEGER
+    column( start_time ): TIMESTAMP
+    column( end_time ): TIMESTAMP
+    column( status ): TEXT
+  }
+
+  table( player_matches ) {
+    primary_key(foreign_key( user_id )): INTEGER
+    primary_key(foreign_key( match_id )): INTEGER
+    column( kills ): INTEGER
+    column( deaths ): INTEGER
+    column( headshots ): INTEGER
+    column( bodyshots ): INTEGER
+    column( missedshots ): INTEGER
+  }
 }
 
-table( player_matches ) {
-  primary_key(foreign_key( user_id )): INTEGER
-  primary_key(foreign_key( match_id )): INTEGER
-  column( kills ): INTEGER
-  column( deaths ): INTEGER
-  column( headshots ): INTEGER
-  column( bodyshots): INTEGER
-  column( missedshots): INTEGER
+package "Communication" {
+  table( chat_messages ) {
+    primary_key( cmsg_id ): INTEGER
+    foreign_key( sender_id ): INTEGER
+    foreign_key( match_id ): INTEGER
+    column( timestamp ): TIMESTAMP
+    column( message_text ): TEXT
+  }
+
+  table( private_messages ) {
+    primary_key( pmsg_id ): INTEGER
+    foreign_key( sender_id ): INTEGER
+    foreign_key( receiver_id ): INTEGER
+    column( timestamp ): TIMESTAMP
+    column( message_text ): TEXT
+  }
 }
 
-table( chat_messages ) {
-  primary_key( cmsg_id ): INTEGER
-  foreign_key( sender_id ): INTEGER
-  foreign_key( match_id ): INTEGER
-  column( timestamp ): TIMESTAMP
-  column( message_text ): TEXT
-}
+package "Moderation" {
+  table( bans ) {
+    primary_key( ban_id ): INTEGER
+    foreign_key( user_id ): INTEGER
+    column( reason ): TEXT
+    column( ban_date ): TIMESTAMP
+    column( expiry_date ): TIMESTAMP
+    foreign_key( banned_by ): INTEGER
+  }
 
-table( private_messages ) {
-  primary_key( pmsg_id ): INTEGER
-  foreign_key( sender_id ): INTEGER
-  foreign_key( receiver_id ): INTEGER
-  column( timestamp ): TIMESTAMP
-  column( message_text ): TEXT
-}
-
-table( roles ) {
-  primary_key( role_id ): INTEGER
-  column( role_name ): TEXT
-}
-
-table( bans ) {
-  primary_key( ban_id ): INTEGER
-  foreign_key( user_id ): INTEGER
-  column( reason ): TEXT
-  column( ban_date ): TIMESTAMP
-  column( expiry_date ): TIMESTAMP
-  foreign_key( banned_by ): INTEGER
-}
-
-table( mutes ) {
-  primary_key( mute_id ): INTEGER
-  foreign_key( user_id ): INTEGER
-  column( reason ): TEXT
-  column( mute_date ): TIMESTAMP
-  column( expiry_date ): TIMESTAMP
-  foreign_key( muted_by ): INTEGER
-}
-
-table( refresh_tokens ) {
-  primary_key( token_id ): INTEGER
-  foreign_key( user_id ): INTEGER
-  column( token ): TEXT
-  column( created_at ): TIMESTAMP
-  column( expires_at ): TIMESTAMP
+  table( mutes ) {
+    primary_key( mute_id ): INTEGER
+    foreign_key( user_id ): INTEGER
+    column( reason ): TEXT
+    column( mute_date ): TIMESTAMP
+    column( expiry_date ): TIMESTAMP
+    foreign_key( muted_by ): INTEGER
+  }
 }
 
 ' Relationships
-users ||--o{ player_matches
-users ||--o{ chat_messages
-users ||--o{ private_messages : sender
-users ||--o{ private_messages : receiver
-users ||--o{ bans : banned user
-users ||--o{ bans : banned by
-users ||--o{ mutes : muted user
-users ||--o{ mutes : muted by
-users ||--o{ refresh_tokens
+users "1" --o{ "*" player_matches
+users "1" --o{ "*" chat_messages
+users "1" --o{ "*" private_messages : sends
+users "1" --o{ "*" private_messages : receives
+users "1" --o{ "*" bans : receives
+users "1" --o{ "*" bans : issues
+users "1" --o{ "*" mutes : receives
+users "1" --o{ "*" mutes : issues
+users "1" --o{ "*" refresh_tokens
 
-matches ||--o{ player_matches
-matches ||--o{ chat_messages
+matches "1" --o{ "*" player_matches
+matches "1" --o{ "*" chat_messages
 
-roles ||--o{ users
+roles "1" --o{ "*" users
+
 @enduml

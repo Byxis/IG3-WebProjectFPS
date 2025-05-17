@@ -9,7 +9,7 @@ class ConnectionManager {
   addConnection(username: string, ws: CustomWebSocket): void {
     ws.username = username;
     this.connections.set(username, ws);
-    console.log(`Connection added for ${username} (Total: ${this.connections.size})`);
+    console.log(`➕  ${username} (${this.connections.size})`);
   }
 
   /**
@@ -19,7 +19,7 @@ class ConnectionManager {
   removeConnection(username: string): boolean {
     const result = this.connections.delete(username);
     if (result) {
-      console.log(`Connection removed for ${username} (Total: ${this.connections.size})`);
+      console.log(`➖  ${username} (${this.connections.size})`);
     }
     return result;
   }

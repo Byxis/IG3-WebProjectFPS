@@ -16,6 +16,7 @@ import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
 import { ErrorType } from "./enums/ErrorType.ts";
 import { connectionManager } from "./libs/ConnectionManager.ts";
 import { CONFIG } from "../shared/Config.ts";
+import { matchManager } from "./libs/MatchManager.ts";
 
 // Custom WebSocket type with username
 interface CustomWebSocket extends WebSocket {
@@ -62,18 +63,15 @@ export function setupWebSocketServer(serverPhysics: ServerPhysics) {
       }
 
       const username = ctx.state.user?.username;
-      console.log(`WebSocket upgrade request from user: ${username}`);
       
       const ws = ctx.upgrade() as CustomWebSocket;
       
       if (username) {
         connectionManager.addConnection(username, ws);
-        console.log(`New authenticated connection for user: ${username}`);
         
         setupWebSocketHandlers(ws, serverPhysics);
       } else {
         ws.close(1008, "Authentication required");
-        console.log("Rejected unauthenticated connection attempt");
       }
       
       await next();
@@ -95,11 +93,30 @@ function setupWebSocketHandlers(
       if (ws.username) {
         connectionManager.sendToConnection(ws.username, {
           type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-          name: "Système",
-          message: `Bienvenue, ${ws.username}! Connection établie.`,
+          name: "System",
+          message: `Welcome, ${ws.username}! Connection established.`,
           role: 3,
         });
-        console.log(`Welcome message sent to ${ws.username}`);
+        
+        const currentMatchId = matchManager.getCurrentMatchId();
+        if (currentMatchId) {
+          const matchPhase = matchManager.getMatchPhase(currentMatchId);
+          const timeRemaining = matchManager.getPhaseTimeRemaining(currentMatchId);
+          
+          connectionManager.sendToConnection(ws.username, {
+            type: MessageTypeEnum.MATCH_PHASE_CHANGE,
+            phase: matchPhase,
+            matchId: currentMatchId,
+            timeRemaining: timeRemaining
+          });
+          
+          const matchStats = matchManager.getMatchStats(currentMatchId);
+          connectionManager.sendToConnection(ws.username, {
+            type: MessageTypeEnum.MATCH_STATS_UPDATE,
+            matchId: currentMatchId,
+            stats: matchStats
+          });
+        }
       }
     } catch (error) {
       console.error("Failed to send welcome message:", error);
@@ -178,8 +195,7 @@ function setupWebSocketHandlers(
         }
 
         case MessageTypeEnum.GET_CHAT_MESSAGES: {
-          console.log(`Chat messages requested`);
-          const matchId = 1; //TODO: get match id from the current match
+          const matchId = matchManager.getCurrentMatchId();
           const messages = await sqlHandler.getChatMessages(matchId);
 
           if (messages.length === 0) break;
@@ -245,9 +261,6 @@ function setupWebSocketHandlers(
     if (ws.username) {
       connectionManager.removeConnection(ws.username);
     }
-    console.log(
-      `- websocket disconnected for user ${ws.username} (${connectionManager.connectionCount} connections remaining)`,
-    );
   };
 }
 
@@ -279,7 +292,7 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
     if (ws.username) {
       connectionManager.sendToConnection(ws.username, {
         type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-        name: "Système",
+        name: "System",
         message: result.message,
         role: 3,
       });
@@ -294,15 +307,15 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
           if (result.effect.target === data.name) {
             connectionManager.broadcast({
               type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-              name: "Système",
-              message: `${data.name} s'est suicidé`,
+              name: "System",
+              message: `${data.name} committed suicide`,
               role: 3,
             }, ws.username);
           } else {
             connectionManager.broadcast({
               type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-              name: "Système",
-              message: `${result.effect.target} a été tué par ${data.name}`,
+              name: "System",
+              message: `${result.effect.target} was killed by ${data.name}`,
               role: 3,
             }, ws.username);
           }
@@ -316,7 +329,7 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
 
         connectionManager.sendToConnection(result.effect.target, {
           type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-          name: `MP de ${data.name}`,
+          name: `PM from ${data.name}`,
           message: result.effect.reason,
           role: userRole,
         });
@@ -337,12 +350,12 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
           removePlayer(result.effect.target);
           connectionManager.removeConnection(result.effect.target);
           const durationText = result.effect.expiryDate
-            ? `temporairement (jusqu'au ${result.effect.expiryDate.toLocaleString()})`
-            : "définitivement";
+            ? `temporarily (until ${result.effect.expiryDate.toLocaleString()})`
+            : "permanently";
           connectionManager.broadcast({
             type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-            name: "Système",
-            message: `${result.effect.target} a été banni ${durationText} par ${data.name} pour: ${result.effect.reason}`,
+            name: "System",
+            message: `${result.effect.target} was banned ${durationText} by ${data.name} for: ${result.effect.reason}`,
             role: 3,
           }, ws.username);
         }
@@ -361,12 +374,12 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
             result.effect.expiryDate,
           );
           const durationText = result.effect.expiryDate
-            ? `temporairement (jusqu'au ${result.effect.expiryDate.toLocaleString()})`
-            : "définitivement";
+            ? `temporarily (until ${result.effect.expiryDate.toLocaleString()})`
+            : "permanently";
           connectionManager.broadcast({
             type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-            name: "Système",
-            message: `${result.effect.target} a été rendu muet ${durationText} par ${data.name} pour: ${result.effect.reason}`,
+            name: "System",
+            message: `${result.effect.target} was muted ${durationText} by ${data.name} for: ${result.effect.reason}`,
             role: 3,
           }, ws.username);
         }
@@ -381,8 +394,8 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
           await sqlHandler.removeBan(unbannedPlayerId);
           connectionManager.broadcast({
             type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-            name: "Système",
-            message: `${result.effect.target} a été débanni par ${data.name}`,
+            name: "System",
+            message: `${result.effect.target} was unbanned by ${data.name}`,
             role: 3,
           }, ws.username);
         }
@@ -398,8 +411,8 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
           await sqlHandler.removeMute(unmutedPlayerId);
           connectionManager.broadcast({
             type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-            name: "Système",
-            message: `${result.effect.target} a été démuté par ${data.name}`,
+            name: "System",
+            message: `${result.effect.target} was unmuted by ${data.name}`,
             role: 3,
           }, ws.username);
         }
@@ -407,20 +420,16 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
       }
 
       case CommandEffectType.LOGOUT: {
-        console.log(
-          `Traitement de la commande LOGOUT pour ${result.effect.target}`,
-        );
-
         if (ws.username) {
           connectionManager.sendToConnection(ws.username, {
             type: MessageTypeEnum.LOGOUT_COMMAND,
-            message: "Vous avez été déconnecté.",
+            message: "You have been disconnected.",
           });
 
           connectionManager.broadcast({
             type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-            name: "Système",
-            message: `${result.effect.target} s'est déconnecté.`,
+            name: "System",
+            message: `${result.effect.target} has disconnected.`,
             role: 3,
           }, ws.username);
 
@@ -444,9 +453,9 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
       if (ws.username) {
         connectionManager.sendToConnection(ws.username, {
           type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-          name: "Système",
+          name: "System",
           message:
-            `Vous ne pouvez pas envoyer de message car vous êtes muet ${muteStatus.expiry ? `jusqu'au ${muteStatus.expiry.toLocaleString()}` : "définitivement"}. Raison: ${muteStatus.reason}`,
+            `You cannot send a message because you are muted ${muteStatus.expiry ? `until ${muteStatus.expiry.toLocaleString()}` : "permanently"}. Reason: ${muteStatus.reason}`,
           role: 3,
         });
       }
@@ -470,7 +479,7 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
 function notifyAll(message: string, excludeConnection?: CustomWebSocket) {
   connectionManager.broadcast({
     type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-    name: "Système",
+    name: "System",
     message: message,
     role: 3,
   }, excludeConnection?.username);

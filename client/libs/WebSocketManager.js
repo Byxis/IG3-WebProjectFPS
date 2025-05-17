@@ -7,6 +7,7 @@ import { ErrorTypes } from "../enum/ErrorTypes.js";
 import { verifyAuthentication } from "./AuthManager.js";
 import game from "./Game.js";
 import movementManager from "./MovementManager.js";
+import matchUIManager from "./MatchUIManager.js";
 
 let wsocket = null;
 let reconnectTimer = null;
@@ -326,7 +327,6 @@ function handleWebSocketMessage(event) {
       }
 
       case MessageTypeEnum.LOGOUT_COMMAND: {
-        console.log("Received LOGOUT_COMMAND message");
         handleLogout();
         break;
       }
@@ -380,6 +380,26 @@ function handleWebSocketMessage(event) {
       case MessageTypeEnum.RELOAD_COMPLETE: {
         movementManager.isReloading = false;
         uiManager.completeReloadAnimation();
+        break;
+      }
+      
+      case MessageTypeEnum.MATCH_PHASE_CHANGE: {
+        matchUIManager.handleMatchPhaseChange(data);
+        break;
+      }
+      
+      case MessageTypeEnum.MATCH_TIMER_UPDATE: {
+        matchUIManager.handleMatchTimerUpdate(data);
+        break;
+      }
+      
+      case MessageTypeEnum.MATCH_STATS_UPDATE: {
+        matchUIManager.handleMatchStatsUpdate(data);
+        break;
+      }
+      
+      case MessageTypeEnum.MATCH_END: {
+        matchUIManager.handleMatchEnd(data);
         break;
       }
 

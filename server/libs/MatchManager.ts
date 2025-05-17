@@ -25,13 +25,14 @@ interface MatchState {
   startTime: number;
   endTime: number | null;
   playerStats: Map<string, PlayerMatchStats>;
+  disconnectedPlayerStats: Map<string, PlayerMatchStats>; // Add tracking for disconnected players
   settings: MatchSettings;
   timerHandle: number | null;
 }
 
 export class MatchManager {
   private activeMatches: Map<number, MatchState> = new Map();
-  private currentMatchId: number | null = null;
+  private currentMatchId: number = 1;
   private defaultSettings: MatchSettings;
   private waitingCheckInterval: number | null = null;
   private readonly MIN_PLAYERS_TO_START = 2;
@@ -60,6 +61,7 @@ export class MatchManager {
       startTime: Date.now(),
       endTime: null,
       playerStats: new Map(),
+      disconnectedPlayerStats: new Map(),
       settings: { ...this.defaultSettings },
       timerHandle: null
     };
@@ -117,8 +119,7 @@ export class MatchManager {
   }
 
   /**
-   * Notifies the match manager that a player has joined
-   * Checks if we can now start the match
+   * Called when a player joins the game
    */
   playerJoined(): void {
     const matchId = this.currentMatchId;
@@ -126,6 +127,17 @@ export class MatchManager {
 
     const match = this.activeMatches.get(matchId);
     if (!match) return;
+
+    // Initialize match stats record for each new player
+    Object.keys(players).forEach(playerName => {
+      try {
+        const userId = sqlHandler.getUserByName(playerName);
+        if (userId > 0) {
+          sqlHandler.recordPlayerMatchData(userId, matchId, 0, 0, 0, 0, 0);
+        }
+      } catch (_error) {
+      }
+    });
 
     if (match.phase === MatchPhase.WAITING_FOR_PLAYERS) {
       const playerCount = Object.keys(players).length;
@@ -200,6 +212,25 @@ export class MatchManager {
       );
     }
   }
+
+  /**
+   * Handle player disconnection by saving their stats
+   * @param playerName The player's name
+   */
+  playerDisconnected(playerName: string): void {
+    const matchId = this.currentMatchId;
+    if (!matchId) return;
+
+    const match = this.activeMatches.get(matchId);
+    if (!match) return;
+
+    const playerStats = match.playerStats.get(playerName);
+    if (playerStats) {
+      match.disconnectedPlayerStats.set(playerName, { ...playerStats });
+      console.log(`Saved stats for disconnected player: ${playerName}`);
+    }
+  }
+
   /**
    * Starts a specific phase for a match
    * @param matchId The match ID
@@ -242,6 +273,7 @@ export class MatchManager {
         nextPhase = MatchPhase.RESULTS;
 
         this.startTimerUpdates(matchId);
+        this.startPeriodicStatsBroadcast(matchId);
         break;
 
       case MatchPhase.RESULTS:
@@ -294,6 +326,29 @@ export class MatchManager {
   }
 
   /**
+   * Starts periodic match stats updates to clients
+   * @param matchId The match ID
+   */
+  private startPeriodicStatsBroadcast(matchId: number): void {
+    const match = this.activeMatches.get(matchId);
+    if (!match) return;
+
+    const updateInterval = 5000;
+
+    const sendStatsUpdate = () => {
+      this.broadcastMatchStats(matchId);
+
+      if (match.phase !== MatchPhase.GAMEPLAY) {
+        return;
+      }
+
+      setTimeout(sendStatsUpdate, updateInterval);
+    };
+
+    sendStatsUpdate();
+  }
+
+  /**
    * Ends a match and prepares for the next one
    * @param matchId The match ID
    */
@@ -337,31 +392,54 @@ export class MatchManager {
   }
 
   /**
-   * Gets statistics for all players in the match
+   * Gets statistics for all players in the match, including disconnected ones
    * @param matchId The match ID
    * @returns Array of player statistics sorted by kills
    */
   getMatchStats(matchId: number): any[] {
-    const stats = Object.entries(players).map(([name, player]) => {
-      return {
-        name,
-        kills: player.kills,
-        deaths: player.deaths,
-        headshots: player.headshots,
-        bodyshots: player.bodyshots,
-        missedshots: player.missedshots,
-        ratio: player.deaths > 0 ? (player.kills / player.deaths).toFixed(2) : player.kills.toFixed(2),
-      };
-    }).sort((a, b) => b.kills - a.kills);
+    const match = this.activeMatches.get(matchId);
+    if (!match) return [];
 
-    return stats;
+    const combinedStats = new Map<string, any>();
+    
+    Object.keys(players).forEach((playerName) => {
+      const matchStats = sqlHandler.getUserMatchStats(playerName, matchId);
+      combinedStats.set(playerName, {
+        name: playerName,
+        kills: matchStats.kills,
+        deaths: matchStats.deaths,
+        headshots: matchStats.headshots,
+        bodyshots: matchStats.bodyshots,
+        missedshots: matchStats.missedshots,
+        ratio: matchStats.deaths > 0 ? (matchStats.kills / matchStats.deaths).toFixed(2) : matchStats.kills.toFixed(2),
+        active: true
+      });
+    });
+    
+    match.disconnectedPlayerStats.forEach((stats, name) => {
+      if (!combinedStats.has(name)) {
+        combinedStats.set(name, {
+          name,
+          kills: stats.kills,
+          deaths: stats.deaths,
+          headshots: stats.headshots,
+          bodyshots: stats.bodyshots,
+          missedshots: stats.missedshots,
+          ratio: stats.deaths > 0 ? (stats.kills / stats.deaths).toFixed(2) : stats.kills.toFixed(2),
+          active: false
+        });
+      }
+    });
+
+    // Sort all players by kills
+    return Array.from(combinedStats.values()).sort((a, b) => b.kills - a.kills);
   }
 
   /**
    * Gets the current match ID
    * @returns The current match ID or null if no match is active
    */
-  getCurrentMatchId(): number | null {
+  getCurrentMatchId(): number {
     return this.currentMatchId;
   }
 
@@ -446,6 +524,7 @@ export class MatchManager {
         startTime: startTime,
         endTime: null,
         playerStats: new Map(),
+        disconnectedPlayerStats: new Map(),
         settings: { ...this.defaultSettings },
         timerHandle: null
       };
@@ -534,6 +613,7 @@ export class MatchManager {
         nextPhase = MatchPhase.RESULTS;
 
         this.startTimerUpdates(matchId);
+        this.startPeriodicStatsBroadcast(matchId);
         break;
 
       case MatchPhase.RESULTS:

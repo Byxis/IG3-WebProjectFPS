@@ -5,7 +5,7 @@
  * @returns {void}
  */
 export function debugSceneObjects(scene) {
-  console.log("=== DÉBUT DE LA HIÉRARCHIE DE LA SCÈNE ===");
+  console.log("=== SCENE HIERARCHY START ===");
 
   function traverseObject(object, depth = 0) {
     const indent = "  ".repeat(depth);
@@ -25,7 +25,7 @@ export function debugSceneObjects(scene) {
   }
 
   traverseObject(scene);
-  console.log("=== FIN DE LA HIÉRARCHIE DE LA SCÈNE ===");
+  console.log("=== SCENE HIERARCHY END ===");
 }
 
 /**
@@ -35,7 +35,7 @@ export function debugSceneObjects(scene) {
  * @returns {void}
  */
 export function advancedDebugSceneObjects(scene) {
-  console.log("=== DÉBUT DE LA HIÉRARCHIE DE LA SCÈNE ===");
+  console.log("=== SCENE HIERARCHY START ===");
 
   function traverseObject(object, depth = 0) {
     const indent = "  ".repeat(depth);
@@ -73,5 +73,5 @@ export function advancedDebugSceneObjects(scene) {
   }
 
   traverseObject(scene);
-  console.log("=== FIN DE LA HIÉRARCHIE DE LA SCÈNE ===");
+  console.log("=== SCENE HIERARCHY END ===");
 }

@@ -285,7 +285,7 @@ export class UIManager {
 
     chatMessage.appendChild(nameSpan);
 
-    if (name === "Système") {
+    if (name === "System") {
       const messageLines = message.split("<br>");
 
       chatMessage.appendChild(document.createTextNode(": " + messageLines[0]));
@@ -357,11 +357,11 @@ export class UIManager {
       
       // Change color based on health level
       if (healthPercent <= 25) {
-        lives.style.color = '#ff4655'; // Red for low health
+        lives.style.color = '#ff4655';
       } else if (healthPercent <= 50) {
-        lives.style.color = '#ff9800'; // Orange for medium health
+        lives.style.color = '#ff9800';
       } else {
-        lives.style.color = 'white'; // Default color for good health
+        lives.style.color = 'white';
       }
     }
   }
@@ -392,11 +392,11 @@ export class UIManager {
       
       // Visual indication when low on ammo
       if (ammo === 0) {
-        ammosDisplay.style.color = '#ff4655'; // Red when empty
-      } else if (ammo <= maxAmmo * 0.25) {
-        ammosDisplay.style.color = '#ff9800'; // Orange when low
+        ammosDisplay.style.color = '#ff4655';
+      } else if (ammo <= maxAmmo * 0.5) {
+        ammosDisplay.style.color = '#ff9800';
       } else {
-        ammosDisplay.style.color = 'white'; // Default color
+        ammosDisplay.style.color = 'white';
       }
     }
   }

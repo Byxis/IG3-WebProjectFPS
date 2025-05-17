@@ -65,9 +65,9 @@ export function isHorizontalMovementValid(serverPos, clientPos, deltaTime, netwo
     const maxHorizontalSpeed = isSprinting
         ? CONFIG.SPRINT_SPEED
         : CONFIG.WALK_SPEED;
-    // Tolérance de base pour la simulation physique
+    // Base tolerance for physics simulation
     const physicsDistance = maxHorizontalSpeed * deltaTime + 0.1;
-    // Tolérance de la latence réseau
+    // Network latency tolerance
     const networkDistance = maxHorizontalSpeed * Math.abs(networkTimeOffset) /
         1000;
     const totalDistance = physicsDistance + networkDistance;

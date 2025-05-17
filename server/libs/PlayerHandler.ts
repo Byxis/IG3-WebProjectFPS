@@ -141,6 +141,8 @@ export function removePlayer(playerName: string) {
     },
   });
 
+  matchManager.playerDisconnected(playerName);
+  
   delete players[playerName];
 }
 

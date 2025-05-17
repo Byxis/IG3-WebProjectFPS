@@ -193,7 +193,6 @@ export class SqlHandler {
    * @returns {Row[]} SQL query result
    */
   createUser(username: string, passwordHash: string): Row[] {
-    console.log(username);
     return this.db.query(
       "INSERT INTO users (username, password_hash, player_role) VALUES (?, ?, 1) RETURNING user_id",
       [username, passwordHash],
@@ -278,14 +277,6 @@ export class SqlHandler {
       [username],
     );
     if (result.length > 0) {
-      
-      console.log({
-        kills: result[0][0] as number || 0,
-        deaths: result[0][1] as number,
-        headshots: result[0][2] as number,
-        bodyshots: result[0][3] as number,
-        missedshots: result[0][4] as number,
-      });
       return {
         kills: result[0][0] as number,
         deaths: result[0][1] as number,
@@ -448,12 +439,29 @@ export class SqlHandler {
     bodyshots: number,
     missedshots: number,
   ): Row[] {
-    return this.db.query(
-      `INSERT INTO player_matches 
-       (user_id, match_id, kills, deaths, headshots, bodyshots, missedshots) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [userId, matchId, kills, deaths, headshots, bodyshots, missedshots],
-    );
+    try {
+      // First check if a record already exists
+      const existingRecord = this.db.query(
+        "SELECT 1 FROM player_matches WHERE user_id = ? AND match_id = ?",
+        [userId, matchId]
+      );
+      
+      // If a record exists, don't try to insert a new one
+      if (existingRecord.length > 0) {
+        return [];
+      }
+      
+      // Insert only if no record exists
+      return this.db.query(
+        `INSERT INTO player_matches 
+         (user_id, match_id, kills, deaths, headshots, bodyshots, missedshots) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [userId, matchId, kills, deaths, headshots, bodyshots, missedshots]
+      );
+    } catch (error) {
+      console.error(`Error recording player match data:`, error);
+      return [];
+    }
   }
 
   /**
@@ -831,22 +839,17 @@ export class SqlHandler {
            WHERE user_id = ? AND match_id = ?`,
           [kills, deaths, headshots, bodyshots, missedshots, userId, matchId]
         );
-        
-        console.log(`Updated stats for user ${playerName} (ID: ${userId}) in match ${matchId}`);
+      
       } else {
         this.db.query(
           `INSERT INTO player_matches (user_id, match_id, kills, deaths, headshots, bodyshots, missedshots)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [userId, matchId, kills, deaths, headshots, bodyshots, missedshots]
         );
-        
-        console.log(`Created new stats record for user ${playerName} (ID: ${userId}) in match ${matchId}`);
+  
       }
 
       this.db.query("COMMIT");
-
-      const updatedStats = this.getUserMatchStats(playerName, matchId);
-      console.log(`Stats after update for ${playerName} in match ${matchId}:`, updatedStats);
 
       return true;
     } catch (error) {

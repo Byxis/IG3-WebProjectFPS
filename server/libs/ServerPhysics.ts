@@ -76,10 +76,6 @@ export class ServerPhysics {
       players[name].position.y = position.y;
 
       if (corrected) {
-        /*console.log(
-          `Player ${name} position is invalid. Correcting...`,
-          this.players[name].position,
-        );*/
         return {
           corrected: true,
           position: players[name].position,
