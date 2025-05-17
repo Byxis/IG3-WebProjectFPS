@@ -14,7 +14,7 @@ export class MovementManager {
    */
   constructor() {
     this.raycaster = new THREE.Raycaster();
-    this.shootCooldown = 500;
+    this.shootCooldown = 250;
     this.lastShootTime = 0;
 
     this.forward = 0;
@@ -56,7 +56,14 @@ export class MovementManager {
       },
     };
 
+    this.ammo = 0; // Will be set by server
+    this.maxAmmo = CONFIG.MAX_AMMO;
+    this.isReloading = false;
+    this.reloadStartTime = 0;
+    this.reloadDuration = CONFIG.RELOAD_TIME;
+
     this.setupShootingControls();
+    this.setupReloadControls();
   }
 
   /**
@@ -70,10 +77,19 @@ export class MovementManager {
     this.handleMovementUpdate();
     this.simulateMovement(deltaTime);
     this.checkForVerification();
+    this.checkForReload();
 
     uiManager.updatePosition(sceneManager.cameraContainer.position);
 
     this.smoothRotation(deltaTime);
+
+    if (this.isReloading) {
+      const progress = Math.min(
+        (performance.now() - this.reloadStartTime) / this.reloadDuration,
+        1,
+      );
+      uiManager.updateReloadProgress(progress);
+    }
   }
 
   /**
@@ -123,6 +139,15 @@ export class MovementManager {
    * @returns {void}
    */
   handleMovementUpdate() {
+    // If player is dead, don't process movement
+    if (uiManager.isPlayerCurrentlyDead()) {
+      this.forward = 0;
+      this.side = 0;
+      this.isSprinting = false;
+      this.isJumping = false;
+      return;
+    }
+
     const oldForward = this.forward;
     const oldSide = this.side;
     const oldIsSprinting = this.isSprinting;
@@ -281,6 +306,57 @@ export class MovementManager {
   }
 
   /**
+   ** Checks if reload key is pressed and handles reloading
+   * @returns {void}
+   */
+  checkForReload() {
+    if (
+      GAMESTATE.keyStates.KeyR && !this.isReloading && this.ammo < this.maxAmmo
+    ) {
+      this.startReload();
+    }
+  }
+
+  /**
+   ** Starts the reload process
+   * @returns {void}
+   */
+  startReload() {
+    if (this.isReloading) return;
+
+    const wsocket = getWebSocket();
+    if (
+      !wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected
+    ) {
+      return;
+    }
+
+    wsocket.send(JSON.stringify({
+      type: MessageTypeEnum.RELOAD_START,
+      name: localStorage.getItem("username"),
+      timestamp: Date.now(),
+    }));
+  }
+
+  /**
+   ** Sets up event listeners for reload key
+   * @returns {void}
+   */
+  setupReloadControls() {
+    document.addEventListener("keydown", (event) => {
+      if (event.code === "KeyR") {
+        GAMESTATE.keyStates.KeyR = true;
+      }
+    });
+
+    document.addEventListener("keyup", (event) => {
+      if (event.code === "KeyR") {
+        GAMESTATE.keyStates.KeyR = false;
+      }
+    });
+  }
+
+  /**
    ** Sets up event listeners for shooting mechanics.
    * Handles mouse click events for shooting and applies appropriate event filters.
    * @returns {void}
@@ -305,12 +381,26 @@ export class MovementManager {
    * @returns {void}
    */
   shoot() {
+    // If player is dead, don't allow shooting
+    if (uiManager.isPlayerCurrentlyDead()) {
+      return;
+    }
+
     console.log("Shot fired");
 
     const now = performance.now();
     if (now - this.lastShootTime < this.shootCooldown) {
       return;
     }
+
+    if (this.isReloading || this.ammo <= 0) {
+      if (this.ammo <= 0) {
+        console.log("Out of ammo, auto reloading...");
+        this.startReload();
+      }
+      return;
+    }
+
     this.lastShootTime = now;
 
     const cameraPosition = sceneManager.camera.getWorldPosition(
@@ -326,48 +416,69 @@ export class MovementManager {
 
     scene.traverse((object) => {
       if (
-        object.isMesh && object.parent && object.parent.name &&
+        object.isMesh && object.parent &&
+        object.parent.name &&
         object.parent.name !== localStorage.getItem("username")
       ) {
         targets.push(object);
       }
     });
 
-    const intersects = this.raycaster.intersectObjects(targets, true);
+    const wsocket = getWebSocket();
+    if (
+      wsocket && wsocket.readyState === WebSocket.OPEN &&
+      wsState.isConnected
+    ) {
+      const shotData = {
+        type: MessageTypeEnum.PLAYER_SHOT,
+        shooter: localStorage.getItem("username"),
+        timestamp: Date.now(),
+        position: {
+          x: cameraPosition.x,
+          y: cameraPosition.y,
+          z: cameraPosition.z,
+        },
+        direction: {
+          x: cameraDirection.x,
+          y: cameraDirection.y,
+          z: cameraDirection.z,
+        },
+      };
 
-    if (intersects.length > 0) {
-      const hit = intersects[0];
-      let hitObject = hit.object;
+      const intersects = this.raycaster.intersectObjects(targets, true);
 
-      while (hitObject.parent && !hitObject.parent.name) {
-        hitObject = hitObject.parent;
-      }
-
-      const hitPlayerName = hitObject.parent.name;
-
-      if (hitPlayerName) {
-        console.log(
-          `Hit player ${hitPlayerName} at distance ${hit.distance.toFixed(2)}`,
-        );
-
-        const wsocket = getWebSocket();
-        if (
-          wsocket && wsocket.readyState === WebSocket.OPEN &&
-          wsState.isConnected
+      if (intersects.length > 0) {
+        const hit = intersects[0];
+        const hitObject = hit.object;
+        let playerGroup = hitObject;
+        while (
+          playerGroup &&
+          (!playerGroup.name || !playerGroup.parent ||
+            playerGroup.parent.type !== "Scene")
         ) {
-          wsocket.send(JSON.stringify({
-            type: MessageTypeEnum.PLAYER_SHOT,
-            shooter: localStorage.getItem("username"),
-            target: hitPlayerName,
-            timestamp: Date.now(),
-            hitPoint: {
-              x: hit.point.x,
-              y: hit.point.y,
-              z: hit.point.z,
-            },
-          }));
+          playerGroup = playerGroup.parent;
+        }
+
+        const hitPlayerName = playerGroup ? playerGroup.name : null;
+
+        if (hitPlayerName) {
+          console.log(
+            `Hit player ${hitPlayerName} at distance ${
+              hit.distance.toFixed(2)
+            }`,
+          );
+
+          shotData.target = hitPlayerName;
+          shotData.hitPoint = {
+            x: hit.point.x,
+            y: hit.point.y,
+            z: hit.point.z,
+          };
+          shotData.distance = hit.distance;
         }
       }
+
+      wsocket.send(JSON.stringify(shotData));
     }
   }
 }

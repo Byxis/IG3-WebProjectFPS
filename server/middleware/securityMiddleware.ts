@@ -97,7 +97,7 @@ export function rateLimiter(ctx: Context, next: () => Promise<unknown>) {
     const attempts = loginAttempts.get(ip);
 
     if (attempts.count >= 5 && now - attempts.timestamp < 15 * 60 * 1000) {
-      console.log(`❌ Trop de tentatives de connexion depuis l'IP ${ip}`);
+      console.log(`❌ Too many connection attempts from IP ${ip}`);
       ctx.response.status = ErrorType.TOO_MANY_REQUESTS.valueOf();
       ctx.response.body = {
         error: "Too many login attempts. Please try again later.",

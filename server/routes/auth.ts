@@ -56,7 +56,7 @@ authRoutes.post("/register", csrfProtection, async (ctx) => {
     return errorResponse(
       ctx,
       ErrorType.BAD_REQUEST,
-      "Nom d'utilisateur et mot de passe requis",
+      "Username and password required",
     );
   }
 
@@ -64,7 +64,7 @@ authRoutes.post("/register", csrfProtection, async (ctx) => {
     return errorResponse(
       ctx,
       ErrorType.BAD_REQUEST,
-      "Le mot de passe doit contenir au moins 6 caractères",
+      "Password must be at least 6 characters",
     );
   }
 
@@ -72,7 +72,7 @@ authRoutes.post("/register", csrfProtection, async (ctx) => {
     return errorResponse(
       ctx,
       ErrorType.CONFLICT,
-      "Nom d'utilisateur déjà pris",
+      "Username already taken",
     );
   }
 
@@ -125,8 +125,8 @@ authRoutes.post("/login", csrfProtection, rateLimiter, async (ctx) => {
     return errorResponse(
       ctx,
       ErrorType.AUTH_REQUIRED,
-      "Identifiants invalides",
-      { reason: "Nom d'utilisateur introuvable" },
+      "Invalid credentials",
+      { reason: "Username not found" },
     );
   }
 
@@ -137,16 +137,16 @@ authRoutes.post("/login", csrfProtection, rateLimiter, async (ctx) => {
     return errorResponse(
       ctx,
       ErrorType.AUTH_REQUIRED,
-      "Identifiants invalides",
-      { reason: "Mot de passe incorrect" },
+      "Invalid credentials",
+      { reason: "Incorrect password" },
     );
   }
   const isBanned = sqlHandler.isBanned(userId);
 
   if (isBanned.banned) {
-    return errorResponse(ctx, ErrorType.BANNED, "Utilisateur banni", {
-      reason: "Vous êtes banni pour la raison suivante : " + isBanned.reason +
-        " jusqu'au " + isBanned.expiry,
+    return errorResponse(ctx, ErrorType.BANNED, "User banned", {
+      reason: "You are banned for the following reason: " + isBanned.reason +
+        " until " + isBanned.expiry,
     });
   }
 
@@ -192,7 +192,7 @@ authRoutes.post("/refresh", async (ctx) => {
   if (!token) {
     console.log("❌ No refresh token provided");
     ctx.response.status = 401;
-    ctx.response.body = { error: "Refresh token manquant" };
+    ctx.response.body = { error: "Missing refresh token" };
     return;
   }
 
@@ -201,7 +201,7 @@ authRoutes.post("/refresh", async (ctx) => {
   if (!payload || payload.type !== "refresh") {
     console.log("❌ Invalid refresh token");
     ctx.response.status = 401;
-    ctx.response.body = { error: "Refresh token invalide" };
+    ctx.response.body = { error: "Invalid refresh token" };
     return;
   }
 
@@ -209,7 +209,7 @@ authRoutes.post("/refresh", async (ctx) => {
   if (userId <= 0) {
     console.log("❌ Unknown user");
     ctx.response.status = 401;
-    ctx.response.body = { error: "Utilisateur inconnu" };
+    ctx.response.body = { error: "Unknown user" };
     return;
   }
 
@@ -217,7 +217,7 @@ authRoutes.post("/refresh", async (ctx) => {
   if (!isValidToken) {
     console.log("❌ Revoked or invalid refresh token");
     ctx.response.status = 401;
-    ctx.response.body = { error: "Refresh token révoqué ou invalide" };
+    ctx.response.body = { error: "Revoked or invalid refresh token" };
     return;
   }
 
@@ -274,7 +274,7 @@ authRoutes.post("/logout", async (ctx) => {
 
   ctx.cookies.delete("accessToken");
   ctx.cookies.delete("refreshToken");
-  ctx.response.body = { message: "Déconnecté avec succès" };
+  ctx.response.body = { message: "Successfully logged out" };
 });
 
 console.log("- Auth routes loaded ✅");

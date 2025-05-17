@@ -1,4 +1,9 @@
 import { DB, Row } from "https://deno.land/x/sqlite/mod.ts";
+import {
+  DEFAULT_GAMEPLAY_DURATION,
+  DEFAULT_RESULT_DURATION,
+  DEFAULT_WARMUP_DURATION,
+} from "../config/config.ts";
 
 export class SqlHandler {
   private db: DB;
@@ -192,7 +197,6 @@ export class SqlHandler {
    * @returns {Row[]} SQL query result
    */
   createUser(username: string, passwordHash: string): Row[] {
-    console.log(username);
     return this.db.query(
       "INSERT INTO users (username, password_hash, player_role) VALUES (?, ?, 1) RETURNING user_id",
       [username, passwordHash],
@@ -270,11 +274,49 @@ export class SqlHandler {
     missedshots: number;
   } {
     const result = this.db.query(
-      `SELECT kills, deaths, headshots, bodyshots, missedshots
+      `SELECT SUM(kills), SUM(deaths), SUM(headshots), SUM(bodyshots), SUM(missedshots)
        FROM player_matches pm
         JOIN users u ON pm.user_id = u.user_id
         WHERE u.username = ?`,
       [username],
+    );
+    if (result.length > 0) {
+      return {
+        kills: result[0][0] as number,
+        deaths: result[0][1] as number,
+        headshots: result[0][2] as number,
+        bodyshots: result[0][3] as number,
+        missedshots: result[0][4] as number,
+      };
+    }
+    return {
+      kills: 0,
+      deaths: 0,
+      headshots: 0,
+      bodyshots: 0,
+      missedshots: 0,
+    };
+  }
+
+  /**
+   ** Gets a user's game statistics for a specific match
+   * @param {string} username - The username
+   * @param {number} matchId - The match ID
+   * @returns {object} User statistics for the match
+   */
+  getUserMatchStats(username: string, matchId: number): {
+    kills: number;
+    deaths: number;
+    headshots: number;
+    bodyshots: number;
+    missedshots: number;
+  } {
+    const result = this.db.query(
+      `SELECT kills, deaths, headshots, bodyshots, missedshots
+       FROM player_matches pm
+       JOIN users u ON pm.user_id = u.user_id
+       WHERE u.username = ? AND pm.match_id = ?`,
+      [username, matchId],
     );
     if (result.length > 0) {
       return {
@@ -401,12 +443,29 @@ export class SqlHandler {
     bodyshots: number,
     missedshots: number,
   ): Row[] {
-    return this.db.query(
-      `INSERT INTO player_matches 
-       (user_id, match_id, kills, deaths, headshots, bodyshots, missedshots) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [userId, matchId, kills, deaths, headshots, bodyshots, missedshots],
-    );
+    try {
+      // First check if a record already exists
+      const existingRecord = this.db.query(
+        "SELECT 1 FROM player_matches WHERE user_id = ? AND match_id = ?",
+        [userId, matchId],
+      );
+
+      // If a record exists, don't try to insert a new one
+      if (existingRecord.length > 0) {
+        return [];
+      }
+
+      // Insert only if no record exists
+      return this.db.query(
+        `INSERT INTO player_matches 
+         (user_id, match_id, kills, deaths, headshots, bodyshots, missedshots) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [userId, matchId, kills, deaths, headshots, bodyshots, missedshots],
+      );
+    } catch (error) {
+      console.error(`Error recording player match data:`, error);
+      return [];
+    }
   }
 
   /**
@@ -733,6 +792,134 @@ export class SqlHandler {
    */
   close(): void {
     this.db.close();
+  }
+
+  /**
+   ** Update player stats by adding incremental values
+   * @param {string} playerName - The player's name
+   * @param {number} matchId - The current match ID
+   * @param {number} kills - Kills to add
+   * @param {number} deaths - Deaths to add
+   * @param {number} headshots - Headshots to add
+   * @param {number} bodyshots - Bodyshots to add
+   * @param {number} missedshots - Missed shots to add
+   */
+  updateUserStats(
+    playerName: string,
+    matchId: number,
+    kills: number,
+    deaths: number,
+    headshots: number,
+    bodyshots: number,
+    missedshots: number,
+  ): boolean {
+    try {
+      const userId = this.getUserByName(playerName);
+      if (userId <= 0) {
+        console.error(
+          `Cannot update stats for ${playerName}: User does not exist in database`,
+        );
+        return false;
+      }
+
+      if (!this.doMatchExists(matchId)) {
+        console.error(
+          `Cannot update stats for ${playerName}: Match ${matchId} does not exist`,
+        );
+        return false;
+      }
+
+      this.db.query("BEGIN TRANSACTION");
+
+      const existingRecord = this.db.query(
+        "SELECT user_id FROM player_matches WHERE user_id = ? AND match_id = ?",
+        [userId, matchId],
+      );
+
+      if (existingRecord.length > 0) {
+        this.db.query(
+          `UPDATE player_matches 
+           SET kills = kills + ?, 
+               deaths = deaths + ?,
+               headshots = headshots + ?,
+               bodyshots = bodyshots + ?,
+               missedshots = missedshots + ?
+           WHERE user_id = ? AND match_id = ?`,
+          [kills, deaths, headshots, bodyshots, missedshots, userId, matchId],
+        );
+      } else {
+        this.db.query(
+          `INSERT INTO player_matches (user_id, match_id, kills, deaths, headshots, bodyshots, missedshots)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [userId, matchId, kills, deaths, headshots, bodyshots, missedshots],
+        );
+      }
+
+      this.db.query("COMMIT");
+
+      return true;
+    } catch (error) {
+      this.db.query("ROLLBACK");
+      console.error(
+        `Error updating user stats for ${playerName} in match ${matchId}:`,
+        error,
+      );
+      return false;
+    }
+  }
+
+  /**
+   ** Gets the most recent active match from the database
+   * @returns {object|null} Match info or null if no active match found
+   */
+  getActiveMatch(): { matchId: number; startTime: string } | null {
+    try {
+      const result = this.db.query(
+        `SELECT match_id, start_time 
+         FROM matches 
+         WHERE status = 'active' 
+         ORDER BY start_time DESC 
+         LIMIT 1`,
+      );
+
+      if (result.length > 0) {
+        const startTimeStr = result[0][1] as string;
+        const formattedTime = startTimeStr.replace(" ", "T") + "Z";
+
+        return {
+          matchId: result[0][0] as number,
+          startTime: formattedTime,
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error("Error retrieving active match:", error);
+      return null;
+    }
+  }
+
+  /**
+   ** Cleans up stale matches that should have ended already
+   * @returns {number} Number of matches cleaned up
+   */
+  cleanupStaleMatches(): number {
+    try {
+      const totalMatchDuration = DEFAULT_WARMUP_DURATION +
+        DEFAULT_GAMEPLAY_DURATION +
+        DEFAULT_RESULT_DURATION;
+
+      const result = this.db.query(
+        `UPDATE matches 
+         SET end_time = CURRENT_TIMESTAMP, status = 'completed' 
+         WHERE status = 'active' 
+         AND datetime(start_time, '+${totalMatchDuration} seconds') < datetime('now')`,
+      );
+
+      return result.length;
+    } catch (error) {
+      console.error("Error cleaning up stale matches:", error);
+      return 0;
+    }
   }
 }
 
