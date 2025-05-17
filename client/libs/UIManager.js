@@ -341,44 +341,31 @@ export class UIManager {
    */
   updateHealth(health) {
     const lives = document.getElementById("lives");
-    
+
     if (lives) {
       const healthPercent = Math.max(0, Math.min(100, health));
-      
+
       // Show hearts based on health percentage
-      let heartsText = '';
+      let heartsText = "";
       const fullHearts = Math.floor(healthPercent / 25);
-      
+
       for (let i = 0; i < fullHearts; i++) {
-        heartsText += '❤️';
+        heartsText += "❤️";
       }
-      
+
       lives.innerHTML = `${heartsText} ${healthPercent}`;
-      
+
       // Change color based on health level
       if (healthPercent <= 25) {
-        lives.style.color = '#ff4655';
+        lives.style.color = "#ff4655";
       } else if (healthPercent <= 50) {
-        lives.style.color = '#ff9800';
+        lives.style.color = "#ff9800";
       } else {
-        lives.style.color = 'white';
+        lives.style.color = "white";
       }
     }
   }
 
-  /**
-   ** Updates the ammo display in the UI.
-   * @param {number} current - The current ammo count.
-   * @param {number} max - The maximum ammo count.
-   * @returns {void}
-   */
-  updateAmmo(current, max) {
-    const ammoElement = document.getElementById('ammos');
-    if (ammoElement) {
-      ammoElement.textContent = `${current}/${max}`;
-    }
-  }
-  
   /**
    ** Updates the ammo display
    * @param {number} ammo - Current ammo count
@@ -386,31 +373,34 @@ export class UIManager {
    */
   updateAmmo(ammo, maxAmmo) {
     const ammosDisplay = document.getElementById("ammos");
-    
+
     if (ammosDisplay) {
       ammosDisplay.textContent = `${ammo}/${maxAmmo}`;
-      
+
       // Visual indication when low on ammo
       if (ammo === 0) {
-        ammosDisplay.style.color = '#ff4655';
+        ammosDisplay.style.color = "#ff4655";
       } else if (ammo <= maxAmmo * 0.5) {
-        ammosDisplay.style.color = '#ff9800';
+        ammosDisplay.style.color = "#ff9800";
       } else {
-        ammosDisplay.style.color = 'white';
+        ammosDisplay.style.color = "white";
       }
     }
   }
-  
+
   /**
    ** Starts the reload animation
    * @param {number} duration - Reload duration in milliseconds
    * @returns {void}
    */
   startReloadAnimation(duration) {
-    const ammoElement = document.getElementById('ammos');
+    const ammoElement = document.getElementById("ammos");
     if (ammoElement) {
-      ammoElement.classList.add('reloading');
-      document.documentElement.style.setProperty('--reload-duration', `${duration}ms`);
+      ammoElement.classList.add("reloading");
+      document.documentElement.style.setProperty(
+        "--reload-duration",
+        `${duration}ms`,
+      );
     }
   }
 
@@ -419,9 +409,9 @@ export class UIManager {
    * @param {number} progress - Progress from 0 to 1
    */
   updateReloadProgress(progress) {
-    const ammoElement = document.getElementById('ammos');
-    if (ammoElement && ammoElement.classList.contains('reloading')) {
-      ammoElement.style.setProperty('--reload-progress', `${progress * 100}%`);
+    const ammoElement = document.getElementById("ammos");
+    if (ammoElement && ammoElement.classList.contains("reloading")) {
+      ammoElement.style.setProperty("--reload-progress", `${progress * 100}%`);
     }
   }
 
@@ -429,12 +419,12 @@ export class UIManager {
    ** Completes the reload animation
    */
   completeReloadAnimation() {
-    const ammoElement = document.getElementById('ammos');
+    const ammoElement = document.getElementById("ammos");
     if (ammoElement) {
-      ammoElement.style.setProperty('--reload-progress', '100%');
+      ammoElement.style.setProperty("--reload-progress", "100%");
       setTimeout(() => {
-        ammoElement.classList.remove('reloading');
-        ammoElement.style.removeProperty('--reload-progress');
+        ammoElement.classList.remove("reloading");
+        ammoElement.style.removeProperty("--reload-progress");
       }, 200);
     }
   }
@@ -445,34 +435,34 @@ export class UIManager {
    */
   showDeathOverlay(respawnTime = 3) {
     this.isPlayerDead = true;
-    
+
     const deathOverlay = document.getElementById("death-overlay");
     const respawnTimer = document.getElementById("respawn-timer");
-    
+
     if (deathOverlay) {
       deathOverlay.style.display = "flex";
     }
-    
+
     let timeLeft = respawnTime;
-    
+
     // Clear any existing timer
     if (this.respawnTimer) {
       clearInterval(this.respawnTimer);
     }
-    
+
     // Update the timer immediately
     if (respawnTimer) {
       respawnTimer.textContent = `Respawn dans ${timeLeft}...`;
     }
-    
+
     // Start a new timer that updates each second
     this.respawnTimer = setInterval(() => {
       timeLeft--;
-      
+
       if (respawnTimer) {
         respawnTimer.textContent = `Respawn dans ${timeLeft}...`;
       }
-      
+
       if (timeLeft <= 0) {
         clearInterval(this.respawnTimer);
         this.respawnTimer = null;
@@ -485,17 +475,17 @@ export class UIManager {
    */
   hideDeathOverlay() {
     const deathOverlay = document.getElementById("death-overlay");
-    
+
     if (deathOverlay) {
       deathOverlay.classList.add("fade-out");
-      
+
       setTimeout(() => {
         deathOverlay.style.display = "none";
         deathOverlay.classList.remove("fade-out");
         this.isPlayerDead = false;
       }, 500); // Match the fadeOut animation duration
     }
-    
+
     if (this.respawnTimer) {
       clearInterval(this.respawnTimer);
       this.respawnTimer = null;

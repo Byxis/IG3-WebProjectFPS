@@ -67,7 +67,7 @@ canvas {
 }
 
 #ammos::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   bottom: 0;
@@ -109,7 +109,7 @@ canvas {
   z-index: 10;
 }
 
-.onTop, 
+.onTop,
 .ui-panel,
 #lives,
 #ammos,
@@ -237,13 +237,21 @@ canvas {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .fade-out {
@@ -416,7 +424,7 @@ canvas {
 }
 
 .game-ui {
-  font-family: var(--font-family, 'Poppins', sans-serif);
+  font-family: var(--font-family, "Poppins", sans-serif);
   color: white;
 }
 
@@ -444,9 +452,15 @@ canvas {
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* Simple transitions for UI elements */

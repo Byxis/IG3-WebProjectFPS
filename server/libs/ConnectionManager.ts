@@ -1,3 +1,5 @@
+import { CustomWebSocket } from "../websocketManager.ts";
+
 class ConnectionManager {
   private connections: Map<string, CustomWebSocket> = new Map();
 
@@ -59,14 +61,14 @@ class ConnectionManager {
    * @param username - The username of the connection to send to
    * @param message - The message object to send (will be JSON stringified)
    */
-    sendToConnection(username: string, message: unknown): void {
-        const conn = this.connections.get(username);
-        if (conn && conn.readyState === WebSocket.OPEN) {
-        conn.send(JSON.stringify(message));
-        } else {
-        console.error(`Connection for ${username} not found or not open`);
-        }
-      }
+  sendToConnection(username: string, message: unknown): void {
+    const conn = this.connections.get(username);
+    if (conn && conn.readyState === WebSocket.OPEN) {
+      conn.send(JSON.stringify(message));
+    } else {
+      console.error(`Connection for ${username} not found or not open`);
+    }
+  }
 
   /**
    * Get the total number of active connections
@@ -84,11 +86,14 @@ class ConnectionManager {
 
   /**
    ** Vérify username from connection
-    * @param username - The username to check
-    * @returns username if it exists and is valid, otherwise the username of the connection
+   * @param username - The username to check
+   * @returns username if it exists and is valid, otherwise the username of the connection
    */
   verifyUsername(username: string): string | undefined {
-    if (this.connections.has(username) && this.connections.get(username)?.username === username) {
+    if (
+      this.connections.has(username) &&
+      this.connections.get(username)?.username === username
+    ) {
       return username;
     }
     for (const [name, conn] of this.connections) {

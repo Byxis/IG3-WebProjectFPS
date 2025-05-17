@@ -214,7 +214,7 @@ export class Game {
   handlePlayerDeath(playerName) {
     const player = this.players[playerName];
     if (!player) return;
-    
+
     if (playerName !== localStorage.getItem("username")) {
       player.playDeathAnimation();
     }
@@ -228,7 +228,7 @@ export class Game {
   handlePlayerRespawn(playerName) {
     const player = this.players[playerName];
     if (!player) return;
-    
+
     player.respawn();
   }
 
@@ -250,8 +250,8 @@ export class Game {
    */
   updatePlayerStats(statsData) {
     if (!statsData || !Array.isArray(statsData)) return;
-    
-    statsData.forEach(playerStat => {
+
+    statsData.forEach((playerStat) => {
       this.playerStats.set(playerStat.name, playerStat);
     });
   }

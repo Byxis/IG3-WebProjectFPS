@@ -1,5 +1,9 @@
 import { DB, Row } from "https://deno.land/x/sqlite/mod.ts";
-import { DEFAULT_WARMUP_DURATION, DEFAULT_GAMEPLAY_DURATION, DEFAULT_RESULT_DURATION } from "../config/config.ts";
+import {
+  DEFAULT_GAMEPLAY_DURATION,
+  DEFAULT_RESULT_DURATION,
+  DEFAULT_WARMUP_DURATION,
+} from "../config/config.ts";
 
 export class SqlHandler {
   private db: DB;
@@ -443,20 +447,20 @@ export class SqlHandler {
       // First check if a record already exists
       const existingRecord = this.db.query(
         "SELECT 1 FROM player_matches WHERE user_id = ? AND match_id = ?",
-        [userId, matchId]
+        [userId, matchId],
       );
-      
+
       // If a record exists, don't try to insert a new one
       if (existingRecord.length > 0) {
         return [];
       }
-      
+
       // Insert only if no record exists
       return this.db.query(
         `INSERT INTO player_matches 
          (user_id, match_id, kills, deaths, headshots, bodyshots, missedshots) 
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [userId, matchId, kills, deaths, headshots, bodyshots, missedshots]
+        [userId, matchId, kills, deaths, headshots, bodyshots, missedshots],
       );
     } catch (error) {
       console.error(`Error recording player match data:`, error);
@@ -801,23 +805,27 @@ export class SqlHandler {
    * @param {number} missedshots - Missed shots to add
    */
   updateUserStats(
-    playerName: string, 
+    playerName: string,
     matchId: number,
-    kills: number, 
-    deaths: number, 
-    headshots: number, 
-    bodyshots: number, 
-    missedshots: number
+    kills: number,
+    deaths: number,
+    headshots: number,
+    bodyshots: number,
+    missedshots: number,
   ): boolean {
     try {
       const userId = this.getUserByName(playerName);
       if (userId <= 0) {
-        console.error(`Cannot update stats for ${playerName}: User does not exist in database`);
+        console.error(
+          `Cannot update stats for ${playerName}: User does not exist in database`,
+        );
         return false;
       }
 
       if (!this.doMatchExists(matchId)) {
-        console.error(`Cannot update stats for ${playerName}: Match ${matchId} does not exist`);
+        console.error(
+          `Cannot update stats for ${playerName}: Match ${matchId} does not exist`,
+        );
         return false;
       }
 
@@ -825,7 +833,7 @@ export class SqlHandler {
 
       const existingRecord = this.db.query(
         "SELECT user_id FROM player_matches WHERE user_id = ? AND match_id = ?",
-        [userId, matchId]
+        [userId, matchId],
       );
 
       if (existingRecord.length > 0) {
@@ -837,16 +845,14 @@ export class SqlHandler {
                bodyshots = bodyshots + ?,
                missedshots = missedshots + ?
            WHERE user_id = ? AND match_id = ?`,
-          [kills, deaths, headshots, bodyshots, missedshots, userId, matchId]
+          [kills, deaths, headshots, bodyshots, missedshots, userId, matchId],
         );
-      
       } else {
         this.db.query(
           `INSERT INTO player_matches (user_id, match_id, kills, deaths, headshots, bodyshots, missedshots)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [userId, matchId, kills, deaths, headshots, bodyshots, missedshots]
+          [userId, matchId, kills, deaths, headshots, bodyshots, missedshots],
         );
-  
       }
 
       this.db.query("COMMIT");
@@ -854,7 +860,10 @@ export class SqlHandler {
       return true;
     } catch (error) {
       this.db.query("ROLLBACK");
-      console.error(`Error updating user stats for ${playerName} in match ${matchId}:`, error);
+      console.error(
+        `Error updating user stats for ${playerName} in match ${matchId}:`,
+        error,
+      );
       return false;
     }
   }
@@ -863,23 +872,23 @@ export class SqlHandler {
    ** Gets the most recent active match from the database
    * @returns {object|null} Match info or null if no active match found
    */
-  getActiveMatch(): { matchId: number, startTime: string } | null {
+  getActiveMatch(): { matchId: number; startTime: string } | null {
     try {
       const result = this.db.query(
         `SELECT match_id, start_time 
          FROM matches 
          WHERE status = 'active' 
          ORDER BY start_time DESC 
-         LIMIT 1`
+         LIMIT 1`,
       );
-      
+
       if (result.length > 0) {
         const startTimeStr = result[0][1] as string;
-        const formattedTime = startTimeStr.replace(' ', 'T') + 'Z';
-        
+        const formattedTime = startTimeStr.replace(" ", "T") + "Z";
+
         return {
           matchId: result[0][0] as number,
-          startTime: formattedTime
+          startTime: formattedTime,
         };
       }
       return null;
@@ -895,18 +904,17 @@ export class SqlHandler {
    */
   cleanupStaleMatches(): number {
     try {
-      const totalMatchDuration = 
-        DEFAULT_WARMUP_DURATION +
+      const totalMatchDuration = DEFAULT_WARMUP_DURATION +
         DEFAULT_GAMEPLAY_DURATION +
         DEFAULT_RESULT_DURATION;
-      
+
       const result = this.db.query(
         `UPDATE matches 
          SET end_time = CURRENT_TIMESTAMP, status = 'completed' 
          WHERE status = 'active' 
-         AND datetime(start_time, '+${totalMatchDuration} seconds') < datetime('now')`
+         AND datetime(start_time, '+${totalMatchDuration} seconds') < datetime('now')`,
       );
-      
+
       return result.length;
     } catch (error) {
       console.error("Error cleaning up stale matches:", error);

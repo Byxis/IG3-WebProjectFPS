@@ -3,12 +3,16 @@ import { players } from "./PlayerHandler.ts";
 import { connectionManager } from "./ConnectionManager.ts";
 import { MessageTypeEnum } from "../../shared/MessageTypeEnum.ts";
 import sqlHandler from "./SqlHandler.ts";
-import { DEFAULT_RESULT_DURATION, DEFAULT_GAMEPLAY_DURATION, DEFAULT_WARMUP_DURATION } from "../config/config.ts";
+import {
+  DEFAULT_GAMEPLAY_DURATION,
+  DEFAULT_RESULT_DURATION,
+  DEFAULT_WARMUP_DURATION,
+} from "../config/config.ts";
 
 interface MatchSettings {
-  warmupDuration: number;   // Duration in milliseconds
+  warmupDuration: number; // Duration in milliseconds
   gameplayDuration: number; // Duration in milliseconds
-  resultsDuration: number;  // Duration in milliseconds
+  resultsDuration: number; // Duration in milliseconds
 }
 
 interface PlayerMatchStats {
@@ -63,7 +67,7 @@ export class MatchManager {
       playerStats: new Map(),
       disconnectedPlayerStats: new Map(),
       settings: { ...this.defaultSettings },
-      timerHandle: null
+      timerHandle: null,
     };
 
     this.activeMatches.set(matchId, matchState);
@@ -88,14 +92,16 @@ export class MatchManager {
       this.waitingCheckInterval = null;
     }
 
-    console.log(`Match ${matchId} waiting for at least ${this.MIN_PLAYERS_TO_START} players to join`);
+    console.log(
+      `Match ${matchId} waiting for at least ${this.MIN_PLAYERS_TO_START} players to join`,
+    );
 
     connectionManager.broadcast({
       type: MessageTypeEnum.MATCH_PHASE_CHANGE,
       phase: MatchPhase.WAITING_FOR_PLAYERS,
       matchId: matchId,
       minPlayers: this.MIN_PLAYERS_TO_START,
-      currentPlayers: Object.keys(players).length
+      currentPlayers: Object.keys(players).length,
     });
 
     this.waitingCheckInterval = setInterval(() => {
@@ -106,11 +112,13 @@ export class MatchManager {
         matchId: matchId,
         currentPlayers: playerCount,
         minPlayers: this.MIN_PLAYERS_TO_START,
-        waiting: true
+        waiting: true,
       });
 
       if (playerCount >= this.MIN_PLAYERS_TO_START) {
-        console.log(`Enough players (${playerCount}) have joined, starting warmup phase`);
+        console.log(
+          `Enough players (${playerCount}) have joined, starting warmup phase`,
+        );
         clearInterval(this.waitingCheckInterval!);
         this.waitingCheckInterval = null;
         this.startMatchPhase(matchId, MatchPhase.WARMUP);
@@ -129,19 +137,22 @@ export class MatchManager {
     if (!match) return;
 
     // Initialize match stats record for each new player
-    Object.keys(players).forEach(playerName => {
+    Object.keys(players).forEach((playerName) => {
       try {
         const userId = sqlHandler.getUserByName(playerName);
         if (userId > 0) {
           sqlHandler.recordPlayerMatchData(userId, matchId, 0, 0, 0, 0, 0);
         }
       } catch (_error) {
+        // Handle error if needed
       }
     });
 
     if (match.phase === MatchPhase.WAITING_FOR_PLAYERS) {
       const playerCount = Object.keys(players).length;
-      console.log(`Player joined. Current count: ${playerCount}/${this.MIN_PLAYERS_TO_START}`);
+      console.log(
+        `Player joined. Current count: ${playerCount}/${this.MIN_PLAYERS_TO_START}`,
+      );
 
       if (playerCount >= this.MIN_PLAYERS_TO_START) {
         console.log(`Enough players have joined, starting warmup phase`);
@@ -156,7 +167,7 @@ export class MatchManager {
           matchId: matchId,
           currentPlayers: playerCount,
           minPlayers: this.MIN_PLAYERS_TO_START,
-          waiting: true
+          waiting: true,
         });
       }
     }
@@ -167,7 +178,10 @@ export class MatchManager {
    * @param playerName The player's name
    * @param statUpdates The stat updates to apply
    */
-  updatePlayerMatchStats(playerName: string, statUpdates: Partial<PlayerMatchStats>): void {
+  updatePlayerMatchStats(
+    playerName: string,
+    statUpdates: Partial<PlayerMatchStats>,
+  ): void {
     const matchId = this.currentMatchId;
     if (!matchId) return;
 
@@ -193,7 +207,7 @@ export class MatchManager {
       deaths: statUpdates.deaths || 0,
       headshots: statUpdates.headshots || 0,
       bodyshots: statUpdates.bodyshots || 0,
-      missedshots: statUpdates.missedshots || 0
+      missedshots: statUpdates.missedshots || 0,
     };
 
     // Update in-memory stats
@@ -208,7 +222,7 @@ export class MatchManager {
         statsToUpdate.deaths,
         statsToUpdate.headshots,
         statsToUpdate.bodyshots,
-        statsToUpdate.missedshots
+        statsToUpdate.missedshots,
       );
     }
   }
@@ -312,7 +326,7 @@ export class MatchManager {
       connectionManager.broadcast({
         type: MessageTypeEnum.MATCH_TIMER_UPDATE,
         matchId: matchId,
-        timeRemaining: timeRemaining
+        timeRemaining: timeRemaining,
       });
 
       if (match.phase !== MatchPhase.GAMEPLAY || timeRemaining <= 0) {
@@ -366,11 +380,11 @@ export class MatchManager {
 
     connectionManager.broadcast({
       type: MessageTypeEnum.MATCH_END,
-      matchId: matchId
+      matchId: matchId,
     });
 
     this.activeMatches.delete(matchId);
-    this.currentMatchId = null;
+    this.currentMatchId = 1;
 
     setTimeout(() => {
       this.initializeMatch();
@@ -387,7 +401,7 @@ export class MatchManager {
     connectionManager.broadcast({
       type: MessageTypeEnum.MATCH_STATS_UPDATE,
       matchId: matchId,
-      stats: stats
+      stats: stats,
     });
   }
 
@@ -396,12 +410,30 @@ export class MatchManager {
    * @param matchId The match ID
    * @returns Array of player statistics sorted by kills
    */
-  getMatchStats(matchId: number): any[] {
+  getMatchStats(matchId: number): {
+    name: string;
+    kills: number;
+    deaths: number;
+    headshots: number;
+    bodyshots: number;
+    missedshots: number;
+    ratio: string;
+    active: boolean;
+  }[] {
     const match = this.activeMatches.get(matchId);
     if (!match) return [];
 
-    const combinedStats = new Map<string, any>();
-    
+    const combinedStats = new Map<string, {
+      name: string;
+      kills: number;
+      deaths: number;
+      headshots: number;
+      bodyshots: number;
+      missedshots: number;
+      ratio: string;
+      active: boolean;
+    }>();
+
     Object.keys(players).forEach((playerName) => {
       const matchStats = sqlHandler.getUserMatchStats(playerName, matchId);
       combinedStats.set(playerName, {
@@ -411,11 +443,13 @@ export class MatchManager {
         headshots: matchStats.headshots,
         bodyshots: matchStats.bodyshots,
         missedshots: matchStats.missedshots,
-        ratio: matchStats.deaths > 0 ? (matchStats.kills / matchStats.deaths).toFixed(2) : matchStats.kills.toFixed(2),
-        active: true
+        ratio: matchStats.deaths > 0
+          ? (matchStats.kills / matchStats.deaths).toFixed(2)
+          : matchStats.kills.toFixed(2),
+        active: true,
       });
     });
-    
+
     match.disconnectedPlayerStats.forEach((stats, name) => {
       if (!combinedStats.has(name)) {
         combinedStats.set(name, {
@@ -425,8 +459,10 @@ export class MatchManager {
           headshots: stats.headshots,
           bodyshots: stats.bodyshots,
           missedshots: stats.missedshots,
-          ratio: stats.deaths > 0 ? (stats.kills / stats.deaths).toFixed(2) : stats.kills.toFixed(2),
-          active: false
+          ratio: stats.deaths > 0
+            ? (stats.kills / stats.deaths).toFixed(2)
+            : stats.kills.toFixed(2),
+          active: false,
         });
       }
     });
@@ -466,21 +502,26 @@ export class MatchManager {
     const elapsed = now - match.startTime;
 
     switch (match.phase) {
-      case MatchPhase.WARMUP:
+      case MatchPhase.WARMUP: {
         return Math.max(0, match.settings.warmupDuration - elapsed);
+      }
 
-      case MatchPhase.GAMEPLAY:
+      case MatchPhase.GAMEPLAY: {
         const gameplayStart = match.settings.warmupDuration;
         const gameplayEnd = gameplayStart + match.settings.gameplayDuration;
         return Math.max(0, gameplayEnd - elapsed);
+      }
 
-      case MatchPhase.RESULTS:
-        const resultsStart = match.settings.warmupDuration + match.settings.gameplayDuration;
+      case MatchPhase.RESULTS: {
+        const resultsStart = match.settings.warmupDuration +
+          match.settings.gameplayDuration;
         const resultsEnd = resultsStart + match.settings.resultsDuration;
         return Math.max(0, resultsEnd - elapsed);
+      }
 
-      default:
+      default: {
         return 0;
+      }
     }
   }
 
@@ -489,7 +530,7 @@ export class MatchManager {
    * @param playerName The player's name
    * @returns Whether actions can be registered
    */
-  canRegisterActions(playerName: string): boolean {
+  canRegisterActions(): boolean {
     const matchId = this.currentMatchId;
     if (!matchId) return false;
 
@@ -503,14 +544,13 @@ export class MatchManager {
    * Tries to recover an active match from the database
    * @returns Promise<number|null> Match ID if recovered, null otherwise
    */
-  async tryRecoverActiveMatch(): Promise<number | null> {
+  tryRecoverActiveMatch(): number | null {
     const activeMatch = sqlHandler.getActiveMatch();
 
     if (!activeMatch) {
       return null;
     }
 
-   
     try {
       const dbDateString = activeMatch.startTime;
 
@@ -526,22 +566,20 @@ export class MatchManager {
         playerStats: new Map(),
         disconnectedPlayerStats: new Map(),
         settings: { ...this.defaultSettings },
-        timerHandle: null
+        timerHandle: null,
       };
 
       const warmupEnd = this.defaultSettings.warmupDuration;
       const gameplayEnd = warmupEnd + this.defaultSettings.gameplayDuration;
       const resultsEnd = gameplayEnd + this.defaultSettings.resultsDuration;
 
-      
       let timeRemaining = 0;
 
       if (elapsedMs < 0) {
         matchState.startTime = now;
         timeRemaining = warmupEnd;
         matchState.phase = MatchPhase.WARMUP;
-      }
-      else if (elapsedMs < warmupEnd) {
+      } else if (elapsedMs < warmupEnd) {
         matchState.phase = MatchPhase.WARMUP;
         timeRemaining = warmupEnd - elapsedMs;
       } else if (elapsedMs < gameplayEnd) {
@@ -555,15 +593,21 @@ export class MatchManager {
         return null;
       }
 
-      console.log(`Recovered match ${activeMatch.matchId} in ${matchState.phase} phase with ${timeRemaining}ms remaining`);
+      console.log(
+        `Recovered match ${activeMatch.matchId} in ${matchState.phase} phase with ${timeRemaining}ms remaining`,
+      );
 
       this.activeMatches.set(activeMatch.matchId, matchState);
       this.currentMatchId = activeMatch.matchId;
 
-      if (matchState.phase === MatchPhase.WAITING_FOR_PLAYERS) {
+      if (matchState.phase === MatchPhase.WAITING_FOR_PLAYERS as MatchPhase) {
         this.startWaitingForPlayers(activeMatch.matchId);
       } else {
-        this.startMatchPhaseWithTime(activeMatch.matchId, matchState.phase, timeRemaining);
+        this.startMatchPhaseWithTime(
+          activeMatch.matchId,
+          matchState.phase,
+          timeRemaining,
+        );
       }
 
       return activeMatch.matchId;
@@ -579,7 +623,11 @@ export class MatchManager {
    * @param phase The phase to start
    * @param remainingTime Time remaining in milliseconds
    */
-  private startMatchPhaseWithTime(matchId: number, phase: MatchPhase, remainingTime: number): void {
+  private startMatchPhaseWithTime(
+    matchId: number,
+    phase: MatchPhase,
+    remainingTime: number,
+  ): void {
     const match = this.activeMatches.get(matchId);
     if (!match) {
       console.error(`Match ${matchId} not found when starting phase ${phase}`);
@@ -591,7 +639,9 @@ export class MatchManager {
       match.timerHandle = null;
     }
 
-    console.log(`Match ${matchId} entering phase: ${phase} with ${remainingTime}ms remaining`);
+    console.log(
+      `Match ${matchId} entering phase: ${phase} with ${remainingTime}ms remaining`,
+    );
 
     match.phase = phase;
 

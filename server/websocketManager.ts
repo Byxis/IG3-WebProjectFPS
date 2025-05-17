@@ -4,8 +4,8 @@ import {
   initiateNewPlayer,
   players,
   removePlayer,
-  validateShot,
   startReload,
+  validateShot,
 } from "./libs/PlayerHandler.ts";
 import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
@@ -19,7 +19,7 @@ import { CONFIG } from "../shared/Config.ts";
 import { matchManager } from "./libs/MatchManager.ts";
 
 // Custom WebSocket type with username
-interface CustomWebSocket extends WebSocket {
+export interface CustomWebSocket extends WebSocket {
   username?: string;
 }
 
@@ -63,17 +63,17 @@ export function setupWebSocketServer(serverPhysics: ServerPhysics) {
       }
 
       const username = ctx.state.user?.username;
-      
+
       const ws = ctx.upgrade() as CustomWebSocket;
-      
+
       if (username) {
         connectionManager.addConnection(username, ws);
-        
+
         setupWebSocketHandlers(ws, serverPhysics);
       } else {
         ws.close(1008, "Authentication required");
       }
-      
+
       await next();
     });
   };
@@ -97,24 +97,26 @@ function setupWebSocketHandlers(
           message: `Welcome, ${ws.username}! Connection established.`,
           role: 3,
         });
-        
+
         const currentMatchId = matchManager.getCurrentMatchId();
         if (currentMatchId) {
           const matchPhase = matchManager.getMatchPhase(currentMatchId);
-          const timeRemaining = matchManager.getPhaseTimeRemaining(currentMatchId);
-          
+          const timeRemaining = matchManager.getPhaseTimeRemaining(
+            currentMatchId,
+          );
+
           connectionManager.sendToConnection(ws.username, {
             type: MessageTypeEnum.MATCH_PHASE_CHANGE,
             phase: matchPhase,
             matchId: currentMatchId,
-            timeRemaining: timeRemaining
+            timeRemaining: timeRemaining,
           });
-          
+
           const matchStats = matchManager.getMatchStats(currentMatchId);
           connectionManager.sendToConnection(ws.username, {
             type: MessageTypeEnum.MATCH_STATS_UPDATE,
             matchId: currentMatchId,
-            stats: matchStats
+            stats: matchStats,
           });
         }
       }
@@ -214,15 +216,17 @@ function setupWebSocketHandlers(
         }
 
         case MessageTypeEnum.PLAYER_SHOT: {
-          if (!data.shooter || !players[data.shooter])
-          {
+          if (!data.shooter || !players[data.shooter]) {
             console.error("Player not found:", data.shooter);
             break;
           }
           if (data.target && data.distance && players[data.target]) {
             validateShot(data.shooter, data.target, data.distance);
           } else if (data.shooter && players[data.shooter]) {
-            if (players[data.shooter].ammo > 0 && !players[data.shooter].isReloading) {
+            if (
+              players[data.shooter].ammo > 0 &&
+              !players[data.shooter].isReloading
+            ) {
               players[data.shooter].ammo--;
               players[data.shooter].missedshots++;
 
@@ -355,7 +359,8 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
           connectionManager.broadcast({
             type: MessageTypeEnum.SEND_CHAT_MESSAGE,
             name: "System",
-            message: `${result.effect.target} was banned ${durationText} by ${data.name} for: ${result.effect.reason}`,
+            message:
+              `${result.effect.target} was banned ${durationText} by ${data.name} for: ${result.effect.reason}`,
             role: 3,
           }, ws.username);
         }
@@ -379,7 +384,8 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
           connectionManager.broadcast({
             type: MessageTypeEnum.SEND_CHAT_MESSAGE,
             name: "System",
-            message: `${result.effect.target} was muted ${durationText} by ${data.name} for: ${result.effect.reason}`,
+            message:
+              `${result.effect.target} was muted ${durationText} by ${data.name} for: ${result.effect.reason}`,
             role: 3,
           }, ws.username);
         }
@@ -454,8 +460,11 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
         connectionManager.sendToConnection(ws.username, {
           type: MessageTypeEnum.SEND_CHAT_MESSAGE,
           name: "System",
-          message:
-            `You cannot send a message because you are muted ${muteStatus.expiry ? `until ${muteStatus.expiry.toLocaleString()}` : "permanently"}. Reason: ${muteStatus.reason}`,
+          message: `You cannot send a message because you are muted ${
+            muteStatus.expiry
+              ? `until ${muteStatus.expiry.toLocaleString()}`
+              : "permanently"
+          }. Reason: ${muteStatus.reason}`,
           role: 3,
         });
       }
@@ -476,7 +485,7 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
  * @param {string} message - The message to send
  * @param {CustomWebSocket} [excludeConnection] - Optional connection to exclude
  */
-function notifyAll(message: string, excludeConnection?: CustomWebSocket) {
+function _notifyAll(message: string, excludeConnection?: CustomWebSocket) {
   connectionManager.broadcast({
     type: MessageTypeEnum.SEND_CHAT_MESSAGE,
     name: "System",

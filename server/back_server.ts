@@ -11,7 +11,6 @@ import { GameLoop } from "./libs/GameLoop.ts";
 import { matchManager } from "./libs/MatchManager.ts";
 import sqlHandler from "./libs/SqlHandler.ts";
 
-
 const serverPhysics = new ServerPhysics();
 
 console.log("✅ Server started ✅\n");
@@ -24,11 +23,13 @@ gameLoop.start();
 (async () => {
   const cleanedMatches = sqlHandler.cleanupStaleMatches();
   if (cleanedMatches > 0) {
-    console.log(`Cleaned up ${cleanedMatches} stale matches from previous sessions`);
+    console.log(
+      `Cleaned up ${cleanedMatches} stale matches from previous sessions`,
+    );
   }
-  
+
   const recoveredMatchId = await matchManager.tryRecoverActiveMatch();
-  
+
   if (recoveredMatchId) {
     console.log(`Successfully recovered match with ID: ${recoveredMatchId}`);
   } else {

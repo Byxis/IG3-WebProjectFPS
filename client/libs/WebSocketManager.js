@@ -345,7 +345,6 @@ function handleWebSocketMessage(event) {
           if (data.player === localStorage.getItem("username")) {
             uiManager.showDeathOverlay();
           }
-
         }
         break;
       }
@@ -368,7 +367,7 @@ function handleWebSocketMessage(event) {
         }
         break;
       }
-      
+
       case MessageTypeEnum.RELOAD_START: {
         movementManager.isReloading = true;
         movementManager.reloadStartTime = performance.now();
@@ -376,28 +375,28 @@ function handleWebSocketMessage(event) {
         uiManager.startReloadAnimation(movementManager.reloadDuration);
         break;
       }
-      
+
       case MessageTypeEnum.RELOAD_COMPLETE: {
         movementManager.isReloading = false;
         uiManager.completeReloadAnimation();
         break;
       }
-      
+
       case MessageTypeEnum.MATCH_PHASE_CHANGE: {
         matchUIManager.handleMatchPhaseChange(data);
         break;
       }
-      
+
       case MessageTypeEnum.MATCH_TIMER_UPDATE: {
         matchUIManager.handleMatchTimerUpdate(data);
         break;
       }
-      
+
       case MessageTypeEnum.MATCH_STATS_UPDATE: {
         matchUIManager.handleMatchStatsUpdate(data);
         break;
       }
-      
+
       case MessageTypeEnum.MATCH_END: {
         matchUIManager.handleMatchEnd(data);
         break;

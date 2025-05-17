@@ -310,7 +310,9 @@ export class MovementManager {
    * @returns {void}
    */
   checkForReload() {
-    if (GAMESTATE.keyStates.KeyR && !this.isReloading && this.ammo < this.maxAmmo) {
+    if (
+      GAMESTATE.keyStates.KeyR && !this.isReloading && this.ammo < this.maxAmmo
+    ) {
       this.startReload();
     }
   }
@@ -323,7 +325,9 @@ export class MovementManager {
     if (this.isReloading) return;
 
     const wsocket = getWebSocket();
-    if (!wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected) {
+    if (
+      !wsocket || wsocket.readyState !== WebSocket.OPEN || !wsState.isConnected
+    ) {
       return;
     }
 
@@ -445,7 +449,7 @@ export class MovementManager {
 
       if (intersects.length > 0) {
         const hit = intersects[0];
-        let hitObject = hit.object;
+        const hitObject = hit.object;
         let playerGroup = hitObject;
         while (
           playerGroup &&
@@ -459,7 +463,9 @@ export class MovementManager {
 
         if (hitPlayerName) {
           console.log(
-            `Hit player ${hitPlayerName} at distance ${hit.distance.toFixed(2)}`,
+            `Hit player ${hitPlayerName} at distance ${
+              hit.distance.toFixed(2)
+            }`,
           );
 
           shotData.target = hitPlayerName;

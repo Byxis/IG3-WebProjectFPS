@@ -26,7 +26,7 @@ export const CONFIG = {
   STARTING_AMMO: 30,
   MAX_AMMO: 30,
   RELOAD_TIME: 3000,
-  
+
   // Combat settings
   BASE_DAMAGE: 25,
   DAMAGE_FALLOFF_START: 10,

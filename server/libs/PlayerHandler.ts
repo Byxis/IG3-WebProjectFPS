@@ -82,7 +82,7 @@ export async function initiateNewPlayer(dataPlayer: {
       isJumping: false,
     },
   };
-  
+
   players[dataPlayer.name] = player;
 
   connectionManager.broadcast({
@@ -107,7 +107,7 @@ export async function initiateNewPlayer(dataPlayer: {
   connectionManager.sendToConnection(dataPlayer.name, {
     type: MessageTypeEnum.AMMO_UPDATE,
     ammo: player.ammo,
-    maxAmmo: CONFIG.MAX_AMMO
+    maxAmmo: CONFIG.MAX_AMMO,
   });
 
   matchManager.playerJoined();
@@ -142,7 +142,7 @@ export function removePlayer(playerName: string) {
   });
 
   matchManager.playerDisconnected(playerName);
-  
+
   delete players[playerName];
 }
 
@@ -179,7 +179,11 @@ export function playerExists(name: string): boolean {
  * @param {string} shooterName - Name of the player who caused the damage
  * @returns {boolean} True if player was killed, false otherwise
  */
-export function damagePlayer(playerName: string, damage: number, shooterName: string): boolean {
+export function damagePlayer(
+  playerName: string,
+  damage: number,
+  shooterName: string,
+): boolean {
   if (!players[playerName]) return false;
 
   if (players[playerName].isDead) return false;
@@ -212,7 +216,7 @@ function handlePlayerDeath(playerName: string, killerName: string): void {
   if (killerName && players[killerName] && playerName !== killerName) {
     players[killerName].kills++;
     players[killerName].killStreak++;
-  
+
     matchManager.updatePlayerMatchStats(killerName, { kills: 1 });
   }
 
@@ -226,7 +230,7 @@ function handlePlayerDeath(playerName: string, killerName: string): void {
   connectionManager.broadcast({
     type: MessageTypeEnum.DEATH_EVENT,
     player: playerName,
-    killer: killerName
+    killer: killerName,
   });
 
   if (playerName === killerName) {
@@ -273,7 +277,7 @@ function respawnPlayer(playerName: string): void {
 
   connectionManager.broadcast({
     type: MessageTypeEnum.RESPAWN_EVENT,
-    player: playerName
+    player: playerName,
   });
 
   updatePlayer(players[playerName]);
@@ -292,15 +296,15 @@ export function decreasePlayerAmmo(playerName: string): boolean {
   if (players[playerName].ammo <= 0) {
     return false;
   }
-  
+
   players[playerName].ammo--;
-  
+
   connectionManager.sendToConnection(playerName, {
     type: MessageTypeEnum.AMMO_UPDATE,
     ammo: players[playerName].ammo,
-    maxAmmo: CONFIG.MAX_AMMO
+    maxAmmo: CONFIG.MAX_AMMO,
   });
-  
+
   return true;
 }
 
@@ -311,24 +315,26 @@ export function decreasePlayerAmmo(playerName: string): boolean {
  */
 export function startReload(playerName: string): boolean {
   if (!players[playerName]) return false;
-  
-  if (players[playerName].isReloading || 
-      players[playerName].isDead || 
-      players[playerName].ammo >= CONFIG.MAX_AMMO) {
+
+  if (
+    players[playerName].isReloading ||
+    players[playerName].isDead ||
+    players[playerName].ammo >= CONFIG.MAX_AMMO
+  ) {
     return false;
   }
-  
+
   players[playerName].isReloading = true;
-  
+
   connectionManager.sendToConnection(playerName, {
     type: MessageTypeEnum.RELOAD_START,
-    reloadTime: CONFIG.RELOAD_TIME
+    reloadTime: CONFIG.RELOAD_TIME,
   });
-  
+
   players[playerName].reloadTimeout = setTimeout(() => {
     completeReload(playerName);
   }, CONFIG.RELOAD_TIME);
-  
+
   return true;
 }
 
@@ -339,26 +345,26 @@ export function startReload(playerName: string): boolean {
  */
 export function completeReload(playerName: string): boolean {
   if (!players[playerName]) return false;
-  
+
   players[playerName].isReloading = false;
-  
+
   if (players[playerName].reloadTimeout !== null) {
     clearTimeout(players[playerName].reloadTimeout);
     players[playerName].reloadTimeout = null;
   }
-  
+
   players[playerName].ammo = CONFIG.MAX_AMMO;
-  
+
   connectionManager.sendToConnection(playerName, {
-    type: MessageTypeEnum.RELOAD_COMPLETE
+    type: MessageTypeEnum.RELOAD_COMPLETE,
   });
-  
+
   connectionManager.sendToConnection(playerName, {
     type: MessageTypeEnum.AMMO_UPDATE,
     ammo: players[playerName].ammo,
-    maxAmmo: CONFIG.MAX_AMMO
+    maxAmmo: CONFIG.MAX_AMMO,
   });
-  
+
   return true;
 }
 
@@ -369,14 +375,14 @@ export function completeReload(playerName: string): boolean {
  */
 export function cancelReload(playerName: string): boolean {
   if (!players[playerName] || !players[playerName].isReloading) return false;
-  
+
   players[playerName].isReloading = false;
-  
+
   if (players[playerName].reloadTimeout !== null) {
     clearTimeout(players[playerName].reloadTimeout);
     players[playerName].reloadTimeout = null;
   }
-  
+
   return true;
 }
 
@@ -393,31 +399,35 @@ export function validateShot(
   distance: number,
 ): boolean {
   if (!players[shooter] || !players[target]) return false;
-  
+
   if (players[shooter].ammo <= 0 || players[shooter].isReloading) {
     return false;
   }
-  
-  if (!matchManager.canRegisterActions(shooter)) {
+
+  if (!matchManager.canRegisterActions()) {
     return false;
   }
-  
+
   if (!decreasePlayerAmmo(shooter)) {
     return false;
   }
 
   let damage = CONFIG.BASE_DAMAGE;
   if (distance > CONFIG.DAMAGE_FALLOFF_START) {
-    const falloffRange = CONFIG.DAMAGE_FALLOFF_END - CONFIG.DAMAGE_FALLOFF_START;
-    const falloffAmount = Math.min(distance - CONFIG.DAMAGE_FALLOFF_START, falloffRange) / falloffRange;
-    const damageMultiplier = 1 - (falloffAmount * (1 - CONFIG.MIN_DAMAGE_PERCENT));
+    const falloffRange = CONFIG.DAMAGE_FALLOFF_END -
+      CONFIG.DAMAGE_FALLOFF_START;
+    const falloffAmount =
+      Math.min(distance - CONFIG.DAMAGE_FALLOFF_START, falloffRange) /
+      falloffRange;
+    const damageMultiplier = 1 -
+      (falloffAmount * (1 - CONFIG.MIN_DAMAGE_PERCENT));
     damage = Math.floor(damage * damageMultiplier);
   }
 
-  const killed = damagePlayer(target, damage, shooter);
+  damagePlayer(target, damage, shooter);
 
   players[shooter].bodyshots++;
-  
+
   matchManager.updatePlayerMatchStats(shooter, { bodyshots: 1 });
   return true;
 }

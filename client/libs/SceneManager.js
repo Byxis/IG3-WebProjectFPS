@@ -22,19 +22,19 @@ export class SceneManager {
    */
   setupScene() {
     this.scene = new THREE.Scene();
-    
+
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambientLight);
-    
+
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(10, 10, 10);
     directionalLight.castShadow = true;
-    
+
     directionalLight.shadow.mapSize.width = 2048;
     directionalLight.shadow.mapSize.height = 2048;
     directionalLight.shadow.camera.near = 0.5;
     directionalLight.shadow.camera.far = 100;
-    
+
     this.scene.add(directionalLight);
 
     const planeGeometry = new THREE.PlaneGeometry(100, 100);
@@ -42,7 +42,7 @@ export class SceneManager {
       color: 0x999999,
       side: THREE.DoubleSide,
       roughness: 0.8,
-      metalness: 0.2
+      metalness: 0.2,
     });
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.rotation.x = Math.PI / 2;
@@ -65,11 +65,11 @@ export class SceneManager {
       CONFIG.NEAR,
       CONFIG.FAR,
     );
-    
+
     this.cameraContainer = new THREE.Object3D();
     this.scene.add(this.cameraContainer);
     this.cameraContainer.add(this.camera);
-    
+
     this.camera.position.y = CONFIG.CAMERA_HEIGHT;
     this.cameraContainer.position.set(0, 0, 5);
     this.camera.lookAt(new THREE.Vector3(0, this.camera.position.y, 0));
@@ -81,12 +81,12 @@ export class SceneManager {
    * @returns {void}
    */
   setupRenderer() {
-    this.renderer = new THREE.WebGLRenderer({ 
+    this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: false,
-      preserveDrawingBuffer: true
+      preserveDrawingBuffer: true,
     });
-    
+
     this.renderer.setClearColor(0x87CEEB);
     this.renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
     this.renderer.shadowMap.enabled = true;
