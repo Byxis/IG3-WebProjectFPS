@@ -158,7 +158,6 @@ export async function verifyJWT(
 ): Promise<JWTPayload | null> {
   try {
     if (!token || token === "undefined" || token === "null") {
-      console.log("Invalid token format received");
       return null;
     }
 
@@ -197,8 +196,6 @@ export const isAuthorized = async (
       return false;
     }
   }
-
-  console.log("Unknown token");
   return false;
 };
 

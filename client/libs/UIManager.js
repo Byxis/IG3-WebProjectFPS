@@ -24,6 +24,9 @@ export class UIManager {
     this.createUIContainer();
 
     this.setupListeners();
+
+    this.isPlayerDead = false;
+    this.respawnTimer = null;
   }
 
   /**
@@ -282,7 +285,7 @@ export class UIManager {
 
     chatMessage.appendChild(nameSpan);
 
-    if (name === "Système") {
+    if (name === "System") {
       const messageLines = message.split("<br>");
 
       chatMessage.appendChild(document.createTextNode(": " + messageLines[0]));
@@ -330,6 +333,171 @@ export class UIManager {
    */
   hideConnectionError() {
     this.connectionError.classList.remove("visible", "error");
+  }
+
+  /**
+   ** Updates the health bar display
+   * @param {number} health - The player's current health
+   */
+  updateHealth(health) {
+    const lives = document.getElementById("lives");
+
+    if (lives) {
+      const healthPercent = Math.max(0, Math.min(100, health));
+
+      // Show hearts based on health percentage
+      let heartsText = "";
+      const fullHearts = Math.floor(healthPercent / 25);
+
+      for (let i = 0; i < fullHearts; i++) {
+        heartsText += "❤️";
+      }
+
+      lives.innerHTML = `${heartsText} ${healthPercent}`;
+
+      // Change color based on health level
+      if (healthPercent <= 25) {
+        lives.style.color = "#ff4655";
+      } else if (healthPercent <= 50) {
+        lives.style.color = "#ff9800";
+      } else {
+        lives.style.color = "white";
+      }
+    }
+  }
+
+  /**
+   ** Updates the ammo display
+   * @param {number} ammo - Current ammo count
+   * @param {number} maxAmmo - Maximum ammo capacity
+   */
+  updateAmmo(ammo, maxAmmo) {
+    const ammosDisplay = document.getElementById("ammos");
+
+    if (ammosDisplay) {
+      ammosDisplay.textContent = `${ammo}/${maxAmmo}`;
+
+      // Visual indication when low on ammo
+      if (ammo === 0) {
+        ammosDisplay.style.color = "#ff4655";
+      } else if (ammo <= maxAmmo * 0.5) {
+        ammosDisplay.style.color = "#ff9800";
+      } else {
+        ammosDisplay.style.color = "white";
+      }
+    }
+  }
+
+  /**
+   ** Starts the reload animation
+   * @param {number} duration - Reload duration in milliseconds
+   * @returns {void}
+   */
+  startReloadAnimation(duration) {
+    const ammoElement = document.getElementById("ammos");
+    if (ammoElement) {
+      ammoElement.classList.add("reloading");
+      document.documentElement.style.setProperty(
+        "--reload-duration",
+        `${duration}ms`,
+      );
+    }
+  }
+
+  /**
+   ** Updates reload progress (for manual progress updates)
+   * @param {number} progress - Progress from 0 to 1
+   */
+  updateReloadProgress(progress) {
+    const ammoElement = document.getElementById("ammos");
+    if (ammoElement && ammoElement.classList.contains("reloading")) {
+      ammoElement.style.setProperty("--reload-progress", `${progress * 100}%`);
+    }
+  }
+
+  /**
+   ** Completes the reload animation
+   */
+  completeReloadAnimation() {
+    const ammoElement = document.getElementById("ammos");
+    if (ammoElement) {
+      ammoElement.style.setProperty("--reload-progress", "100%");
+      setTimeout(() => {
+        ammoElement.classList.remove("reloading");
+        ammoElement.style.removeProperty("--reload-progress");
+      }, 200);
+    }
+  }
+
+  /**
+   ** Shows the death overlay and starts the respawn timer
+   * @param {number} respawnTime - Time in seconds until respawn
+   */
+  showDeathOverlay(respawnTime = 3) {
+    this.isPlayerDead = true;
+
+    const deathOverlay = document.getElementById("death-overlay");
+    const respawnTimer = document.getElementById("respawn-timer");
+
+    if (deathOverlay) {
+      deathOverlay.style.display = "flex";
+    }
+
+    let timeLeft = respawnTime;
+
+    // Clear any existing timer
+    if (this.respawnTimer) {
+      clearInterval(this.respawnTimer);
+    }
+
+    // Update the timer immediately
+    if (respawnTimer) {
+      respawnTimer.textContent = `Respawn dans ${timeLeft}...`;
+    }
+
+    // Start a new timer that updates each second
+    this.respawnTimer = setInterval(() => {
+      timeLeft--;
+
+      if (respawnTimer) {
+        respawnTimer.textContent = `Respawn dans ${timeLeft}...`;
+      }
+
+      if (timeLeft <= 0) {
+        clearInterval(this.respawnTimer);
+        this.respawnTimer = null;
+      }
+    }, 1000);
+  }
+
+  /**
+   ** Hides the death overlay and cleans up the respawn timer
+   */
+  hideDeathOverlay() {
+    const deathOverlay = document.getElementById("death-overlay");
+
+    if (deathOverlay) {
+      deathOverlay.classList.add("fade-out");
+
+      setTimeout(() => {
+        deathOverlay.style.display = "none";
+        deathOverlay.classList.remove("fade-out");
+        this.isPlayerDead = false;
+      }, 500); // Match the fadeOut animation duration
+    }
+
+    if (this.respawnTimer) {
+      clearInterval(this.respawnTimer);
+      this.respawnTimer = null;
+    }
+  }
+
+  /**
+   ** Checks if the player is currently dead
+   * @returns {boolean} True if the player is dead
+   */
+  isPlayerCurrentlyDead() {
+    return this.isPlayerDead;
   }
 }
 

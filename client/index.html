@@ -19,14 +19,19 @@
     >
   </head>
   <body class="game-body">
-    <p id="lives" class="onTop">❤️❤️❤️</p>
-    <p id="kills" class="onTop">0</p>
-    <p id="ammos" class="onTop">30/30</p>
+    <!-- Game UI -->
+    <p id="lives" class="onTop ui-panel">❤️❤️❤️❤️ 100</p>
+    <p id="ammos" class="onTop ui-panel">30/30</p>
 
-    <div id="ui-container" class="onTop">
+    <div id="ui-container" class="onTop ui-panel">
       <div id="position-display">Position: (0.0, 0.0, 0.0)</div>
       <div id="fps" style="display: none">FPS: 60</div>
       <div id="net-debug" style="display: none">Offset: 0.00ms</div>
+    </div>
+
+    <div id="death-overlay">
+      <div id="death-message">You are dead</div>
+      <div id="respawn-timer">Respawn in 3...</div>
     </div>
 
     <div id="chatbox" class="onTop">
@@ -42,6 +47,32 @@
       <div id="crosshair-outer"></div>
       <div id="crosshair-inner"></div>
     </div>
+
+    <!-- Match System UI -->
+    <div id="match-info" class="onTop ui-panel">
+      <div id="match-phase">Waiting for players</div>
+      <div id="match-timer">--:--</div>
+    </div>
+
+    <div id="scoreboard" class="game-ui">
+      <div class="scoreboard-header">
+        <h2>Scoreboard</h2>
+        <span id="scoreboard-close">×</span>
+      </div>
+      <table id="scoreboard-table">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Kills</th>
+            <th>Deaths</th>
+            <th>K/D</th>
+          </tr>
+        </thead>
+        <tbody id="scoreboard-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Error UI -->
     <div id="connection-error">
       <i class="fas fa-exclamation-triangle"></i>
       <span id="connection-error-text">Connection Error</span>

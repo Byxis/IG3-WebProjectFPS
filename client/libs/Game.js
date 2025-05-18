@@ -26,6 +26,11 @@ export class Game {
     this.lastFPSUpdate = performance.now();
     this.fpsUpdateInterval = 1000;
     this.currentFPS = 0;
+
+    // Match state
+    this.currentMatchId = null;
+    this.currentMatchPhase = null;
+    this.playerStats = new Map();
   }
 
   update() {
@@ -199,6 +204,56 @@ export class Game {
     } catch (error) {
       console.error("Error sending position verification:", error);
     }
+  }
+
+  /**
+   ** Handles player death event
+   * @param {string} playerName - Name of the player who died
+   * @returns {void}
+   */
+  handlePlayerDeath(playerName) {
+    const player = this.players[playerName];
+    if (!player) return;
+
+    if (playerName !== localStorage.getItem("username")) {
+      player.playDeathAnimation();
+    }
+  }
+
+  /**
+   ** Handles player respawn event
+   * @param {string} playerName - Name of the player who respawned
+   * @returns {void}
+   */
+  handlePlayerRespawn(playerName) {
+    const player = this.players[playerName];
+    if (!player) return;
+
+    player.respawn();
+  }
+
+  /**
+   ** Updates the match state
+   * @param {number} matchId - Match ID
+   * @param {string} phase - Current match phase
+   * @returns {void}
+   */
+  updateMatchState(matchId, phase) {
+    this.currentMatchId = matchId;
+    this.currentMatchPhase = phase;
+  }
+
+  /**
+   ** Updates player stats for the current match
+   * @param {Array} statsData - Array of player statistics
+   * @returns {void}
+   */
+  updatePlayerStats(statsData) {
+    if (!statsData || !Array.isArray(statsData)) return;
+
+    statsData.forEach((playerStat) => {
+      this.playerStats.set(playerStat.name, playerStat);
+    });
   }
 }
 

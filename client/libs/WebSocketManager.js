@@ -6,6 +6,8 @@ import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.j
 import { ErrorTypes } from "../enum/ErrorTypes.js";
 import { verifyAuthentication } from "./AuthManager.js";
 import game from "./Game.js";
+import movementManager from "./MovementManager.js";
+import matchUIManager from "./MatchUIManager.js";
 
 let wsocket = null;
 let reconnectTimer = null;
@@ -325,8 +327,78 @@ function handleWebSocketMessage(event) {
       }
 
       case MessageTypeEnum.LOGOUT_COMMAND: {
-        console.log("Received LOGOUT_COMMAND message");
         handleLogout();
+        break;
+      }
+
+      case MessageTypeEnum.HEALTH_UPDATE: {
+        if (data.health !== undefined) {
+          uiManager.updateHealth(data.health);
+        }
+        break;
+      }
+
+      case MessageTypeEnum.DEATH_EVENT: {
+        if (data.player) {
+          game.handlePlayerDeath(data.player);
+          console.log("Player died:", data.player.name);
+          if (data.player === localStorage.getItem("username")) {
+            uiManager.showDeathOverlay();
+          }
+        }
+        break;
+      }
+
+      case MessageTypeEnum.RESPAWN_EVENT: {
+        if (data.player) {
+          game.handlePlayerRespawn(data.player);
+          if (data.player === localStorage.getItem("username")) {
+            uiManager.hideDeathOverlay();
+          }
+        }
+        break;
+      }
+
+      case MessageTypeEnum.AMMO_UPDATE: {
+        if (data.ammo !== undefined) {
+          movementManager.ammo = data.ammo;
+          movementManager.maxAmmo = data.maxAmmo || CONFIG.MAX_AMMO;
+          uiManager.updateAmmo(data.ammo, data.maxAmmo || CONFIG.MAX_AMMO);
+        }
+        break;
+      }
+
+      case MessageTypeEnum.RELOAD_START: {
+        movementManager.isReloading = true;
+        movementManager.reloadStartTime = performance.now();
+        movementManager.reloadDuration = data.reloadTime || CONFIG.RELOAD_TIME;
+        uiManager.startReloadAnimation(movementManager.reloadDuration);
+        break;
+      }
+
+      case MessageTypeEnum.RELOAD_COMPLETE: {
+        movementManager.isReloading = false;
+        uiManager.completeReloadAnimation();
+        break;
+      }
+
+      case MessageTypeEnum.MATCH_PHASE_CHANGE: {
+        matchUIManager.handleMatchPhaseChange(data);
+        break;
+      }
+
+      case MessageTypeEnum.MATCH_TIMER_UPDATE: {
+        matchUIManager.handleMatchTimerUpdate(data);
+        break;
+      }
+
+      case MessageTypeEnum.MATCH_STATS_UPDATE: {
+        matchUIManager.handleMatchStatsUpdate(data);
+        break;
+      }
+
+      case MessageTypeEnum.MATCH_END: {
+        matchUIManager.handleMatchEnd(data);
         break;
       }
 
