@@ -37,12 +37,68 @@ export class Player {
     const head = new THREE.Mesh(headGeometry, this.headMaterial);
     head.position.y = 1.75;
 
+    this.createUsernameSprite(name);
+
     this.head = head;
     this.playerGroup.add(this.cube);
     this.playerGroup.add(head);
 
     this.playerGroup.position.set(position.x, position.y - 0.75, position.z);
     this.playerGroup.pitch = pitch;
+  }
+
+  /**
+   * Creates a text sprite to display the player's username
+   * @param {string} username - The player's username to display
+   */
+  createUsernameSprite(username) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 256;
+    canvas.height = 64;
+    
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    
+    context.font = 'bold 48px Arial';
+
+    const textWidth = context.measureText(username).width;
+    const padding = 20;
+    const boxWidth = textWidth + (padding * 2);
+    const boxHeight = 60;
+    const boxX = (canvas.width - boxWidth) / 2;
+    const boxY = (canvas.height - boxHeight) / 2;
+    const cornerRadius = 10;
+    
+    context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    context.beginPath();
+    context.moveTo(boxX + cornerRadius, boxY);
+    context.lineTo(boxX + boxWidth - cornerRadius, boxY);
+    context.arcTo(boxX + boxWidth, boxY, boxX + boxWidth, boxY + cornerRadius, cornerRadius);
+    context.lineTo(boxX + boxWidth, boxY + boxHeight - cornerRadius);
+    context.arcTo(boxX + boxWidth, boxY + boxHeight, boxX + boxWidth - cornerRadius, boxY + boxHeight, cornerRadius);
+    context.lineTo(boxX + cornerRadius, boxY + boxHeight);
+    context.arcTo(boxX, boxY + boxHeight, boxX, boxY + boxHeight - cornerRadius, cornerRadius);
+    context.lineTo(boxX, boxY + cornerRadius);
+    context.arcTo(boxX, boxY, boxX + cornerRadius, boxY, cornerRadius);
+    context.closePath();
+    context.fill();
+    
+    context.fillStyle = 'white';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(username, canvas.width / 2, canvas.height / 2);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({ 
+      map: texture,
+      transparent: true
+    });
+    
+    this.usernameSprite = new THREE.Sprite(spriteMaterial);
+    this.usernameSprite.scale.set(1, 0.25, 1);
+    this.usernameSprite.position.y = 2.4;
+    
+    this.playerGroup.add(this.usernameSprite);
   }
 
   /**
