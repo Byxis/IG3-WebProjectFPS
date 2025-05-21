@@ -350,7 +350,7 @@ function handleWebSocketMessage(event) {
       case MessageTypeEnum.HEALTH_UPDATE: {
         if (data.health !== undefined) {
           const damageReceived = data.health < previousHealth;
-          
+
           if (damageReceived) {
             soundManager.playDamage();
           }

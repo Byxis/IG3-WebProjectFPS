@@ -120,17 +120,17 @@ export class SceneManager {
 
       movementX = Math.max(-maxDelta, Math.min(maxDelta, movementX));
       movementY = Math.max(-maxDelta, Math.min(maxDelta, movementY));
-      
+
       GAMESTATE.camera.targetRotationY -= movementX * CONFIG.MOUSE_SENSITIVITY;
       GAMESTATE.camera.targetPitch -= movementY * CONFIG.MOUSE_SENSITIVITY;
       GAMESTATE.camera.targetPitch = Math.max(
         -Math.PI / 2 + 0.01,
-        Math.min(Math.PI / 2 - 0.01, GAMESTATE.camera.targetPitch)
+        Math.min(Math.PI / 2 - 0.01, GAMESTATE.camera.targetPitch),
       );
 
       GAMESTATE.camera.pitch = GAMESTATE.camera.targetPitch;
       this.setPitchHasChanged(true);
-      }
+    }
   }
 
   /**

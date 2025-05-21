@@ -1,13 +1,13 @@
 import { Context } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { authMiddleware } from "./middleware/authMiddleware.ts";
 import {
+  handlePlayerReconnection,
   initiateNewPlayer,
+  markPlayerAsDisconnected,
   players,
   removePlayer,
   startReload,
   validateShot,
-  markPlayerAsDisconnected,
-  handlePlayerReconnection,
 } from "./libs/PlayerHandler.ts";
 import { ServerPhysics } from "./libs/ServerPhysics.ts";
 import { MessageTypeEnum } from "../shared/MessageTypeEnum.ts";
@@ -26,13 +26,21 @@ export interface CustomWebSocket extends WebSocket {
   username?: string;
 }
 
+// Interface for player data
+interface PlayerData {
+  name: string;
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
+  pitch: number;
+}
+
 // Interface for chat message data
 interface ChatMessageData {
   type: string;
   name: string;
   message: string;
   password?: string;
-  player?: unknown;
+  player?: PlayerData;
   position?: unknown;
   movement?: {
     forward: number;
@@ -144,13 +152,22 @@ function setupWebSocketHandlers(
 
       switch (type) {
         case MessageTypeEnum.ADD_NEW_PLAYER: {
-          const playerName = (data.player as any)?.name;
-          if (playerName && players[playerName] && players[playerName].isDisconnected) {
+          const playerName = (data.player as {
+            name: string;
+            position: { x: number; y: number; z: number };
+            rotation: { x: number; y: number; z: number };
+            pitch: number;
+          })?.name;
+
+          if (
+            playerName && players[playerName] &&
+            players[playerName].isDisconnected
+          ) {
             handlePlayerReconnection(
               playerName,
-              ws
+              ws,
             );
-            
+
             connectionManager.sendToConnection(playerName, {
               type: MessageTypeEnum.AMMO_UPDATE,
               ammo: players[playerName].ammo,
@@ -281,14 +298,18 @@ function setupWebSocketHandlers(
   ws.onclose = () => {
     if (ws.username) {
       const currentMatchId = matchManager.getCurrentMatchId();
-      const matchPhase = currentMatchId ? matchManager.getMatchPhase(currentMatchId) : null;
-      
-      if (matchPhase === MatchPhase.GAMEPLAY || matchPhase === MatchPhase.WARMUP) {
+      const matchPhase = currentMatchId
+        ? matchManager.getMatchPhase(currentMatchId)
+        : null;
+
+      if (
+        matchPhase === MatchPhase.GAMEPLAY || matchPhase === MatchPhase.WARMUP
+      ) {
         markPlayerAsDisconnected(ws.username);
       } else {
         removePlayer(ws.username);
       }
-      
+
       connectionManager.removeConnection(ws.username);
     }
   };

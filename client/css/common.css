@@ -121,15 +121,15 @@ p {
 }
 
 @keyframes damage-pulse {
-  0% { 
-    opacity: 0.3; 
+  0% {
+    opacity: 0.3;
     box-shadow: inset 0 0 180px var(--damage-color);
   }
-  50% { 
-    opacity: 0.8; 
+  50% {
+    opacity: 0.8;
     box-shadow: inset 0 0 250px var(--damage-color);
   }
-  100% { 
+  100% {
     opacity: 0.3;
     box-shadow: inset 0 0 180px var(--damage-color);
   }

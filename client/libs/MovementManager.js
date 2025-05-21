@@ -399,14 +399,13 @@ export class MovementManager {
       return;
     }
     soundManager.playGunshot();
-    if(this.ammo <= 10) {
+    if (this.ammo <= 10) {
       soundManager.playDryFire();
     }
 
-    if(this.ammo <= 5) {
+    if (this.ammo <= 5) {
       soundManager.playDryFireHigh();
     }
-
 
     this.lastShootTime = now;
 

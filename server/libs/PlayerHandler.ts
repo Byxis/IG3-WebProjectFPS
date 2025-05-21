@@ -155,14 +155,14 @@ export function markPlayerAsDisconnected(playerName: string) {
   if (!players[playerName]) return;
   matchManager.playerDisconnected(playerName);
   players[playerName].isDisconnected = true;
-  
+
   connectionManager.broadcast({
     type: "PLAYER_DISCONNECTED",
     player: {
       name: playerName,
     },
   });
-  
+
   console.log(`Player ${playerName} marked as disconnected`);
 }
 
@@ -172,9 +172,12 @@ export function markPlayerAsDisconnected(playerName: string) {
  * @param {WebSocket} websocket - Player's new WebSocket connection
  * @returns {boolean} Whether reconnection was successful
  */
-export function handlePlayerReconnection(playerName: string, websocket: WebSocket): boolean {
+export function handlePlayerReconnection(
+  playerName: string,
+  websocket: WebSocket,
+): boolean {
   if (!players[playerName]) return false;
-  
+
   players[playerName].websocket = websocket;
 
   if (players[playerName].isDisconnected) {
@@ -184,10 +187,10 @@ export function handlePlayerReconnection(playerName: string, websocket: WebSocke
       type: "PLAYER_RECONNECTED",
       player: getPlayerSendInfo(playerName),
     });
-    
+
     console.log(`Player ${playerName} has reconnected`);
   }
-  
+
   return true;
 }
 
@@ -444,7 +447,7 @@ export function validateShot(
   distance: number,
 ): boolean {
   if (!players[shooter] || !players[target]) return false;
-  
+
   if (players[target].isDisconnected) return false;
 
   if (players[shooter].ammo <= 0 || players[shooter].isReloading) {

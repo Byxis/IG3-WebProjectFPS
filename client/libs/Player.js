@@ -54,14 +54,14 @@ export class Player {
    * @param {string} username - The player's username to display
    */
   createUsernameSprite(username) {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
     canvas.width = 256;
     canvas.height = 64;
-    
+
     context.clearRect(0, 0, canvas.width, canvas.height);
-    
-    context.font = 'bold 48px Arial';
+
+    context.font = "bold 48px Arial";
 
     const textWidth = context.measureText(username).width;
     const padding = 20;
@@ -70,36 +70,54 @@ export class Player {
     const boxX = (canvas.width - boxWidth) / 2;
     const boxY = (canvas.height - boxHeight) / 2;
     const cornerRadius = 10;
-    
-    context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+
+    context.fillStyle = "rgba(0, 0, 0, 0.5)";
     context.beginPath();
     context.moveTo(boxX + cornerRadius, boxY);
     context.lineTo(boxX + boxWidth - cornerRadius, boxY);
-    context.arcTo(boxX + boxWidth, boxY, boxX + boxWidth, boxY + cornerRadius, cornerRadius);
+    context.arcTo(
+      boxX + boxWidth,
+      boxY,
+      boxX + boxWidth,
+      boxY + cornerRadius,
+      cornerRadius,
+    );
     context.lineTo(boxX + boxWidth, boxY + boxHeight - cornerRadius);
-    context.arcTo(boxX + boxWidth, boxY + boxHeight, boxX + boxWidth - cornerRadius, boxY + boxHeight, cornerRadius);
+    context.arcTo(
+      boxX + boxWidth,
+      boxY + boxHeight,
+      boxX + boxWidth - cornerRadius,
+      boxY + boxHeight,
+      cornerRadius,
+    );
     context.lineTo(boxX + cornerRadius, boxY + boxHeight);
-    context.arcTo(boxX, boxY + boxHeight, boxX, boxY + boxHeight - cornerRadius, cornerRadius);
+    context.arcTo(
+      boxX,
+      boxY + boxHeight,
+      boxX,
+      boxY + boxHeight - cornerRadius,
+      cornerRadius,
+    );
     context.lineTo(boxX, boxY + cornerRadius);
     context.arcTo(boxX, boxY, boxX + cornerRadius, boxY, cornerRadius);
     context.closePath();
     context.fill();
-    
-    context.fillStyle = 'white';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
+
+    context.fillStyle = "white";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
     context.fillText(username, canvas.width / 2, canvas.height / 2);
-    
+
     const texture = new THREE.CanvasTexture(canvas);
-    const spriteMaterial = new THREE.SpriteMaterial({ 
+    const spriteMaterial = new THREE.SpriteMaterial({
       map: texture,
-      transparent: true
+      transparent: true,
     });
-    
+
     this.usernameSprite = new THREE.Sprite(spriteMaterial);
     this.usernameSprite.scale.set(1, 0.25, 1);
     this.usernameSprite.position.y = 2.4;
-    
+
     this.playerGroup.add(this.usernameSprite);
   }
 
@@ -204,12 +222,12 @@ export class Player {
     this.headMaterial.transparent = true;
     this.headMaterial.opacity = 0.4;
     this.headMaterial.needsUpdate = true;
-    
+
     if (this.usernameSprite && this.usernameSprite.material) {
       this.usernameSprite.material.opacity = 0.4;
       this.usernameSprite.material.needsUpdate = true;
     }
-    
+
     this.isDisconnected = true;
   }
 
@@ -220,22 +238,22 @@ export class Player {
    */
   restoreFromDisconnected() {
     if (!this.isDisconnected) return;
-    
+
     this.bodyMaterial.color.set(0xff0000);
     this.bodyMaterial.transparent = false;
     this.bodyMaterial.opacity = 1.0;
     this.bodyMaterial.needsUpdate = true;
-    
+
     this.headMaterial.color.set(0xffff00);
     this.headMaterial.transparent = false;
     this.headMaterial.opacity = 1.0;
     this.headMaterial.needsUpdate = true;
-    
+
     if (this.usernameSprite && this.usernameSprite.material) {
       this.usernameSprite.material.opacity = 1.0;
       this.usernameSprite.material.needsUpdate = true;
     }
-    
+
     this.isDisconnected = false;
   }
 }

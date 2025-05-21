@@ -28,7 +28,6 @@ export class UIManager {
     this.isPlayerDead = false;
     this.respawnTimer = null;
     this.damageOverlay = null;
-    
   }
 
   /**
@@ -343,9 +342,9 @@ export class UIManager {
    */
   initDamageOverlay() {
     if (!this.damageOverlay) {
-      this.damageOverlay = document.querySelector('.damage-overlay');
+      this.damageOverlay = document.querySelector(".damage-overlay");
       if (!this.damageOverlay) {
-        console.warn('Damage overlay element not found');
+        console.warn("Damage overlay element not found");
         this.createDamageOverlay();
       }
     }
@@ -356,8 +355,8 @@ export class UIManager {
    * @returns {void}
    */
   createDamageOverlay() {
-    this.damageOverlay = document.createElement('div');
-    this.damageOverlay.className = 'damage-overlay';
+    this.damageOverlay = document.createElement("div");
+    this.damageOverlay.className = "damage-overlay";
     document.body.appendChild(this.damageOverlay);
   }
 
@@ -373,23 +372,23 @@ export class UIManager {
 
     const healthTier = Math.floor(health / 10) * 10;
     const newHealthClass = `health-${healthTier}`;
-    
-    document.body.classList.forEach(cls => {
-      if (cls.startsWith('health-') && cls !== newHealthClass) {
+
+    document.body.classList.forEach((cls) => {
+      if (cls.startsWith("health-") && cls !== newHealthClass) {
         document.body.classList.remove(cls);
       }
     });
-    
+
     if (health <= 90 && !document.body.classList.contains(newHealthClass)) {
       document.body.classList.add(newHealthClass);
     }
 
     if (damageReceived) {
-      if (!this.damageOverlay.classList.contains('active')) {
-        this.damageOverlay.classList.add('active');
-        
+      if (!this.damageOverlay.classList.contains("active")) {
+        this.damageOverlay.classList.add("active");
+
         setTimeout(() => {
-          this.damageOverlay.classList.remove('active');
+          this.damageOverlay.classList.remove("active");
         }, 500);
       }
     }
@@ -423,7 +422,7 @@ export class UIManager {
         lives.style.color = "white";
       }
     }
-    
+
     this.updateHealthEffect(health, damageReceived);
   }
 

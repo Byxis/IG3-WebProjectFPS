@@ -15,44 +15,47 @@ class SoundManager {
       dryFire: 0.2,
       dryFireHigh: 0.05,
       reload: 0.08,
-      empty: 1.0
+      empty: 1.0,
     };
-    
+
     this.sounds = {
       hitmarker: {
-        pool: this.createSoundPool('../sounds/hitmarker.mp3', this.poolSize),
-        currentIndex: 0
+        pool: this.createSoundPool("../sounds/hitmarker.mp3", this.poolSize),
+        currentIndex: 0,
       },
       headshot: {
-        pool: this.createSoundPool('../sounds/headshot.mp3', this.poolSize),
-        currentIndex: 0
+        pool: this.createSoundPool("../sounds/headshot.mp3", this.poolSize),
+        currentIndex: 0,
       },
       damage: {
-        pool: this.createSoundPool('../sounds/ouch.mp3', this.poolSize),
-        currentIndex: 0
+        pool: this.createSoundPool("../sounds/ouch.mp3", this.poolSize),
+        currentIndex: 0,
       },
       shot: {
-        pool: this.createSoundPool('../sounds/shot.mp3', this.poolSize),
-        currentIndex: 0
+        pool: this.createSoundPool("../sounds/shot.mp3", this.poolSize),
+        currentIndex: 0,
       },
       dryFire: {
-        pool: this.createSoundPool('../sounds/dry-fire.mp3', this.poolSize),
-        currentIndex: 0
+        pool: this.createSoundPool("../sounds/dry-fire.mp3", this.poolSize),
+        currentIndex: 0,
       },
       dryFireHigh: {
-        pool: this.createSoundPool('../sounds/dry-fire-high.mp3', this.poolSize),
-        currentIndex: 0
+        pool: this.createSoundPool(
+          "../sounds/dry-fire-high.mp3",
+          this.poolSize,
+        ),
+        currentIndex: 0,
       },
       reload: {
-        pool: this.createSoundPool('../sounds/reload.mp3', this.poolSize),
-        currentIndex: 0
+        pool: this.createSoundPool("../sounds/reload.mp3", this.poolSize),
+        currentIndex: 0,
       },
       empty: {
-        pool: this.createSoundPool('../sounds/empty.mp3', this.poolSize),
-        currentIndex: 0
-      }
+        pool: this.createSoundPool("../sounds/empty.mp3", this.poolSize),
+        currentIndex: 0,
+      },
     };
-    
+
     this.applyVolumeSettings();
   }
 
@@ -86,7 +89,7 @@ class SoundManager {
     const sound = soundObj.pool[soundObj.currentIndex];
 
     soundObj.currentIndex = (soundObj.currentIndex + 1) % soundObj.pool.length;
-    
+
     return sound;
   }
 
@@ -101,7 +104,9 @@ class SoundManager {
 
       sound.volume = this.masterVolume * specificVolume;
       sound.currentTime = 0;
-      sound.play().catch(e => console.error(`Error playing ${soundName} sound:`, e));
+      sound.play().catch((e) =>
+        console.error(`Error playing ${soundName} sound:`, e)
+      );
     }
   }
 
@@ -143,11 +148,11 @@ class SoundManager {
    */
   applyVolumeToSoundPool(soundName) {
     if (!this.sounds[soundName]) return;
-    
+
     const specificVolume = this.volumeSettings[soundName] || 1.0;
     const finalVolume = this.masterVolume * specificVolume;
-    
-    this.sounds[soundName].pool.forEach(audio => {
+
+    this.sounds[soundName].pool.forEach((audio) => {
       audio.volume = finalVolume;
     });
   }
@@ -168,62 +173,62 @@ class SoundManager {
   getSoundVolume(soundName) {
     return this.volumeSettings[soundName] || 1.0;
   }
-  
+
   /**
    * Plays the hitmarker sound (when hitting an enemy)
    */
   playHitmarker() {
-    this.playSound('hitmarker');
+    this.playSound("hitmarker");
   }
 
   /**
    * Plays the headshot sound (when hitting an enemy's head)
    */
   playHeadshot() {
-    this.playSound('headshot');
+    this.playSound("headshot");
   }
 
   /**
    * Plays the damage sound (when player takes damage)
    */
   playDamage() {
-    this.playSound('damage');
+    this.playSound("damage");
   }
 
   /**
    * Plays the reload sound
    */
   playReload() {
-    this.playSound('reload');
+    this.playSound("reload");
   }
 
   /**
    * Plays the empty gun sound
    */
   playEmptyGun() {
-    this.playSound('empty');
+    this.playSound("empty");
   }
 
- /**
-  * Plays the gunshot sound (when player shoots)
-  */
+  /**
+   * Plays the gunshot sound (when player shoots)
+   */
   playGunshot() {
-    this.playSound('shot');
+    this.playSound("shot");
   }
 
-    /**
-     * Plays the dry fire sound 
-     */
-    playDryFire() {
-        this.playSound('dryFire');
-    }
+  /**
+   * Plays the dry fire sound
+   */
+  playDryFire() {
+    this.playSound("dryFire");
+  }
 
-    /**
-     * Plays the high dry fire sound 
-     */
-    playDryFireHigh() {
-        this.playSound('dryFireHigh');
-    }
+  /**
+   * Plays the high dry fire sound
+   */
+  playDryFireHigh() {
+    this.playSound("dryFireHigh");
+  }
 }
 
 const soundManager = new SoundManager();

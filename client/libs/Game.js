@@ -255,7 +255,7 @@ export class Game {
       this.playerStats.set(playerStat.name, playerStat);
     });
   }
-  
+
   /**
    ** Marks a player as disconnected
    * @param {string} playerName - Name of the player to mark as disconnected
