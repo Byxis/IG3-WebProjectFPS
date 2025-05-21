@@ -335,11 +335,13 @@ function handleWebSocketMessage(event) {
 
       case MessageTypeEnum.HEALTH_UPDATE: {
         if (data.health !== undefined) {
-          if (data.health < previousHealth) {
+          const damageReceived = data.health < previousHealth;
+          
+          if (damageReceived) {
             soundManager.playDamage();
           }
 
-          uiManager.updateHealth(data.health);
+          uiManager.updateHealth(data.health, damageReceived);
           previousHealth = data.health;
         }
         break;
