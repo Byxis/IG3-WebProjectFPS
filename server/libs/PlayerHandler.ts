@@ -42,6 +42,23 @@ export const players: {
 } = {};
 
 /**
+ * Generates a random spawn position in a circle around the origin
+ * @returns {object} Random position with x, y, z coordinates
+ */
+function getRandomSpawnPosition() {
+  const angle = Math.random() * 2 * Math.PI;
+  const radius = 20;
+  const x = radius * Math.cos(angle);
+  const z = radius * Math.sin(angle);
+
+  return {
+    x,
+    y: CONFIG.GROUND_LEVEL,
+    z,
+  };
+}
+
+/**
  ** Initializes a new player in the game
  * @param {object} dataPlayer - Player initialization data
  * @param {WebSocket} websocket - Player's WebSocket connection
@@ -53,6 +70,10 @@ export async function initiateNewPlayer(dataPlayer: {
   pitch: number;
 }, websocket: WebSocket) {
   const stats = await sqlHandler.getUserStats(dataPlayer.name);
+
+  // Use random spawn position instead of client-provided position
+  const spawnPosition = getRandomSpawnPosition();
+
   const player = {
     name: dataPlayer.name,
     health: CONFIG.STARTING_HEALTH,
@@ -66,7 +87,7 @@ export async function initiateNewPlayer(dataPlayer: {
     isReloading: false,
     reloadTimeout: null,
     websocket: websocket,
-    position: { ...dataPlayer.position },
+    position: spawnPosition,
     rotation: { ...dataPlayer.rotation },
     pitch: dataPlayer.pitch,
     velocity: { x: 0, y: 0, z: 5 },
@@ -301,14 +322,14 @@ function handlePlayerDeath(playerName: string, killerName: string): void {
 }
 
 /**
- ** Respawns a player with full health at spawn position
+ ** Respawns a player with full health at a random spawn position
  * @param {string} playerName - Name of player to respawn
  */
 function respawnPlayer(playerName: string): void {
   if (!players[playerName]) return;
 
   players[playerName].health = CONFIG.STARTING_HEALTH;
-  players[playerName].position = { x: 0, y: CONFIG.GROUND_LEVEL, z: 0 }; //TODO: random spawn position
+  players[playerName].position = getRandomSpawnPosition();
   players[playerName].isDead = false;
 
   connectionManager.sendToConnection(playerName, {
