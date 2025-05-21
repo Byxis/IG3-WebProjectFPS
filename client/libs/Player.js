@@ -24,6 +24,7 @@ export class Player {
     this.bodyMaterial = new THREE.MeshBasicMaterial({
       color: 0xff0000,
       wireframe: false,
+      transparent: false,
     });
     this.cube = new THREE.Mesh(bodyGeometry, this.bodyMaterial);
     this.cube.position.y = 0.75;
@@ -33,6 +34,7 @@ export class Player {
     this.headMaterial = new THREE.MeshBasicMaterial({
       color: 0xffff00,
       wireframe: false,
+      transparent: false,
     });
     const head = new THREE.Mesh(headGeometry, this.headMaterial);
     head.position.y = 1.75;
@@ -185,5 +187,55 @@ export class Player {
     this.playerGroup.rotation.x = targetRotation;
     this.respawnAnimation = null;
     this.isDead = false;
+  }
+
+  /**
+   ** Marks the player as disconnected with visual effects
+   * Makes the player appear transparent and grayscale
+   * @returns {void}
+   */
+  markAsDisconnected() {
+    this.bodyMaterial.color.set(0x888888);
+    this.bodyMaterial.transparent = true;
+    this.bodyMaterial.opacity = 0.4;
+    this.bodyMaterial.needsUpdate = true;
+
+    this.headMaterial.color.set(0x888888);
+    this.headMaterial.transparent = true;
+    this.headMaterial.opacity = 0.4;
+    this.headMaterial.needsUpdate = true;
+    
+    if (this.usernameSprite && this.usernameSprite.material) {
+      this.usernameSprite.material.opacity = 0.4;
+      this.usernameSprite.material.needsUpdate = true;
+    }
+    
+    this.isDisconnected = true;
+  }
+
+  /**
+   ** Restores the player's original appearance after reconnection
+   * Reverses the disconnected visual effects
+   * @returns {void}
+   */
+  restoreFromDisconnected() {
+    if (!this.isDisconnected) return;
+    
+    this.bodyMaterial.color.set(0xff0000);
+    this.bodyMaterial.transparent = false;
+    this.bodyMaterial.opacity = 1.0;
+    this.bodyMaterial.needsUpdate = true;
+    
+    this.headMaterial.color.set(0xffff00);
+    this.headMaterial.transparent = false;
+    this.headMaterial.opacity = 1.0;
+    this.headMaterial.needsUpdate = true;
+    
+    if (this.usernameSprite && this.usernameSprite.material) {
+      this.usernameSprite.material.opacity = 1.0;
+      this.usernameSprite.material.needsUpdate = true;
+    }
+    
+    this.isDisconnected = false;
   }
 }

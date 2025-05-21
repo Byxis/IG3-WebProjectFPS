@@ -281,6 +281,20 @@ function handleWebSocketMessage(event) {
         break;
       }
 
+      case MessageTypeEnum.PLAYER_DISCONNECTED: {
+        if (player) {
+          game.markPlayerAsDisconnected(player.name);
+        }
+        break;
+      }
+
+      case MessageTypeEnum.PLAYER_RECONNECTED: {
+        if (player) {
+          game.handlePlayerReconnection(player.name);
+        }
+        break;
+      }
+
       case MessageTypeEnum.UPDATE_PLAYER: {
         if (player) {
           game.updatePlayerPosition(

@@ -255,6 +255,30 @@ export class Game {
       this.playerStats.set(playerStat.name, playerStat);
     });
   }
+  
+  /**
+   ** Marks a player as disconnected
+   * @param {string} playerName - Name of the player to mark as disconnected
+   * @returns {void}
+   */
+  markPlayerAsDisconnected(playerName) {
+    const player = this.players[playerName];
+    if (player) {
+      player.markAsDisconnected();
+    }
+  }
+
+  /**
+   * Handles player reconnection event
+   * @param {string} playerName - The name of the player who reconnected
+   */
+  handlePlayerReconnection(playerName) {
+    const player = this.players[playerName];
+    if (player) {
+      player.restoreFromDisconnected();
+      console.log(`Player ${playerName} has reconnected`);
+    }
+  }
 }
 
 const game = new Game();
