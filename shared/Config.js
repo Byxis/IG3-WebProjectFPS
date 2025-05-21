@@ -3,7 +3,7 @@ export const CONFIG = {
   // Player movement settings
   WALK_SPEED: 3.0,
   SPRINT_SPEED: 6.0,
-  MOUSE_SENSITIVITY: 0.001,
+  MOUSE_SENSITIVITY: 0.0008,
   //Jump physics settings
   JUMP_FORCE: 7,
   GRAVITY: 20,
