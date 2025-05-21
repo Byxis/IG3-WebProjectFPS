@@ -70,10 +70,7 @@ export async function initiateNewPlayer(dataPlayer: {
   pitch: number;
 }, websocket: WebSocket) {
   const stats = await sqlHandler.getUserStats(dataPlayer.name);
-
-  // Use random spawn position instead of client-provided position
   const spawnPosition = getRandomSpawnPosition();
-
   const player = {
     name: dataPlayer.name,
     health: CONFIG.STARTING_HEALTH,
