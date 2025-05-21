@@ -5,6 +5,7 @@ import { getWebSocket, wsState } from "./WebSocketManager.js";
 import { getNetworkTimeOffset } from "./NetworkSynchronizer.js";
 import sceneManager from "./SceneManager.js";
 import uiManager from "./UIManager.js";
+import soundManager from "./SoundManager.js";
 import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
 
 export class MovementManager {
@@ -386,8 +387,6 @@ export class MovementManager {
       return;
     }
 
-    console.log("Shot fired");
-
     const now = performance.now();
     if (now - this.lastShootTime < this.shootCooldown) {
       return;
@@ -395,10 +394,17 @@ export class MovementManager {
 
     if (this.isReloading || this.ammo <= 0) {
       if (this.ammo <= 0) {
-        console.log("Out of ammo, auto reloading...");
-        this.startReload();
+        soundManager.playEmptyGun();
       }
       return;
+    }
+    soundManager.playGunshot();
+    if (this.ammo <= 10) {
+      soundManager.playDryFire();
+    }
+
+    if (this.ammo <= 5) {
+      soundManager.playDryFireHigh();
     }
 
     this.lastShootTime = now;
@@ -475,6 +481,14 @@ export class MovementManager {
             z: hit.point.z,
           };
           shotData.distance = hit.distance;
+          const playerPosition = playerGroup.position;
+          const isHeadshot = hit.point.y > (playerPosition.y + 1.5);
+
+          if (isHeadshot) {
+            soundManager.playHeadshot();
+          } else {
+            soundManager.playHitmarker();
+          }
         }
       }
 

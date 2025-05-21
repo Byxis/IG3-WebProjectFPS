@@ -1,7 +1,9 @@
 import { Context } from "https://deno.land/x/oak@v17.1.4/mod.ts";
 import { authMiddleware } from "./middleware/authMiddleware.ts";
 import {
+  handlePlayerReconnection,
   initiateNewPlayer,
+  markPlayerAsDisconnected,
   players,
   removePlayer,
   startReload,
@@ -17,10 +19,19 @@ import { ErrorType } from "./enums/ErrorType.ts";
 import { connectionManager } from "./libs/ConnectionManager.ts";
 import { CONFIG } from "../shared/Config.ts";
 import { matchManager } from "./libs/MatchManager.ts";
+import { MatchPhase } from "./enums/MatchPhase.ts";
 
 // Custom WebSocket type with username
 export interface CustomWebSocket extends WebSocket {
   username?: string;
+}
+
+// Interface for player data
+interface PlayerData {
+  name: string;
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
+  pitch: number;
 }
 
 // Interface for chat message data
@@ -29,7 +40,7 @@ interface ChatMessageData {
   name: string;
   message: string;
   password?: string;
-  player?: unknown;
+  player?: PlayerData;
   position?: unknown;
   movement?: {
     forward: number;
@@ -141,15 +152,38 @@ function setupWebSocketHandlers(
 
       switch (type) {
         case MessageTypeEnum.ADD_NEW_PLAYER: {
-          initiateNewPlayer(
-            data.player as {
-              name: string;
-              position: { x: number; y: number; z: number };
-              rotation: { x: number; y: number; z: number };
-              pitch: number;
-            },
-            ws,
-          );
+          const playerName = (data.player as {
+            name: string;
+            position: { x: number; y: number; z: number };
+            rotation: { x: number; y: number; z: number };
+            pitch: number;
+          })?.name;
+
+          if (
+            playerName && players[playerName] &&
+            players[playerName].isDisconnected
+          ) {
+            handlePlayerReconnection(
+              playerName,
+              ws,
+            );
+
+            connectionManager.sendToConnection(playerName, {
+              type: MessageTypeEnum.AMMO_UPDATE,
+              ammo: players[playerName].ammo,
+              maxAmmo: CONFIG.MAX_AMMO,
+            });
+          } else {
+            initiateNewPlayer(
+              data.player as {
+                name: string;
+                position: { x: number; y: number; z: number };
+                rotation: { x: number; y: number; z: number };
+                pitch: number;
+              },
+              ws,
+            );
+          }
           break;
         }
 
@@ -263,6 +297,19 @@ function setupWebSocketHandlers(
   // Handle WebSocket disconnections
   ws.onclose = () => {
     if (ws.username) {
+      const currentMatchId = matchManager.getCurrentMatchId();
+      const matchPhase = currentMatchId
+        ? matchManager.getMatchPhase(currentMatchId)
+        : null;
+
+      if (
+        matchPhase === MatchPhase.GAMEPLAY || matchPhase === MatchPhase.WARMUP
+      ) {
+        markPlayerAsDisconnected(ws.username);
+      } else {
+        removePlayer(ws.username);
+      }
+
       connectionManager.removeConnection(ws.username);
     }
   };

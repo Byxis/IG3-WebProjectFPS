@@ -114,15 +114,22 @@ export class SceneManager {
    */
   handleMouseMove(event) {
     if (document.pointerLockElement === this.renderer.domElement) {
-      const deltaX = event.movementX * CONFIG.MOUSE_SENSITIVITY;
-      const deltaY = event.movementY * CONFIG.MOUSE_SENSITIVITY;
+      let movementX = event.movementX || 0;
+      let movementY = event.movementY || 0;
+      const maxDelta = 75;
 
-      GAMESTATE.camera.targetRotationY -= deltaX;
-      GAMESTATE.camera.targetPitch -= deltaY;
+      movementX = Math.max(-maxDelta, Math.min(maxDelta, movementX));
+      movementY = Math.max(-maxDelta, Math.min(maxDelta, movementY));
+
+      GAMESTATE.camera.targetRotationY -= movementX * CONFIG.MOUSE_SENSITIVITY;
+      GAMESTATE.camera.targetPitch -= movementY * CONFIG.MOUSE_SENSITIVITY;
       GAMESTATE.camera.targetPitch = Math.max(
-        -Math.PI / 2,
-        Math.min(Math.PI / 2, GAMESTATE.camera.targetPitch),
+        -Math.PI / 2 + 0.01,
+        Math.min(Math.PI / 2 - 0.01, GAMESTATE.camera.targetPitch),
       );
+
+      GAMESTATE.camera.pitch = GAMESTATE.camera.targetPitch;
+      this.setPitchHasChanged(true);
     }
   }
 

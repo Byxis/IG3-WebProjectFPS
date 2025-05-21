@@ -8,9 +8,11 @@ import { verifyAuthentication } from "./AuthManager.js";
 import game from "./Game.js";
 import movementManager from "./MovementManager.js";
 import matchUIManager from "./MatchUIManager.js";
+import soundManager from "./SoundManager.js";
 
 let wsocket = null;
 let reconnectTimer = null;
+let previousHealth = 100;
 
 const MAX_RECONNECTION_ATTEMPTS = 10;
 const RECONNECTION_DELAY = 1000; // 1 second
@@ -279,6 +281,20 @@ function handleWebSocketMessage(event) {
         break;
       }
 
+      case MessageTypeEnum.PLAYER_DISCONNECTED: {
+        if (player) {
+          game.markPlayerAsDisconnected(player.name);
+        }
+        break;
+      }
+
+      case MessageTypeEnum.PLAYER_RECONNECTED: {
+        if (player) {
+          game.handlePlayerReconnection(player.name);
+        }
+        break;
+      }
+
       case MessageTypeEnum.UPDATE_PLAYER: {
         if (player) {
           game.updatePlayerPosition(
@@ -333,7 +349,14 @@ function handleWebSocketMessage(event) {
 
       case MessageTypeEnum.HEALTH_UPDATE: {
         if (data.health !== undefined) {
-          uiManager.updateHealth(data.health);
+          const damageReceived = data.health < previousHealth;
+
+          if (damageReceived) {
+            soundManager.playDamage();
+          }
+
+          uiManager.updateHealth(data.health, damageReceived);
+          previousHealth = data.health;
         }
         break;
       }
@@ -341,7 +364,7 @@ function handleWebSocketMessage(event) {
       case MessageTypeEnum.DEATH_EVENT: {
         if (data.player) {
           game.handlePlayerDeath(data.player);
-          console.log("Player died:", data.player.name);
+          console.log("Player died:", data.player);
           if (data.player === localStorage.getItem("username")) {
             uiManager.showDeathOverlay();
           }
@@ -373,6 +396,7 @@ function handleWebSocketMessage(event) {
         movementManager.reloadStartTime = performance.now();
         movementManager.reloadDuration = data.reloadTime || CONFIG.RELOAD_TIME;
         uiManager.startReloadAnimation(movementManager.reloadDuration);
+        soundManager.playReload();
         break;
       }
 

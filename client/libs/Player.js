@@ -24,6 +24,7 @@ export class Player {
     this.bodyMaterial = new THREE.MeshBasicMaterial({
       color: 0xff0000,
       wireframe: false,
+      transparent: false,
     });
     this.cube = new THREE.Mesh(bodyGeometry, this.bodyMaterial);
     this.cube.position.y = 0.75;
@@ -33,9 +34,12 @@ export class Player {
     this.headMaterial = new THREE.MeshBasicMaterial({
       color: 0xffff00,
       wireframe: false,
+      transparent: false,
     });
     const head = new THREE.Mesh(headGeometry, this.headMaterial);
     head.position.y = 1.75;
+
+    this.createUsernameSprite(name);
 
     this.head = head;
     this.playerGroup.add(this.cube);
@@ -43,6 +47,78 @@ export class Player {
 
     this.playerGroup.position.set(position.x, position.y - 0.75, position.z);
     this.playerGroup.pitch = pitch;
+  }
+
+  /**
+   * Creates a text sprite to display the player's username
+   * @param {string} username - The player's username to display
+   */
+  createUsernameSprite(username) {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    canvas.width = 256;
+    canvas.height = 64;
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    context.font = "bold 48px Arial";
+
+    const textWidth = context.measureText(username).width;
+    const padding = 20;
+    const boxWidth = textWidth + (padding * 2);
+    const boxHeight = 60;
+    const boxX = (canvas.width - boxWidth) / 2;
+    const boxY = (canvas.height - boxHeight) / 2;
+    const cornerRadius = 10;
+
+    context.fillStyle = "rgba(0, 0, 0, 0.5)";
+    context.beginPath();
+    context.moveTo(boxX + cornerRadius, boxY);
+    context.lineTo(boxX + boxWidth - cornerRadius, boxY);
+    context.arcTo(
+      boxX + boxWidth,
+      boxY,
+      boxX + boxWidth,
+      boxY + cornerRadius,
+      cornerRadius,
+    );
+    context.lineTo(boxX + boxWidth, boxY + boxHeight - cornerRadius);
+    context.arcTo(
+      boxX + boxWidth,
+      boxY + boxHeight,
+      boxX + boxWidth - cornerRadius,
+      boxY + boxHeight,
+      cornerRadius,
+    );
+    context.lineTo(boxX + cornerRadius, boxY + boxHeight);
+    context.arcTo(
+      boxX,
+      boxY + boxHeight,
+      boxX,
+      boxY + boxHeight - cornerRadius,
+      cornerRadius,
+    );
+    context.lineTo(boxX, boxY + cornerRadius);
+    context.arcTo(boxX, boxY, boxX + cornerRadius, boxY, cornerRadius);
+    context.closePath();
+    context.fill();
+
+    context.fillStyle = "white";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(username, canvas.width / 2, canvas.height / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+    });
+
+    this.usernameSprite = new THREE.Sprite(spriteMaterial);
+    this.usernameSprite.scale.set(1, 0.25, 1);
+    this.usernameSprite.position.y = 2.4;
+
+    this.playerGroup.add(this.usernameSprite);
   }
 
   /**
@@ -129,5 +205,55 @@ export class Player {
     this.playerGroup.rotation.x = targetRotation;
     this.respawnAnimation = null;
     this.isDead = false;
+  }
+
+  /**
+   ** Marks the player as disconnected with visual effects
+   * Makes the player appear transparent and grayscale
+   * @returns {void}
+   */
+  markAsDisconnected() {
+    this.bodyMaterial.color.set(0x888888);
+    this.bodyMaterial.transparent = true;
+    this.bodyMaterial.opacity = 0.4;
+    this.bodyMaterial.needsUpdate = true;
+
+    this.headMaterial.color.set(0x888888);
+    this.headMaterial.transparent = true;
+    this.headMaterial.opacity = 0.4;
+    this.headMaterial.needsUpdate = true;
+
+    if (this.usernameSprite && this.usernameSprite.material) {
+      this.usernameSprite.material.opacity = 0.4;
+      this.usernameSprite.material.needsUpdate = true;
+    }
+
+    this.isDisconnected = true;
+  }
+
+  /**
+   ** Restores the player's original appearance after reconnection
+   * Reverses the disconnected visual effects
+   * @returns {void}
+   */
+  restoreFromDisconnected() {
+    if (!this.isDisconnected) return;
+
+    this.bodyMaterial.color.set(0xff0000);
+    this.bodyMaterial.transparent = false;
+    this.bodyMaterial.opacity = 1.0;
+    this.bodyMaterial.needsUpdate = true;
+
+    this.headMaterial.color.set(0xffff00);
+    this.headMaterial.transparent = false;
+    this.headMaterial.opacity = 1.0;
+    this.headMaterial.needsUpdate = true;
+
+    if (this.usernameSprite && this.usernameSprite.material) {
+      this.usernameSprite.material.opacity = 1.0;
+      this.usernameSprite.material.needsUpdate = true;
+    }
+
+    this.isDisconnected = false;
   }
 }

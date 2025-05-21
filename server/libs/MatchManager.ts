@@ -1,8 +1,9 @@
 import { MatchPhase } from "../enums/MatchPhase.ts";
-import { players } from "./PlayerHandler.ts";
+import { players, removePlayer } from "./PlayerHandler.ts";
 import { connectionManager } from "./ConnectionManager.ts";
 import { MessageTypeEnum } from "../../shared/MessageTypeEnum.ts";
 import sqlHandler from "./SqlHandler.ts";
+import { CONFIG } from "../../shared/Config.ts";
 import {
   DEFAULT_GAMEPLAY_DURATION,
   DEFAULT_RESULT_DURATION,
@@ -29,7 +30,7 @@ interface MatchState {
   startTime: number;
   endTime: number | null;
   playerStats: Map<string, PlayerMatchStats>;
-  disconnectedPlayerStats: Map<string, PlayerMatchStats>; // Add tracking for disconnected players
+  disconnectedPlayerStats: Map<string, PlayerMatchStats>;
   settings: MatchSettings;
   timerHandle: number | null;
 }
@@ -285,6 +286,16 @@ export class MatchManager {
       case MatchPhase.GAMEPLAY:
         duration = match.settings.gameplayDuration;
         nextPhase = MatchPhase.RESULTS;
+        Object.keys(players).forEach((playerName) => {
+          if (players[playerName]) {
+            players[playerName].ammo = CONFIG.MAX_AMMO;
+            connectionManager.sendToConnection(playerName, {
+              type: MessageTypeEnum.AMMO_UPDATE,
+              ammo: CONFIG.MAX_AMMO,
+              maxAmmo: CONFIG.MAX_AMMO,
+            });
+          }
+        });
 
         this.startTimerUpdates(matchId);
         this.startPeriodicStatsBroadcast(matchId);
@@ -377,6 +388,12 @@ export class MatchManager {
     match.endTime = Date.now();
 
     sqlHandler.endMatch(matchId);
+
+    Object.keys(players).forEach((playerName) => {
+      if (players[playerName].isDisconnected) {
+        removePlayer(playerName);
+      }
+    });
 
     connectionManager.broadcast({
       type: MessageTypeEnum.MATCH_END,
@@ -661,6 +678,16 @@ export class MatchManager {
 
       case MatchPhase.GAMEPLAY:
         nextPhase = MatchPhase.RESULTS;
+        Object.keys(players).forEach((playerName) => {
+          if (players[playerName]) {
+            players[playerName].ammo = CONFIG.MAX_AMMO;
+            connectionManager.sendToConnection(playerName, {
+              type: MessageTypeEnum.AMMO_UPDATE,
+              ammo: CONFIG.MAX_AMMO,
+              maxAmmo: CONFIG.MAX_AMMO,
+            });
+          }
+        });
 
         this.startTimerUpdates(matchId);
         this.startPeriodicStatsBroadcast(matchId);

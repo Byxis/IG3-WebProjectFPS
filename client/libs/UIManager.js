@@ -22,11 +22,12 @@ export class UIManager {
 
     // Create UI container for display elements
     this.createUIContainer();
-
+    this.initDamageOverlay();
     this.setupListeners();
 
     this.isPlayerDead = false;
     this.respawnTimer = null;
+    this.damageOverlay = null;
   }
 
   /**
@@ -336,16 +337,74 @@ export class UIManager {
   }
 
   /**
+   ** Initializes the damage overlay element for health visual effects
+   * @returns {void}
+   */
+  initDamageOverlay() {
+    if (!this.damageOverlay) {
+      this.damageOverlay = document.querySelector(".damage-overlay");
+      if (!this.damageOverlay) {
+        console.warn("Damage overlay element not found");
+        this.createDamageOverlay();
+      }
+    }
+  }
+
+  /**
+   ** Creates the damage overlay element if it doesn't exist
+   * @returns {void}
+   */
+  createDamageOverlay() {
+    this.damageOverlay = document.createElement("div");
+    this.damageOverlay.className = "damage-overlay";
+    document.body.appendChild(this.damageOverlay);
+  }
+
+  /**
+   ** Updates the health visual effect based on current health
+   * @param {number} health - Current health value
+   * @param {boolean} damageReceived - Whether damage was just received
+   * @returns {void}
+   */
+  updateHealthEffect(health, damageReceived = false) {
+    this.initDamageOverlay();
+    if (!this.damageOverlay) return;
+
+    const healthTier = Math.floor(health / 10) * 10;
+    const newHealthClass = `health-${healthTier}`;
+
+    document.body.classList.forEach((cls) => {
+      if (cls.startsWith("health-") && cls !== newHealthClass) {
+        document.body.classList.remove(cls);
+      }
+    });
+
+    if (health <= 90 && !document.body.classList.contains(newHealthClass)) {
+      document.body.classList.add(newHealthClass);
+    }
+
+    if (damageReceived) {
+      if (!this.damageOverlay.classList.contains("active")) {
+        this.damageOverlay.classList.add("active");
+
+        setTimeout(() => {
+          this.damageOverlay.classList.remove("active");
+        }, 500);
+      }
+    }
+  }
+
+  /**
    ** Updates the health bar display
    * @param {number} health - The player's current health
+   * @param {boolean} damageReceived - Whether damage was just received
    */
-  updateHealth(health) {
+  updateHealth(health, damageReceived = false) {
     const lives = document.getElementById("lives");
 
     if (lives) {
       const healthPercent = Math.max(0, Math.min(100, health));
 
-      // Show hearts based on health percentage
       let heartsText = "";
       const fullHearts = Math.floor(healthPercent / 25);
 
@@ -355,7 +414,6 @@ export class UIManager {
 
       lives.innerHTML = `${heartsText} ${healthPercent}`;
 
-      // Change color based on health level
       if (healthPercent <= 25) {
         lives.style.color = "#ff4655";
       } else if (healthPercent <= 50) {
@@ -364,6 +422,8 @@ export class UIManager {
         lives.style.color = "white";
       }
     }
+
+    this.updateHealthEffect(health, damageReceived);
   }
 
   /**

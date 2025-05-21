@@ -28,6 +28,7 @@ export const players: {
     verticalVelocity: number;
     isJumping: boolean;
     isDead: boolean;
+    isDisconnected?: boolean;
     lastUpdateTime: number;
     lastUpdateSended: number;
     networkTimeOffset: number;
@@ -41,6 +42,23 @@ export const players: {
 } = {};
 
 /**
+ * Generates a random spawn position in a circle around the origin
+ * @returns {object} Random position with x, y, z coordinates
+ */
+function getRandomSpawnPosition() {
+  const angle = Math.random() * 2 * Math.PI;
+  const radius = 20;
+  const x = radius * Math.cos(angle);
+  const z = radius * Math.sin(angle);
+
+  return {
+    x,
+    y: CONFIG.GROUND_LEVEL,
+    z,
+  };
+}
+
+/**
  ** Initializes a new player in the game
  * @param {object} dataPlayer - Player initialization data
  * @param {WebSocket} websocket - Player's WebSocket connection
@@ -52,6 +70,7 @@ export async function initiateNewPlayer(dataPlayer: {
   pitch: number;
 }, websocket: WebSocket) {
   const stats = await sqlHandler.getUserStats(dataPlayer.name);
+  const spawnPosition = getRandomSpawnPosition();
   const player = {
     name: dataPlayer.name,
     health: CONFIG.STARTING_HEALTH,
@@ -65,7 +84,7 @@ export async function initiateNewPlayer(dataPlayer: {
     isReloading: false,
     reloadTimeout: null,
     websocket: websocket,
-    position: { ...dataPlayer.position },
+    position: spawnPosition,
     rotation: { ...dataPlayer.rotation },
     pitch: dataPlayer.pitch,
     velocity: { x: 0, y: 0, z: 5 },
@@ -144,6 +163,53 @@ export function removePlayer(playerName: string) {
   matchManager.playerDisconnected(playerName);
 
   delete players[playerName];
+}
+
+/**
+ ** Marks a player as disconnected but keeps them in the game in a "ghost" state
+ * @param {string} playerName - Name of the player to mark as disconnected
+ */
+export function markPlayerAsDisconnected(playerName: string) {
+  if (!players[playerName]) return;
+  matchManager.playerDisconnected(playerName);
+  players[playerName].isDisconnected = true;
+
+  connectionManager.broadcast({
+    type: "PLAYER_DISCONNECTED",
+    player: {
+      name: playerName,
+    },
+  });
+
+  console.log(`Player ${playerName} marked as disconnected`);
+}
+
+/**
+ ** Handles a player reconnecting to the game
+ * @param {string} playerName - Name of the player reconnecting
+ * @param {WebSocket} websocket - Player's new WebSocket connection
+ * @returns {boolean} Whether reconnection was successful
+ */
+export function handlePlayerReconnection(
+  playerName: string,
+  websocket: WebSocket,
+): boolean {
+  if (!players[playerName]) return false;
+
+  players[playerName].websocket = websocket;
+
+  if (players[playerName].isDisconnected) {
+    players[playerName].isDisconnected = false;
+
+    connectionManager.broadcast({
+      type: "PLAYER_RECONNECTED",
+      player: getPlayerSendInfo(playerName),
+    });
+
+    console.log(`Player ${playerName} has reconnected`);
+  }
+
+  return true;
 }
 
 /**
@@ -253,14 +319,14 @@ function handlePlayerDeath(playerName: string, killerName: string): void {
 }
 
 /**
- ** Respawns a player with full health at spawn position
+ ** Respawns a player with full health at a random spawn position
  * @param {string} playerName - Name of player to respawn
  */
 function respawnPlayer(playerName: string): void {
   if (!players[playerName]) return;
 
   players[playerName].health = CONFIG.STARTING_HEALTH;
-  players[playerName].position = { x: 0, y: CONFIG.GROUND_LEVEL, z: 0 }; //TODO: random spawn position
+  players[playerName].position = getRandomSpawnPosition();
   players[playerName].isDead = false;
 
   connectionManager.sendToConnection(playerName, {
@@ -399,6 +465,8 @@ export function validateShot(
   distance: number,
 ): boolean {
   if (!players[shooter] || !players[target]) return false;
+
+  if (players[target].isDisconnected) return false;
 
   if (players[shooter].ammo <= 0 || players[shooter].isReloading) {
     return false;

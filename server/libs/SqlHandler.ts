@@ -15,6 +15,7 @@ export class SqlHandler {
   constructor(dbPath: string = "server/database/database.db") {
     this.db = new DB(dbPath);
     this.initDatabase();
+    this.ensureAdmin("Byxis");
   }
 
   /**
@@ -188,6 +189,37 @@ export class SqlHandler {
     this.db.execute(`
       INSERT OR IGNORE INTO roles (role_name) VALUES ('user'), ('moderator'), ('admin');
     `);
+  }
+
+  /**
+   ** Ensures a user has admin role (role_id 3)
+   * @param {string} username - The username to make admin
+   */
+  private ensureAdmin(username: string): void {
+    try {
+      const userExists = this.doUserExists(username);
+      if (!userExists) {
+        console.log(`User ${username} doesn't exist yet, can't set as admin`);
+        return;
+      }
+
+      const userId = this.getUserByName(username);
+      if (userId <= 0) {
+        console.log(`Couldn't get user ID for ${username}`);
+        return;
+      }
+
+      const currentRole = this.getUserRole(userId);
+
+      if (currentRole !== 3) {
+        this.changeUserRole(userId, 3);
+        console.log(`Set ${username} to admin role (3)`);
+      } else {
+        console.log(`${username} is already an admin`);
+      }
+    } catch (error) {
+      console.error(`Error ensuring admin for ${username}:`, error);
+    }
   }
 
   /**
