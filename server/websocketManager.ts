@@ -151,6 +151,11 @@ function setupWebSocketHandlers(
               ws
             );
             
+            connectionManager.sendToConnection(playerName, {
+              type: MessageTypeEnum.AMMO_UPDATE,
+              ammo: players[playerName].ammo,
+              maxAmmo: CONFIG.MAX_AMMO,
+            });
           } else {
             initiateNewPlayer(
               data.player as {

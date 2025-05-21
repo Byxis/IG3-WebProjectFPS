@@ -286,6 +286,16 @@ export class MatchManager {
       case MatchPhase.GAMEPLAY:
         duration = match.settings.gameplayDuration;
         nextPhase = MatchPhase.RESULTS;
+        Object.keys(players).forEach((playerName) => {
+          if (players[playerName]) {
+            players[playerName].ammo = CONFIG.MAX_AMMO;
+            connectionManager.sendToConnection(playerName, {
+              type: MessageTypeEnum.AMMO_UPDATE,
+              ammo: CONFIG.MAX_AMMO,
+              maxAmmo: CONFIG.MAX_AMMO,
+            });
+          }
+        });
 
         this.startTimerUpdates(matchId);
         this.startPeriodicStatsBroadcast(matchId);
