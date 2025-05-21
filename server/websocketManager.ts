@@ -263,6 +263,7 @@ function setupWebSocketHandlers(
   // Handle WebSocket disconnections
   ws.onclose = () => {
     if (ws.username) {
+      removePlayer(ws.username);
       connectionManager.removeConnection(ws.username);
     }
   };
