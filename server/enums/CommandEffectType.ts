@@ -7,4 +7,5 @@ export enum CommandEffectType {
   UNMUTE = "unmute",
   PRIVATE_MESSAGE = "private_message",
   LOGOUT = "logout",
+  SETTINGS_UPDATE = "settings_update",
 }

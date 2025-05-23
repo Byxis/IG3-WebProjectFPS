@@ -129,9 +129,15 @@ export class SceneManager {
 
       movementX = Math.max(-maxDelta, Math.min(maxDelta, movementX));
       movementY = Math.max(-maxDelta, Math.min(maxDelta, movementY));
+      let sensitivity = localStorage.getItem('mouse_sensitivity');
+      if (sensitivity === null) {
+        sensitivity = CONFIG.MOUSE_SENSITIVITY;
+      } else {
+        sensitivity = parseFloat(sensitivity);
+      }
 
-      GAMESTATE.camera.targetRotationY -= movementX * CONFIG.MOUSE_SENSITIVITY;
-      GAMESTATE.camera.targetPitch -= movementY * CONFIG.MOUSE_SENSITIVITY;
+      GAMESTATE.camera.targetRotationY -= movementX * sensitivity;
+      GAMESTATE.camera.targetPitch -= movementY * sensitivity;
       GAMESTATE.camera.targetPitch = Math.max(
         -Math.PI / 2 + 0.01,
         Math.min(Math.PI / 2 - 0.01, GAMESTATE.camera.targetPitch),
