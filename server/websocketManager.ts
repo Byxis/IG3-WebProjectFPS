@@ -498,10 +498,10 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
 
       case CommandEffectType.SETTINGS_UPDATE: {
         if (!result.effect.reason) break;
-        
+
         try {
           const settingData = JSON.parse(result.effect.reason);
-          
+
           if (result.effect.target === "all") {
             connectionManager.broadcast({
               type: MessageTypeEnum.SETTINGS_UPDATE,

@@ -427,8 +427,8 @@ function handleWebSocketMessage(event) {
       }
 
       case MessageTypeEnum.SETTINGS_UPDATE: {
-        if (data.settingType === 'sensitivity' && data.value !== undefined) {
-          localStorage.setItem('mouse_sensitivity', data.value.toString());
+        if (data.settingType === "sensitivity" && data.value !== undefined) {
+          localStorage.setItem("mouse_sensitivity", data.value.toString());
           console.log(`Mouse sensitivity updated to: ${data.value}`);
         }
         break;

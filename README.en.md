@@ -4,14 +4,16 @@
 
 **🌍 Language / Langue**
 
-[![🇫🇷 Français](https://img.shields.io/badge/🇫🇷-Français-lightgrey?style=for-the-badge)](README.md) 
+[![🇫🇷 Français](https://img.shields.io/badge/🇫🇷-Français-lightgrey?style=for-the-badge)](README.md)
 [![🇺🇸 English](https://img.shields.io/badge/🇺🇸-English-blue?style=for-the-badge)](README.en.md)
 
 ---
 
 </div>
 
-Real-time multiplayer first-person shooter developed with a secure client-server architecture. Robust authentication, server-side anti-cheat validation, and advanced moderation system.
+Real-time multiplayer first-person shooter developed with a secure client-server
+architecture. Robust authentication, server-side anti-cheat validation, and
+advanced moderation system.
 
 ## 📋 Table of Contents
 
@@ -35,6 +37,7 @@ Real-time multiplayer first-person shooter developed with a secure client-server
 ## ✨ Features
 
 ### 🎮 Core Gameplay
+
 - **Real-time multiplayer FPS** with server-side validation
 - **Shooting system** with raycasting detection
 - **Fluid movement** with jump and sprint
@@ -42,18 +45,21 @@ Real-time multiplayer first-person shooter developed with a secure client-server
 - **Real-time scoreboard** with K/D statistics
 - **Damage system** with specific zones (headshots/bodyshots)
 
-### 🔐 Authentication & Security  
+### 🔐 Authentication & Security
+
 - **JWT with refresh tokens** for authentication
 - **Role system** (User, Moderator, Admin)
 - **Server-side anti-cheat** validation
 - **CSRF and CSP protection** for web security
 
 ### 💬 Communication
+
 - **Real-time chat** with moderation commands
-- **Private messages** between players  
+- **Private messages** between players
 - **Sanction system** (ban, mute) with durations
 
 ### 📊 Persistence
+
 - **SQLite database** for users and statistics
 - **Match history** and performance tracking
 - **Sanction management** with automatic expiration
@@ -61,6 +67,7 @@ Real-time multiplayer first-person shooter developed with a secure client-server
 ## 🏗️ Architecture
 
 The project follows a client-server architecture with shared code:
+
 - **Client** (Frontend): Three.js for 3D rendering, WebSockets for communication
 - **Server** (Backend): Deno/Oak with server-side validation
 - **Shared**: Physics and configuration hosted server-side then sent to client
@@ -114,25 +121,28 @@ WebWarfare/
 
 ## 🔧 Technologies
 
-**Backend:** Deno, Oak, SQLite, JWT, bcrypt  
-**Frontend:** Three.js, WebSockets, CSS3  
+**Backend:** Deno, Oak, SQLite, JWT, bcrypt\
+**Frontend:** Three.js, WebSockets, CSS3\
 **Infrastructure:** HTTPS/WSS, CORS, WebGL
 
 ## ⚙️ Installation
 
-The game is deployed and accessible at:  
-**🌐 [webwarfare.cluster-ig3.igpolytech.fr](https://webwarfare.cluster-ig3.igpolytech.fr)**
+The game is deployed and accessible at:\
+**🌐
+[webwarfare.cluster-ig3.igpolytech.fr](https://webwarfare.cluster-ig3.igpolytech.fr)**
 
 ### For local development
+
 - Deno v1.40.0+
 - SSL certificates (self-signed for development)
 - Modern browser with WebGL support
 
 ## 🚀 Getting Started
 
-**Production:** The game is accessible at [webwarfare.cluster-ig3.igpolytech.fr](https://webwarfare.cluster-ig3.igpolytech.fr)
+**Production:** The game is accessible at
+[webwarfare.cluster-ig3.igpolytech.fr](https://webwarfare.cluster-ig3.igpolytech.fr)
 
-**Local development:**  
+**Local development:**\
 Run with necessary permissions for Deno
 
 **Local access:** `https://localhost:8080`
@@ -140,8 +150,9 @@ Run with necessary permissions for Deno
 ## 🎯 Gameplay
 
 ### Controls
+
 - **WASD/Arrows**: Movement
-- **Shift**: Sprint  
+- **Shift**: Sprint
 - **Space**: Jump
 - **Left Click**: Shoot
 - **R**: Reload
@@ -149,6 +160,7 @@ Run with necessary permissions for Deno
 - **Enter**: Chat
 
 ### Interface
+
 - Centered crosshair with indicators
 - HUD with health, ammo, name
 - Chat with command support
@@ -158,31 +170,31 @@ Run with necessary permissions for Deno
 
 ### User Commands
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `/help` | Display command list | `/help` |
-| `/stats [player]` | Display statistics | `/stats` or `/stats Alice` |
-| `/msg <player> <message>` | Private message | `/msg Bob Hello!` |
-| `/kill` | Suicide | `/kill` |
-| `/logout` | Logout | `/logout` |
-| `/settings <param> <value>` | Modify settings | `/settings sensitivity 2.5` |
+| Command                     | Description          | Example                     |
+| --------------------------- | -------------------- | --------------------------- |
+| `/help`                     | Display command list | `/help`                     |
+| `/stats [player]`           | Display statistics   | `/stats` or `/stats Alice`  |
+| `/msg <player> <message>`   | Private message      | `/msg Bob Hello!`           |
+| `/kill`                     | Suicide              | `/kill`                     |
+| `/logout`                   | Logout               | `/logout`                   |
+| `/settings <param> <value>` | Modify settings      | `/settings sensitivity 2.5` |
 
 ### Moderator Commands
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `/kill <player>` | Kill a player | `/kill Alice` |
-| `/mute <player> [duration] [reason]` | Mute player | `/mute Bob 10m spam` |
-| `/unmute <player>` | Unmute player | `/unmute Bob` |
+| Command                              | Description   | Example              |
+| ------------------------------------ | ------------- | -------------------- |
+| `/kill <player>`                     | Kill a player | `/kill Alice`        |
+| `/mute <player> [duration] [reason]` | Mute player   | `/mute Bob 10m spam` |
+| `/unmute <player>`                   | Unmute player | `/unmute Bob`        |
 
 ### Administrator Commands
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `/ban <player> [duration] [reason]` | Ban a player | `/ban Alice 1h cheating` |
-| `/unban <player>` | Unban a player | `/unban Alice` |
-| `/settings match_duration <min>` | Match duration | `/settings match_duration 15` |
-| `/settings player_start_nb <nb>` | Min players to start | `/settings player_start_nb 4` |
+| Command                             | Description          | Example                       |
+| ----------------------------------- | -------------------- | ----------------------------- |
+| `/ban <player> [duration] [reason]` | Ban a player         | `/ban Alice 1h cheating`      |
+| `/unban <player>`                   | Unban a player       | `/unban Alice`                |
+| `/settings match_duration <min>`    | Match duration       | `/settings match_duration 15` |
+| `/settings player_start_nb <nb>`    | Min players to start | `/settings player_start_nb 4` |
 
 **Duration formats**: `5m` (minutes), `2h` (hours), `1d` (days), `1w` (weeks)
 
@@ -197,8 +209,9 @@ Run with necessary permissions for Deno
 ## 📊 Database
 
 SQLite structure with tables for:
+
 - **Users** with roles and authentication
-- **Matches** with detailed statistics  
+- **Matches** with detailed statistics
 - **Chat** and private messages
 - **Moderation** (bans, mutes) with expiration
 - **Refresh tokens** with management
@@ -208,6 +221,7 @@ SQLite structure with tables for:
 ## 🔄 Error Handling
 
 ### Frontend Side
+
 - **Automatic WebSocket reconnection** with exponential backoff
 - **Dedicated error page** with automatic redirection
 - **Timeout and network error** handling
@@ -215,6 +229,7 @@ SQLite structure with tables for:
 - **User notifications** for connection issues
 
 ### Error Types
+
 - Network errors and inaccessible server
 - Authentication and invalid session
 - Banned user or unknown errors
@@ -223,11 +238,13 @@ SQLite structure with tables for:
 ## 🎵 Sound Design
 
 ### Immersive Audio System
+
 - **Centralized management** via `SoundManager.js`
 - **Volume control** and user preferences
 - **Performance optimization** with Audio object pool
 
 ### Gameplay Sounds
+
 - **Shooting** (`shot.mp3`): Weapon tactical feedback
 - **Reloading** (`reload.mp3`): Visual and audio feedback
 - **Impact** (`hitmarker.mp3`): Hit confirmation
@@ -235,19 +252,24 @@ SQLite structure with tables for:
 - **Damage** (`ouch.mp3`): Damage received indication
 
 ### Interface Sounds
-- **Empty ammo** (`empty.mp3`, `dry-fire.mp3`, `dry-fire-high.mp3`): Empty weapon feedback
+
+- **Empty ammo** (`empty.mp3`, `dry-fire.mp3`, `dry-fire-high.mp3`): Empty
+  weapon feedback
 - **Spatialized audio** for 3D immersion
 - **Synchronization** with visual animations
 
 ### Audio Sources and Copyright
+
 - **Free sounds** downloaded from sites like Voicy and other free platforms
 - **Educational use** within a learning project framework
-- **Copyright policy**: If a sound is protected by copyright, please contact me for immediate removal
+- **Copyright policy**: If a sound is protected by copyright, please contact me
+  for immediate removal
 - **License respect** and audio content creators
 
 ## 🎨 Interface and Effects
 
 ### Parallax Effect
+
 - **Animated background** in menus with geometric shapes
 - **Mouse-reactive movement** for visual depth
 - **Grid positioning** with fluid animations
@@ -255,6 +277,7 @@ SQLite structure with tables for:
 - **Performance optimization** with throttling
 
 ### Design
+
 - Modern interface with transparencies
 - Fluid CSS animations
 - Responsive adaptive design
@@ -263,6 +286,7 @@ SQLite structure with tables for:
 ## ⚙️ CI/CD and Development Tools
 
 ### Deployment Pipeline
+
 - **Automatic deployment** on IG3 cluster
 - **Dedicated branches**: `deploy-front` and `deploy-back`
 - **Automated build and compilation**
@@ -270,15 +294,17 @@ SQLite structure with tables for:
 - **Real-time monitoring**
 
 ### CI/CD Workflow
+
 - **Push** to `deploy-front` → Automatic client deployment
 - **Push** to `deploy-back` → Automatic server deployment
 - **Build validation** before production
 - **Automatic rollback** on error
 
 ### Development Tools
+
 - **VS Code Tasks** for local development
   - `Start Frontend`: Starts front server and restarts on modification
-  - `Start Backend`: Starts back server and restarts on modification  
+  - `Start Backend`: Starts back server and restarts on modification
   - `Start All`: Starts both back and front servers
   - `Compile TypeScript`: Compilation of shared files
   - `Replace Imports`: Import conversion for browser
@@ -289,54 +315,71 @@ SQLite structure with tables for:
 ## 📋 Requirements Compliance
 
 ### 🏗️ Required Architecture
-| Requirement | Implementation | Section |
-|-------------|----------------|---------|
-| **No framework** | ✅ Deno/Oak only (native runtime) | [Technologies](#-technologies) |
-| **Login/Register** | ✅ Complete authentication with JWT | [Security](#-security) |
-| **5+ database tables** | ✅ SQLite with 8 tables (users, matches, stats, etc.) | [Database](#-database) |
-| **CRUD + REST Architecture** | ✅ Complete REST API with organized routes | [Architecture](#️-architecture) |
-| **Justified WebSockets** | ✅ Real-time essential for multiplayer FPS | [Technologies](#-technologies) |
-| **Middleware and Routing** | ✅ Complete security and organization system | [Architecture](#️-architecture) |
+
+| Requirement                  | Implementation                                        | Section                         |
+| ---------------------------- | ----------------------------------------------------- | ------------------------------- |
+| **No framework**             | ✅ Deno/Oak only (native runtime)                     | [Technologies](#-technologies)  |
+| **Login/Register**           | ✅ Complete authentication with JWT                   | [Security](#-security)          |
+| **5+ database tables**       | ✅ SQLite with 8 tables (users, matches, stats, etc.) | [Database](#-database)          |
+| **CRUD + REST Architecture** | ✅ Complete REST API with organized routes            | [Architecture](#️-architecture) |
+| **Justified WebSockets**     | ✅ Real-time essential for multiplayer FPS            | [Technologies](#-technologies)  |
+| **Middleware and Routing**   | ✅ Complete security and organization system          | [Architecture](#️-architecture) |
 
 ### 🔐 Implemented Security
-| OWASP Requirement | Implementation | Section |
-|-------------------|----------------|---------|
-| **Hash passwords** | ✅ bcrypt for secure encryption | [Security](#-security) |
-| **JWT Tokens** | ✅ Access/Refresh tokens with rotation | [Security](#-security) |
-| **Authorization** | ✅ Role system (User/Mod/Admin) | [Chat and Moderation](#-chat-and-moderation) |
-| **HTTPS** | ✅ SSL certificates in development and production | [Getting Started](#-getting-started) |
+
+| OWASP Requirement  | Implementation                                    | Section                                      |
+| ------------------ | ------------------------------------------------- | -------------------------------------------- |
+| **Hash passwords** | ✅ bcrypt for secure encryption                   | [Security](#-security)                       |
+| **JWT Tokens**     | ✅ Access/Refresh tokens with rotation            | [Security](#-security)                       |
+| **Authorization**  | ✅ Role system (User/Mod/Admin)                   | [Chat and Moderation](#-chat-and-moderation) |
+| **HTTPS**          | ✅ SSL certificates in development and production | [Getting Started](#-getting-started)         |
 
 ### 🚀 Deployment and Advanced
-| Requirement | Implementation | Section |
-|-------------|----------------|---------|
-| **Separate Front/Back** | ✅ Different ports (8080/3000) + CORS configured | [Architecture](#️-architecture) |
-| **Polytech Cloud** | ✅ Deployed on IG3 cluster | [Installation](#️-installation) |
-| **Refresh/Access tokens** | ✅ Advanced JWT system with rotation | [Security](#-security) |
-| **CSP** | ✅ Content Security Policy implemented | [Security](#-security) |
-| **CI/CD** | ✅ Automatic pipeline with dedicated branches | [CI/CD](#️-cicd-and-development-tools) |
-| **Real-time use case** | ✅ Multiplayer FPS with server validation | [Features](#-features) |
+
+| Requirement               | Implementation                                   | Section                                |
+| ------------------------- | ------------------------------------------------ | -------------------------------------- |
+| **Separate Front/Back**   | ✅ Different ports (8080/3000) + CORS configured | [Architecture](#️-architecture)        |
+| **Polytech Cloud**        | ✅ Deployed on IG3 cluster                       | [Installation](#️-installation)        |
+| **Refresh/Access tokens** | ✅ Advanced JWT system with rotation             | [Security](#-security)                 |
+| **CSP**                   | ✅ Content Security Policy implemented           | [Security](#-security)                 |
+| **CI/CD**                 | ✅ Automatic pipeline with dedicated branches    | [CI/CD](#️-cicd-and-development-tools) |
+| **Real-time use case**    | ✅ Multiplayer FPS with server validation        | [Features](#-features)                 |
 
 ### 🎯 Additional Innovations
-- **Advanced 3D rendering**: Three.js engine with raycasting for precise collision detection → [Architecture](#️-architecture)
-- **Robust anti-cheat**: Server-side validation of all movements and actions → [Security](#-security)
-- **Immersive Sound Design**: Spatialized audio system with complete tactical feedback → [Sound Design](#-sound-design)
-- **Real-time architecture**: Optimized WebSocket synchronization with latency compensation → [Technologies](#-technologies)
-- **Development hot-reload**: Automated VS Code tools for maximum productivity → [CI/CD](#️-cicd-and-development-tools)
-- **Modern Parallax effect**: Responsive interface with fluid geometric animations → [Interface and Effects](#-interface-and-effects)
-- **Intelligent error handling**: Automatic reconnection with exponential backoff → [Error Handling](#-error-handling)
-- **Shared physics**: Client/server synchronized physics engine for consistency → [Architecture](#️-architecture)
-- **Rate limiting**: Request limitation system on login/register against brute-force attacks → [Security](#-security)
+
+- **Advanced 3D rendering**: Three.js engine with raycasting for precise
+  collision detection → [Architecture](#️-architecture)
+- **Robust anti-cheat**: Server-side validation of all movements and actions →
+  [Security](#-security)
+- **Immersive Sound Design**: Spatialized audio system with complete tactical
+  feedback → [Sound Design](#-sound-design)
+- **Real-time architecture**: Optimized WebSocket synchronization with latency
+  compensation → [Technologies](#-technologies)
+- **Development hot-reload**: Automated VS Code tools for maximum productivity →
+  [CI/CD](#️-cicd-and-development-tools)
+- **Modern Parallax effect**: Responsive interface with fluid geometric
+  animations → [Interface and Effects](#-interface-and-effects)
+- **Intelligent error handling**: Automatic reconnection with exponential
+  backoff → [Error Handling](#-error-handling)
+- **Shared physics**: Client/server synchronized physics engine for consistency
+  → [Architecture](#️-architecture)
+- **Rate limiting**: Request limitation system on login/register against
+  brute-force attacks → [Security](#-security)
 
 ## 🤖 AI Usage
 
 ### 🛠️ AI Assistance Tools
-In the context of this academic project, artificial intelligence tools were utilized to optimize the development process:
+
+In the context of this academic project, artificial intelligence tools were
+utilized to optimize the development process:
 
 - **Claude (Anthropic)**: Primary development and documentation assistant
 - **Le Chat (Mistral AI)**: Light technical assistance when needed
 
 ### 🎯 Specific Applications
-- **Preliminary code generation**: Rapid prototyping with manual review and adaptation
+
+- **Preliminary code generation**: Rapid prototyping with manual review and
+  adaptation
 - **Optimization and debugging**: Improvement suggestions and bug fixes
 - **Design and interface**: CSS styling creation and UX/UI enhancement
 - **Problem solving**: Technical solutions to overcome development obstacles
@@ -344,16 +387,20 @@ In the context of this academic project, artificial intelligence tools were util
 - **Architecture and design**: Code organization advice and best practices
 
 ### 📚 Usage Methodology
+
 - **Generated code** systematically reviewed and adapted to specific needs
 - **Manual validation** of all improvement suggestions
 - **Accelerated learning** of new technologies (Deno, Three.js)
-- **Quality maintenance**: AI complements skills without replacing critical thinking
+- **Quality maintenance**: AI complements skills without replacing critical
+  thinking
 
-> 💡 **Important note**: AI usage served as development assistance while preserving the authenticity of academic work and technical skill acquisition.
+> 💡 **Important note**: AI usage served as development assistance while
+> preserving the authenticity of academic work and technical skill acquisition.
 
 ## 🤝 Contributing
 
 ### Guidelines
+
 - TypeScript for server, JSDoc for documentation
 - Server-side validation mandatory
 - Clear client/server/shared separation
@@ -361,6 +408,9 @@ In the context of this academic project, artificial intelligence tools were util
 
 ---
 
-**WebWarfare** - Educational project developed as part of studies at **Polytech Montpellier** in **Computer Science and Management (IG3)** for the **Web Architecture** course. 
+**WebWarfare** - Educational project developed as part of studies at **Polytech
+Montpellier** in **Computer Science and Management (IG3)** for the **Web
+Architecture** course.
 
-Educational objective: Mastery of modern client-server architectures, web security, and real-time development with native technologies.
+Educational objective: Mastery of modern client-server architectures, web
+security, and real-time development with native technologies.

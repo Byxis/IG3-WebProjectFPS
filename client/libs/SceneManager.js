@@ -129,7 +129,7 @@ export class SceneManager {
 
       movementX = Math.max(-maxDelta, Math.min(maxDelta, movementX));
       movementY = Math.max(-maxDelta, Math.min(maxDelta, movementY));
-      let sensitivity = localStorage.getItem('mouse_sensitivity');
+      let sensitivity = localStorage.getItem("mouse_sensitivity");
       if (sensitivity === null) {
         sensitivity = CONFIG.MOUSE_SENSITIVITY;
       } else {
