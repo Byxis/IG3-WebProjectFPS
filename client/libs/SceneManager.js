@@ -30,12 +30,21 @@ export class SceneManager {
     directionalLight.position.set(10, 10, 10);
     directionalLight.castShadow = true;
 
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.mapSize.width = 4096;
+    directionalLight.shadow.mapSize.height = 4096;
     directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 100;
+    directionalLight.shadow.camera.far = 150;
+    directionalLight.shadow.camera.left = -50;
+    directionalLight.shadow.camera.right = 50;
+    directionalLight.shadow.camera.top = 50;
+    directionalLight.shadow.camera.bottom = -50;
+    directionalLight.shadow.bias = -0.0001;
 
     this.scene.add(directionalLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffd6aa, 0.6);
+    fillLight.position.set(-10, 8, -10);
+    this.scene.add(fillLight);
 
     const planeGeometry = new THREE.PlaneGeometry(100, 100);
     const planeMaterial = new THREE.MeshStandardMaterial({
@@ -120,9 +129,15 @@ export class SceneManager {
 
       movementX = Math.max(-maxDelta, Math.min(maxDelta, movementX));
       movementY = Math.max(-maxDelta, Math.min(maxDelta, movementY));
+      let sensitivity = localStorage.getItem("mouse_sensitivity");
+      if (sensitivity === null) {
+        sensitivity = CONFIG.MOUSE_SENSITIVITY;
+      } else {
+        sensitivity = parseFloat(sensitivity);
+      }
 
-      GAMESTATE.camera.targetRotationY -= movementX * CONFIG.MOUSE_SENSITIVITY;
-      GAMESTATE.camera.targetPitch -= movementY * CONFIG.MOUSE_SENSITIVITY;
+      GAMESTATE.camera.targetRotationY -= movementX * sensitivity;
+      GAMESTATE.camera.targetPitch -= movementY * sensitivity;
       GAMESTATE.camera.targetPitch = Math.max(
         -Math.PI / 2 + 0.01,
         Math.min(Math.PI / 2 - 0.01, GAMESTATE.camera.targetPitch),

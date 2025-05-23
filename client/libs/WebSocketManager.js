@@ -426,6 +426,14 @@ function handleWebSocketMessage(event) {
         break;
       }
 
+      case MessageTypeEnum.SETTINGS_UPDATE: {
+        if (data.settingType === "sensitivity" && data.value !== undefined) {
+          localStorage.setItem("mouse_sensitivity", data.value.toString());
+          console.log(`Mouse sensitivity updated to: ${data.value}`);
+        }
+        break;
+      }
+
       default: {
         console.log("Message type not recognized:", data.type);
         break;

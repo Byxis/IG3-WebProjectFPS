@@ -3,6 +3,7 @@ import { players } from "./PlayerHandler.ts";
 import sqlHandler from "./SqlHandler.ts";
 import { CommandEffectType } from "../enums/CommandEffectType.ts";
 import { RoleLevel } from "../enums/RoleLevel.ts";
+import { matchManager } from "./MatchManager.ts";
 
 export interface CommandEffect {
   type: CommandEffectType;
@@ -41,7 +42,7 @@ export class CommandHandler {
       }
 
       const playerName = args[0];
-      if (!playerExists(playerName)) {
+      if (!playerExists(playerName) && !sqlHandler.doUserExists(playerName)) {
         return {
           message: `Error: Player ${playerName} does not exist`,
           effect: { type: CommandEffectType.NONE, target: "", reason: "" },
@@ -103,7 +104,7 @@ export class CommandHandler {
           const playerName = args[0];
           if (!playerExists(playerName)) {
             return {
-              message: `Error: Player ${playerName} does not exist`,
+              message: `Error: Player ${playerName} is not online`,
               effect: { type: CommandEffectType.NONE, target: "", reason: "" },
             };
           }
@@ -143,9 +144,8 @@ export class CommandHandler {
           effect: { type: CommandEffectType.NONE, target: "", reason: "" },
         };
       }
-
       const playerName = args[0];
-      if (!playerExists(playerName)) {
+      if (!playerExists(playerName) && !sqlHandler.doUserExists(playerName)) {
         return {
           message: `Error: Player ${playerName} does not exist`,
           effect: { type: CommandEffectType.NONE, target: "", reason: "" },
@@ -444,6 +444,139 @@ export class CommandHandler {
         },
       };
     });
+
+    this.registerCommand(
+      "settings",
+      RoleLevel.USER,
+      (args, sender, senderRole) => {
+        if (args.length < 2) {
+          return {
+            message:
+              "Usage: /settings <setting> <value><br>Available settings:<br>- sensitivity <float><br>- match_duration <minutes> (admin only)<br>- player_start_nb <number> (admin only)",
+            effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+          };
+        }
+
+        const setting = args[0].toLowerCase();
+        const value = args[1];
+
+        switch (setting) {
+          case "sensitivity": {
+            const sensitivity = parseFloat(value);
+            if (isNaN(sensitivity) || sensitivity <= 0 || sensitivity > 10) {
+              return {
+                message:
+                  "Error: Sensitivity must be a number between 0.01 and 10",
+                effect: {
+                  type: CommandEffectType.NONE,
+                  target: "",
+                  reason: "",
+                },
+              };
+            }
+
+            return {
+              message: `Mouse sensitivity set to ${sensitivity}`,
+              effect: {
+                type: CommandEffectType.SETTINGS_UPDATE,
+                target: sender,
+                reason: JSON.stringify({
+                  type: "sensitivity",
+                  value: sensitivity,
+                }),
+              },
+            };
+          }
+          case "match_duration": {
+            if (senderRole < RoleLevel.ADMIN) {
+              return {
+                message: "Error: Only administrators can change match duration",
+                effect: {
+                  type: CommandEffectType.NONE,
+                  target: "",
+                  reason: "",
+                },
+              };
+            }
+
+            const duration = parseInt(value);
+            if (isNaN(duration) || duration < 1 || duration > 60) {
+              return {
+                message:
+                  "Error: Match duration must be between 1 and 60 minutes",
+                effect: {
+                  type: CommandEffectType.NONE,
+                  target: "",
+                  reason: "",
+                },
+              };
+            }
+
+            matchManager.updateMatchDuration(duration * 60 * 1000);
+
+            return {
+              message: `Match duration set to ${duration} minutes`,
+              effect: {
+                type: CommandEffectType.SETTINGS_UPDATE,
+                target: "all",
+                reason: JSON.stringify({
+                  type: "match_duration",
+                  value: duration,
+                }),
+              },
+            };
+          }
+
+          case "player_start_nb": {
+            if (senderRole < RoleLevel.ADMIN) {
+              return {
+                message:
+                  "Error: Only administrators can change minimum player count",
+                effect: {
+                  type: CommandEffectType.NONE,
+                  target: "",
+                  reason: "",
+                },
+              };
+            }
+
+            const playerCount = parseInt(value);
+            if (isNaN(playerCount) || playerCount < 1 || playerCount > 20) {
+              return {
+                message: "Error: Minimum player count must be between 1 and 20",
+                effect: {
+                  type: CommandEffectType.NONE,
+                  target: "",
+                  reason: "",
+                },
+              };
+            }
+
+            matchManager.updateMinPlayers(playerCount);
+
+            return {
+              message: `Minimum players to start match set to ${playerCount}`,
+              effect: {
+                type: CommandEffectType.SETTINGS_UPDATE,
+                target: "all",
+                reason: JSON.stringify({
+                  type: "player_start_nb",
+                  value: playerCount,
+                }),
+              },
+            };
+          }
+
+          default: {
+            return {
+              message:
+                `Error: Unknown setting '${setting}'. Available settings: sensitivity, match_duration (admin), player_start_nb (admin)`,
+              effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+            };
+          }
+        }
+      },
+    );
   }
 
   /**

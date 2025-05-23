@@ -496,6 +496,33 @@ async function handleChatMessage(data: ChatMessageData, ws: CustomWebSocket) {
         break;
       }
 
+      case CommandEffectType.SETTINGS_UPDATE: {
+        if (!result.effect.reason) break;
+
+        try {
+          const settingData = JSON.parse(result.effect.reason);
+
+          if (result.effect.target === "all") {
+            connectionManager.broadcast({
+              type: MessageTypeEnum.SETTINGS_UPDATE,
+              settingType: settingData.type,
+              value: settingData.value,
+            });
+          } else {
+            if (ws.username) {
+              connectionManager.sendToConnection(ws.username, {
+                type: MessageTypeEnum.SETTINGS_UPDATE,
+                settingType: settingData.type,
+                value: settingData.value,
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Failed to parse settings update data:", error);
+        }
+        break;
+      }
+
       default: {
         break;
       }

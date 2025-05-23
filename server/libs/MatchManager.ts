@@ -40,7 +40,7 @@ export class MatchManager {
   private currentMatchId: number = 1;
   private defaultSettings: MatchSettings;
   private waitingCheckInterval: number | null = null;
-  private readonly MIN_PLAYERS_TO_START = 2;
+  private MIN_PLAYERS_TO_START = 2;
 
   constructor() {
     this.defaultSettings = {
@@ -710,6 +710,23 @@ export class MatchManager {
         this.endMatch(matchId);
       }
     }, remainingTime);
+  }
+  /**
+   * Updates the minimum number of players required to start a match
+   * @param minPlayers The new minimum player count
+   */
+  updateMinPlayers(minPlayers: number): void {
+    this.MIN_PLAYERS_TO_START = minPlayers;
+    console.log(`Minimum players to start updated to: ${minPlayers}`);
+  }
+
+  /**
+   * Updates the match duration setting
+   * @param duration The new gameplay duration in milliseconds
+   */
+  updateMatchDuration(duration: number): void {
+    this.defaultSettings.gameplayDuration = duration;
+    console.log(`Match duration updated to: ${duration / 1000 / 60} minutes`);
   }
 }
 

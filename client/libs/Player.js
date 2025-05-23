@@ -20,14 +20,15 @@ export class Player {
     this.playerGroup.name = name;
 
     // Create a cube to represent the player
-    const bodyGeometry = new THREE.BoxGeometry(0.6, 1.5, 0.6);
+    const bodyGeometry = new THREE.BoxGeometry(0.6, 1.70, 0.6);
     this.bodyMaterial = new THREE.MeshBasicMaterial({
       color: 0xff0000,
       wireframe: false,
       transparent: false,
     });
     this.cube = new THREE.Mesh(bodyGeometry, this.bodyMaterial);
-    this.cube.position.y = 0.75;
+    this.cube.position.y = 0.55;
+    this.cube.castShadow = true;
 
     // Create a head
     const headGeometry = new THREE.SphereGeometry(0.4, 16, 16);
@@ -38,6 +39,7 @@ export class Player {
     });
     const head = new THREE.Mesh(headGeometry, this.headMaterial);
     head.position.y = 1.75;
+    head.castShadow = true;
 
     this.createUsernameSprite(name);
 
