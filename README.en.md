@@ -330,11 +330,10 @@ SQLite structure with tables for:
 ## 🤖 AI Usage
 
 ### 🛠️ AI Assistance Tools
-In the context of this academic project, several artificial intelligence tools were utilized to optimize the development process:
+In the context of this academic project, artificial intelligence tools were utilized to optimize the development process:
 
-- **Le Chat (Mistral AI)**: Technical assistance and problem solving
-- **ChatGPT (OpenAI)**: Code generation and optimization
-- **Claude (Anthropic)**: Code improvement and documentation
+- **Claude (Anthropic)**: Primary development and documentation assistant
+- **Le Chat (Mistral AI)**: Light technical assistance when needed
 
 ### 🎯 Specific Applications
 - **Preliminary code generation**: Rapid prototyping with manual review and adaptation
@@ -342,6 +341,7 @@ In the context of this academic project, several artificial intelligence tools w
 - **Design and interface**: CSS styling creation and UX/UI enhancement
 - **Problem solving**: Technical solutions to overcome development obstacles
 - **Documentation**: Technical writing assistance and README structuring
+- **Architecture and design**: Code organization advice and best practices
 
 ### 📚 Usage Methodology
 - **Generated code** systematically reviewed and adapted to specific needs

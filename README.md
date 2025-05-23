@@ -330,11 +330,10 @@ Structure SQLite avec tables pour :
 ## 🤖 Utilisation de l'IA
 
 ### 🛠️ Outils d'Assistance IA
-Dans le cadre de ce projet académique, plusieurs outils d'intelligence artificielle ont été utilisés pour optimiser le processus de développement :
+Dans le cadre de ce projet académique, des outils d'intelligence artificielle ont été utilisés pour optimiser le processus de développement :
 
-- **Le Chat (Mistral AI)** : Assistance technique et résolution de problèmes
-- **ChatGPT (OpenAI)** : Génération de code et optimisation
-- **Claude (Anthropic)** : Amélioration du code et documentation
+- **Claude (Anthropic)** : Assistant principal pour développement et documentation
+- **Le Chat (Mistral AI)** : Assistance technique ponctuelle et légère
 
 ### 🎯 Applications Spécifiques
 - **Génération de code préliminaire** : Prototypage rapide avec révision et adaptation manuelle
@@ -342,6 +341,7 @@ Dans le cadre de ce projet académique, plusieurs outils d'intelligence artifici
 - **Design et interface** : Création de styles CSS et amélioration UX/UI
 - **Résolution de problèmes** : Solutions techniques pour surmonter les obstacles de développement
 - **Documentation** : Aide à la rédaction technique et structuration du README
+- **Architecture et conception** : Conseils sur l'organisation du code et les bonnes pratiques
 
 ### 📚 Méthodologie d'Utilisation
 - **Code généré** systématiquement revu et adapté aux besoins spécifiques
