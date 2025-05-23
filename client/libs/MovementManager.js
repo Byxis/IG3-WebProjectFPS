@@ -363,7 +363,7 @@ export class MovementManager {
    * @returns {void}
    */
   setupShootingControls() {
-    document.addEventListener("click", (event) => {
+    document.addEventListener("mousedown", (event) => {
       if (document.pointerLockElement !== sceneManager.renderer.domElement) {
         return;
       }
