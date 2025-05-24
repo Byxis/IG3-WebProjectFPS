@@ -74,16 +74,14 @@ export class UIManager {
    ** Sets up event listeners for user interaction with the game.
    * Handles pointer lock, keyboard inputs, chat interactions, and window resizing.
    * @returns {void}
-   */  setupListeners() {
-    // Add click listener to request pointer lock
+   */
+  setupListeners() {
     sceneManager.renderer.domElement.addEventListener("click", () => {
       this.requestPointerLock();
     });
 
-    // Handle pointer lock changes
     document.addEventListener("pointerlockchange", () => {
       if (document.pointerLockElement === sceneManager.renderer.domElement) {
-        // Pointer is locked
         if (!this.isChatboxActive) {
           document.addEventListener(
             "mousemove",
@@ -91,7 +89,6 @@ export class UIManager {
           );
         }
       } else {
-        // Pointer is not locked
         document.removeEventListener(
           "mousemove",
           sceneManager.boundHandleMouseMove,
@@ -114,7 +111,9 @@ export class UIManager {
         GAMESTATE.keyStates[event.code] = false;
         event.preventDefault();
       }
-    });    this.chatboxSend.addEventListener("click", (event) => {
+    });
+
+    this.chatboxSend.addEventListener("click", (event) => {
       event.preventDefault();
       if (this.chatboxInput.value.length > 0) {
         const websocket = getWebSocket();
@@ -129,13 +128,13 @@ export class UIManager {
         this.chatboxInput.value = "";
       }
       this.chatboxInput.focus();
-    });document.addEventListener("keydown", (event) => {
+    });
+
+    document.addEventListener("keydown", (event) => {
       if (event.code === "Enter") {
         if (!this.isChatboxActive) {
-          // Open chat
           this.openChat();
         } else {
-          // Send message or close chat
           if (this.chatboxInput.value.length > 0) {
             this.chatboxSend.click();
           } else {
@@ -146,23 +145,21 @@ export class UIManager {
 
       if (event.code === "Escape") {
         if (this.isChatboxActive) {
-          // Close chat and return to game
           this.closeChat();
         } else {
-          // Exit pointer lock
           document.exitPointerLock();
         }
-      }      // toggle dev mode
+      }
+
+      // toggle dev mode
       if (event.ctrlKey && event.code === "KeyP") {
         event.preventDefault();
         this.toggleDevMode();
       }
     });
 
-    // Add click listener to close chat when clicking outside
     document.addEventListener("click", (event) => {
       if (this.isChatboxActive) {
-        // Check if click is outside the chatbox
         if (!this.chatbox.contains(event.target)) {
           this.closeChat();
         }
@@ -554,7 +551,6 @@ export class UIManager {
    * @returns {void}
    */
   requestPointerLock() {
-    // Only request if chat is not active and pointer is not already locked
     if (!this.isChatboxActive && !document.pointerLockElement) {
       try {
         sceneManager.renderer.domElement.requestPointerLock();
@@ -570,12 +566,10 @@ export class UIManager {
    */
   openChat() {
     if (!this.isChatboxActive) {
-      // Exit pointer lock first
       if (document.pointerLockElement) {
         document.exitPointerLock();
       }
       
-      // Activate chat
       this.isChatboxActive = true;
       this.chatbox.style.opacity = 1;
       this.chatboxInput.focus();
@@ -588,19 +582,15 @@ export class UIManager {
    */
   closeChat() {
     if (this.isChatboxActive) {
-      // Deactivate chat
       this.isChatboxActive = false;
       this.chatboxInput.blur();
-      this.chatboxInput.value = ""; // Clear any unsent message
       
-      // Set opacity back to semi-transparent after a delay
       setTimeout(() => {
         if (!this.isChatboxActive) {
           this.chatbox.style.opacity = 0.5;
         }
       }, 3000);
       
-      // Request pointer lock after a short delay to avoid conflicts
       setTimeout(() => {
         this.requestPointerLock();
       }, 100);

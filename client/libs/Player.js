@@ -58,17 +58,34 @@ export class Player {
   createUsernameSprite(username) {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
-    canvas.width = 256;
-    canvas.height = 64;
-
-    context.clearRect(0, 0, canvas.width, canvas.height);
 
     context.font = "bold 48px Arial";
 
-    const textWidth = context.measureText(username).width;
+    const textMetrics = context.measureText(username);
+    const textWidth = textMetrics.width;
     const padding = 20;
-    const boxWidth = textWidth + (padding * 2);
+    const minBoxWidth = 80;
+    const maxBoxWidth = 400;
     const boxHeight = 60;
+    
+    let boxWidth = Math.max(minBoxWidth, Math.min(maxBoxWidth, textWidth + (padding * 2)));
+    
+    let fontSize = 48;
+    if (textWidth + (padding * 2) > maxBoxWidth) {
+      fontSize = Math.floor((maxBoxWidth - (padding * 2)) / textWidth * 48);
+      fontSize = Math.max(24, fontSize);
+      context.font = `bold ${fontSize}px Arial`;
+      
+      const newTextWidth = context.measureText(username).width;
+      boxWidth = Math.min(maxBoxWidth, newTextWidth + (padding * 2));
+    }
+    
+    canvas.width = Math.max(256, boxWidth + 40);
+    canvas.height = 64;
+    
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.font = `bold ${fontSize}px Arial`;
+
     const boxX = (canvas.width - boxWidth) / 2;
     const boxY = (canvas.height - boxHeight) / 2;
     const cornerRadius = 10;
@@ -117,7 +134,9 @@ export class Player {
     });
 
     this.usernameSprite = new THREE.Sprite(spriteMaterial);
-    this.usernameSprite.scale.set(1, 0.25, 1);
+    const baseScale = 1;
+    const scaleWidth = (canvas.width / 256) * baseScale;
+    this.usernameSprite.scale.set(scaleWidth, 0.25, 1);
     this.usernameSprite.position.y = 2.4;
 
     this.playerGroup.add(this.usernameSprite);

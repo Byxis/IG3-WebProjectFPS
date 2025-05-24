@@ -122,13 +122,13 @@ export async function initiateNewPlayer(dataPlayer: {
     type: MessageTypeEnum.HEALTH_UPDATE,
     health: player.health,
   });
+
   connectionManager.sendToConnection(dataPlayer.name, {
     type: MessageTypeEnum.AMMO_UPDATE,
     ammo: player.ammo,
     maxAmmo: CONFIG.MAX_AMMO,
   });
 
-  // Send immediate position correction to sync client with server spawn position
   connectionManager.sendToConnection(dataPlayer.name, {
     type: MessageTypeEnum.POSITION_CORRECTION,
     position: player.position,
@@ -347,12 +347,12 @@ function respawnPlayer(playerName: string): void {
     message: "You have respawned",
     role: 3,
   });
+
   connectionManager.broadcast({
     type: MessageTypeEnum.RESPAWN_EVENT,
     player: playerName,
   });
 
-  // Send immediate position correction to sync client with new spawn position
   connectionManager.sendToConnection(playerName, {
     type: MessageTypeEnum.POSITION_CORRECTION,
     position: players[playerName].position,
