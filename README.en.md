@@ -193,10 +193,19 @@ Run with necessary permissions for Deno
 | ----------------------------------- | -------------------- | ----------------------------- |
 | `/ban <player> [duration] [reason]` | Ban a player         | `/ban Alice 1h cheating`      |
 | `/unban <player>`                   | Unban a player       | `/unban Alice`                |
+| `/promote <player>`                 | Promote a player     | `/promote Bob`                |
+| `/demote <player>`                  | Demote a player      | `/demote Charlie`             |
 | `/settings match_duration <min>`    | Match duration       | `/settings match_duration 15` |
 | `/settings player_start_nb <nb>`    | Min players to start | `/settings player_start_nb 4` |
 
 **Duration formats**: `5m` (minutes), `2h` (hours), `1d` (days), `1w` (weeks)
+
+### Role System
+
+- **User** → **Moderator** → **Administrator**
+- `/promote`: upgrades a user to the next level
+- `/demote`: downgrades to the previous level
+- **Special protection**: User "Byxis" cannot be demoted
 
 ## 🔐 Security
 

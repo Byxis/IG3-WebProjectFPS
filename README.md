@@ -195,11 +195,20 @@ Lancer avec les permissions nécessaires pour Deno
 | -------------------------------- | ------------------------- | ----------------------------- |
 | `/ban <joueur> [durée] [raison]` | Bannir un joueur          | `/ban Alice 1h triche`        |
 | `/unban <joueur>`                | Débannir un joueur        | `/unban Alice`                |
+| `/promote <joueur>`              | Promouvoir un joueur      | `/promote Bob`                |
+| `/demote <joueur>`               | Rétrograder un joueur     | `/demote Charlie`             |
 | `/settings match_duration <min>` | Durée des matchs          | `/settings match_duration 15` |
 | `/settings player_start_nb <nb>` | Joueurs min pour démarrer | `/settings player_start_nb 4` |
 
 **Formats de durée** : `5m` (minutes), `2h` (heures), `1d` (jours), `1w`
 (semaines)
+
+### Système de Rôles
+
+- **Utilisateur** → **Modérateur** → **Administrateur**
+- `/promote` : fait passer un utilisateur au niveau supérieur
+- `/demote` : fait redescendre au niveau inférieur
+- **Protection spéciale** : L'utilisateur "Byxis" ne peut pas être rétrogradé
 
 ## 🔐 Sécurité
 
