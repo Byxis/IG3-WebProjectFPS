@@ -74,24 +74,24 @@ export class UIManager {
    ** Sets up event listeners for user interaction with the game.
    * Handles pointer lock, keyboard inputs, chat interactions, and window resizing.
    * @returns {void}
-   */
-  setupListeners() {
+   */  setupListeners() {
+    // Add click listener to request pointer lock
     sceneManager.renderer.domElement.addEventListener("click", () => {
-      if (!this.isChatboxActive) {
-        sceneManager.renderer.domElement.requestPointerLock();
-      }
+      this.requestPointerLock();
     });
 
+    // Handle pointer lock changes
     document.addEventListener("pointerlockchange", () => {
-      if (
-        document.pointerLockElement === sceneManager.renderer.domElement &&
-        !this.isChatboxActive
-      ) {
-        document.addEventListener(
-          "mousemove",
-          sceneManager.boundHandleMouseMove,
-        );
+      if (document.pointerLockElement === sceneManager.renderer.domElement) {
+        // Pointer is locked
+        if (!this.isChatboxActive) {
+          document.addEventListener(
+            "mousemove",
+            sceneManager.boundHandleMouseMove,
+          );
+        }
       } else {
+        // Pointer is not locked
         document.removeEventListener(
           "mousemove",
           sceneManager.boundHandleMouseMove,
@@ -114,69 +114,58 @@ export class UIManager {
         GAMESTATE.keyStates[event.code] = false;
         event.preventDefault();
       }
-    });
-
-    this.chatboxSend.addEventListener("click", (event) => {
+    });    this.chatboxSend.addEventListener("click", (event) => {
       event.preventDefault();
-      const websocket = getWebSocket();
-      if (websocket && websocket.readyState === WebSocket.OPEN) {
-        const message = this.chatboxInput.value;
-        websocket.send(JSON.stringify({
-          type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-          name: localStorage.getItem("username"),
-          message: message,
-        }));
+      if (this.chatboxInput.value.length > 0) {
+        const websocket = getWebSocket();
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+          const message = this.chatboxInput.value;
+          websocket.send(JSON.stringify({
+            type: MessageTypeEnum.SEND_CHAT_MESSAGE,
+            name: localStorage.getItem("username"),
+            message: message,
+          }));
+        }
+        this.chatboxInput.value = "";
       }
-      this.chatboxInput.value = "";
       this.chatboxInput.focus();
-    });
-
-    document.addEventListener("keydown", (event) => {
+    });document.addEventListener("keydown", (event) => {
       if (event.code === "Enter") {
         if (!this.isChatboxActive) {
-          document.exitPointerLock();
-          this.chatbox.style.opacity = 1;
-          this.chatboxInput.focus();
-          this.isChatboxActive = true;
+          // Open chat
+          this.openChat();
         } else {
+          // Send message or close chat
           if (this.chatboxInput.value.length > 0) {
             this.chatboxSend.click();
           } else {
-            this.chatboxInput.blur();
-            this.isChatboxActive = false;
-            setTimeout(() => {
-              if (!this.isChatboxActive) {
-                this.chatbox.style.opacity = 0.5;
-              }
-            }, 3000);
-            setTimeout(() => {
-              sceneManager.renderer.domElement.requestPointerLock();
-            }, 100);
+            this.closeChat();
           }
         }
       }
 
       if (event.code === "Escape") {
         if (this.isChatboxActive) {
-          this.chatboxInput.blur();
-          this.isChatboxActive = false;
-          setTimeout(() => {
-            if (!this.isChatboxActive) {
-              this.chatbox.style.opacity = 0.5;
-            }
-          }, 3000);
-          setTimeout(() => {
-            sceneManager.renderer.domElement.requestPointerLock();
-          }, 100);
+          // Close chat and return to game
+          this.closeChat();
         } else {
+          // Exit pointer lock
           document.exitPointerLock();
         }
-      }
-
-      // toggle dev mode
+      }      // toggle dev mode
       if (event.ctrlKey && event.code === "KeyP") {
         event.preventDefault();
         this.toggleDevMode();
+      }
+    });
+
+    // Add click listener to close chat when clicking outside
+    document.addEventListener("click", (event) => {
+      if (this.isChatboxActive) {
+        // Check if click is outside the chatbox
+        if (!this.chatbox.contains(event.target)) {
+          this.closeChat();
+        }
       }
     });
 
@@ -558,6 +547,64 @@ export class UIManager {
    */
   isPlayerCurrentlyDead() {
     return this.isPlayerDead;
+  }
+
+  /**
+   ** Requests pointer lock safely, avoiding multiple concurrent requests
+   * @returns {void}
+   */
+  requestPointerLock() {
+    // Only request if chat is not active and pointer is not already locked
+    if (!this.isChatboxActive && !document.pointerLockElement) {
+      try {
+        sceneManager.renderer.domElement.requestPointerLock();
+      } catch (error) {
+        console.warn("Failed to request pointer lock:", error);
+      }
+    }
+  }
+
+  /**
+   ** Opens the chat interface and exits pointer lock
+   * @returns {void}
+   */
+  openChat() {
+    if (!this.isChatboxActive) {
+      // Exit pointer lock first
+      if (document.pointerLockElement) {
+        document.exitPointerLock();
+      }
+      
+      // Activate chat
+      this.isChatboxActive = true;
+      this.chatbox.style.opacity = 1;
+      this.chatboxInput.focus();
+    }
+  }
+
+  /**
+   ** Closes the chat interface and requests pointer lock
+   * @returns {void}
+   */
+  closeChat() {
+    if (this.isChatboxActive) {
+      // Deactivate chat
+      this.isChatboxActive = false;
+      this.chatboxInput.blur();
+      this.chatboxInput.value = ""; // Clear any unsent message
+      
+      // Set opacity back to semi-transparent after a delay
+      setTimeout(() => {
+        if (!this.isChatboxActive) {
+          this.chatbox.style.opacity = 0.5;
+        }
+      }, 3000);
+      
+      // Request pointer lock after a short delay to avoid conflicts
+      setTimeout(() => {
+        this.requestPointerLock();
+      }, 100);
+    }
   }
 }
 
