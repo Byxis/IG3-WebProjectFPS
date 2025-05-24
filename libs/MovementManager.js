@@ -1,12 +1,12 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.139.2";
-import { CONFIG, GAMESTATE } from "https://localhost:3000/shared/Config.js";
-import { simulatePlayerMovement } from "https://localhost:3000/shared/Physics.js";
+import { CONFIG, GAMESTATE } from "https://webwarfare-back.cluster-ig3.igpolytech.fr/shared/Config.js";
+import { simulatePlayerMovement } from "https://webwarfare-back.cluster-ig3.igpolytech.fr/shared/Physics.js";
 import { getWebSocket, wsState } from "./WebSocketManager.js";
 import { getNetworkTimeOffset } from "./NetworkSynchronizer.js";
 import sceneManager from "./SceneManager.js";
 import uiManager from "./UIManager.js";
 import soundManager from "./SoundManager.js";
-import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
+import { MessageTypeEnum } from "https://webwarfare-back.cluster-ig3.igpolytech.fr/shared/MessageTypeEnum.js";
 
 export class MovementManager {
   /**

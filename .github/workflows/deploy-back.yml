@@ -58,11 +58,11 @@ jobs:
           echo "Server configuration updated"
       - name: Replace URLs in files
         run: |
-          # Replace localhost:8080 by webwarfare.cluster-ig3.igpolytech.fr
-          find . -type f -not -path "*/node_modules/*" -not -path "*/\.git/*" -exec sed -i 's/localhost:8080/webwarfare.cluster-ig3.igpolytech.fr/g' {} \;
+          # Replace webwarfare.cluster-ig3.igpolytech.fr by webwarfare.cluster-ig3.igpolytech.fr
+          find . -type f -not -path "*/node_modules/*" -not -path "*/\.git/*" -exec sed -i 's/webwarfare.cluster-ig3.igpolytech.fr/webwarfare.cluster-ig3.igpolytech.fr/g' {} \;
 
-          # Replace localhost:3000 by webwarfare-back.cluster-ig3.igpolytech.fr
-          find . -type f -not -path "*/node_modules/*" -not -path "*/\.git/*" -exec sed -i 's/localhost:3000/webwarfare-back.cluster-ig3.igpolytech.fr/g' {} \;
+          # Replace webwarfare-back.cluster-ig3.igpolytech.fr by webwarfare-back.cluster-ig3.igpolytech.fr
+          find . -type f -not -path "*/node_modules/*" -not -path "*/\.git/*" -exec sed -i 's/webwarfare-back.cluster-ig3.igpolytech.fr/webwarfare-back.cluster-ig3.igpolytech.fr/g' {} \;
 
           echo "URL replacements completed"
       - name: Commit changes
