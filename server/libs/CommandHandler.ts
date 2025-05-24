@@ -485,7 +485,8 @@ export class CommandHandler {
           break;
         case RoleLevel.ADMIN:
           return {
-            message: `Error: Player ${playerName} is already at the highest role level`,
+            message:
+              `Error: Player ${playerName} is already at the highest role level`,
             effect: { type: CommandEffectType.NONE, target: "", reason: "" },
           };
         default:
@@ -504,7 +505,8 @@ export class CommandHandler {
       }
 
       return {
-        message: `Player ${playerName} has been promoted to ${roleText} by ${sender}`,
+        message:
+          `Player ${playerName} has been promoted to ${roleText} by ${sender}`,
         effect: {
           type: CommandEffectType.ROLE_CHANGE,
           target: playerName,
@@ -522,7 +524,7 @@ export class CommandHandler {
       }
 
       const playerName = args[0];
-      
+
       if (playerName.toLowerCase() === "byxis") {
         return {
           message: "Error: Byxis cannot be demoted",
@@ -561,7 +563,8 @@ export class CommandHandler {
           break;
         case RoleLevel.USER:
           return {
-            message: `Error: Player ${playerName} is already at the lowest role level`,
+            message:
+              `Error: Player ${playerName} is already at the lowest role level`,
             effect: { type: CommandEffectType.NONE, target: "", reason: "" },
           };
         default:
@@ -580,7 +583,8 @@ export class CommandHandler {
       }
 
       return {
-        message: `Player ${playerName} has been demoted to ${roleText} by ${sender}`,
+        message:
+          `Player ${playerName} has been demoted to ${roleText} by ${sender}`,
         effect: {
           type: CommandEffectType.ROLE_CHANGE,
           target: playerName,

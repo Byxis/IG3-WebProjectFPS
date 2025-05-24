@@ -569,7 +569,7 @@ export class UIManager {
       if (document.pointerLockElement) {
         document.exitPointerLock();
       }
-      
+
       this.isChatboxActive = true;
       this.chatbox.style.opacity = 1;
       this.chatboxInput.focus();
@@ -584,13 +584,13 @@ export class UIManager {
     if (this.isChatboxActive) {
       this.isChatboxActive = false;
       this.chatboxInput.blur();
-      
+
       setTimeout(() => {
         if (!this.isChatboxActive) {
           this.chatbox.style.opacity = 0.5;
         }
       }, 3000);
-      
+
       setTimeout(() => {
         this.requestPointerLock();
       }, 100);

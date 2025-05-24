@@ -67,22 +67,25 @@ export class Player {
     const minBoxWidth = 80;
     const maxBoxWidth = 400;
     const boxHeight = 60;
-    
-    let boxWidth = Math.max(minBoxWidth, Math.min(maxBoxWidth, textWidth + (padding * 2)));
-    
+
+    let boxWidth = Math.max(
+      minBoxWidth,
+      Math.min(maxBoxWidth, textWidth + (padding * 2)),
+    );
+
     let fontSize = 48;
     if (textWidth + (padding * 2) > maxBoxWidth) {
       fontSize = Math.floor((maxBoxWidth - (padding * 2)) / textWidth * 48);
       fontSize = Math.max(24, fontSize);
       context.font = `bold ${fontSize}px Arial`;
-      
+
       const newTextWidth = context.measureText(username).width;
       boxWidth = Math.min(maxBoxWidth, newTextWidth + (padding * 2));
     }
-    
+
     canvas.width = Math.max(256, boxWidth + 40);
     canvas.height = 64;
-    
+
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.font = `bold ${fontSize}px Arial`;
 
