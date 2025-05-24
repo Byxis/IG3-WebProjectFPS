@@ -77,20 +77,17 @@ export class UIManager {
    */
   setupListeners() {
     sceneManager.renderer.domElement.addEventListener("click", () => {
-      if (!this.isChatboxActive) {
-        sceneManager.renderer.domElement.requestPointerLock();
-      }
+      this.requestPointerLock();
     });
 
     document.addEventListener("pointerlockchange", () => {
-      if (
-        document.pointerLockElement === sceneManager.renderer.domElement &&
-        !this.isChatboxActive
-      ) {
-        document.addEventListener(
-          "mousemove",
-          sceneManager.boundHandleMouseMove,
-        );
+      if (document.pointerLockElement === sceneManager.renderer.domElement) {
+        if (!this.isChatboxActive) {
+          document.addEventListener(
+            "mousemove",
+            sceneManager.boundHandleMouseMove,
+          );
+        }
       } else {
         document.removeEventListener(
           "mousemove",
@@ -118,56 +115,37 @@ export class UIManager {
 
     this.chatboxSend.addEventListener("click", (event) => {
       event.preventDefault();
-      const websocket = getWebSocket();
-      if (websocket && websocket.readyState === WebSocket.OPEN) {
-        const message = this.chatboxInput.value;
-        websocket.send(JSON.stringify({
-          type: MessageTypeEnum.SEND_CHAT_MESSAGE,
-          name: localStorage.getItem("username"),
-          message: message,
-        }));
+      if (this.chatboxInput.value.length > 0) {
+        const websocket = getWebSocket();
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+          const message = this.chatboxInput.value;
+          websocket.send(JSON.stringify({
+            type: MessageTypeEnum.SEND_CHAT_MESSAGE,
+            name: localStorage.getItem("username"),
+            message: message,
+          }));
+        }
+        this.chatboxInput.value = "";
       }
-      this.chatboxInput.value = "";
       this.chatboxInput.focus();
     });
 
     document.addEventListener("keydown", (event) => {
       if (event.code === "Enter") {
         if (!this.isChatboxActive) {
-          document.exitPointerLock();
-          this.chatbox.style.opacity = 1;
-          this.chatboxInput.focus();
-          this.isChatboxActive = true;
+          this.openChat();
         } else {
           if (this.chatboxInput.value.length > 0) {
             this.chatboxSend.click();
           } else {
-            this.chatboxInput.blur();
-            this.isChatboxActive = false;
-            setTimeout(() => {
-              if (!this.isChatboxActive) {
-                this.chatbox.style.opacity = 0.5;
-              }
-            }, 3000);
-            setTimeout(() => {
-              sceneManager.renderer.domElement.requestPointerLock();
-            }, 100);
+            this.closeChat();
           }
         }
       }
 
       if (event.code === "Escape") {
         if (this.isChatboxActive) {
-          this.chatboxInput.blur();
-          this.isChatboxActive = false;
-          setTimeout(() => {
-            if (!this.isChatboxActive) {
-              this.chatbox.style.opacity = 0.5;
-            }
-          }, 3000);
-          setTimeout(() => {
-            sceneManager.renderer.domElement.requestPointerLock();
-          }, 100);
+          this.closeChat();
         } else {
           document.exitPointerLock();
         }
@@ -177,6 +155,14 @@ export class UIManager {
       if (event.ctrlKey && event.code === "KeyP") {
         event.preventDefault();
         this.toggleDevMode();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (this.isChatboxActive) {
+        if (!this.chatbox.contains(event.target)) {
+          this.closeChat();
+        }
       }
     });
 
@@ -558,6 +544,57 @@ export class UIManager {
    */
   isPlayerCurrentlyDead() {
     return this.isPlayerDead;
+  }
+
+  /**
+   ** Requests pointer lock safely, avoiding multiple concurrent requests
+   * @returns {void}
+   */
+  requestPointerLock() {
+    if (!this.isChatboxActive && !document.pointerLockElement) {
+      try {
+        sceneManager.renderer.domElement.requestPointerLock();
+      } catch (error) {
+        console.warn("Failed to request pointer lock:", error);
+      }
+    }
+  }
+
+  /**
+   ** Opens the chat interface and exits pointer lock
+   * @returns {void}
+   */
+  openChat() {
+    if (!this.isChatboxActive) {
+      if (document.pointerLockElement) {
+        document.exitPointerLock();
+      }
+
+      this.isChatboxActive = true;
+      this.chatbox.style.opacity = 1;
+      this.chatboxInput.focus();
+    }
+  }
+
+  /**
+   ** Closes the chat interface and requests pointer lock
+   * @returns {void}
+   */
+  closeChat() {
+    if (this.isChatboxActive) {
+      this.isChatboxActive = false;
+      this.chatboxInput.blur();
+
+      setTimeout(() => {
+        if (!this.isChatboxActive) {
+          this.chatbox.style.opacity = 0.5;
+        }
+      }, 3000);
+
+      setTimeout(() => {
+        this.requestPointerLock();
+      }, 100);
+    }
   }
 }
 

@@ -129,6 +129,13 @@ export async function initiateNewPlayer(dataPlayer: {
     maxAmmo: CONFIG.MAX_AMMO,
   });
 
+  connectionManager.sendToConnection(dataPlayer.name, {
+    type: MessageTypeEnum.POSITION_CORRECTION,
+    position: player.position,
+    rotation: player.rotation,
+    pitch: player.pitch,
+  });
+
   matchManager.playerJoined();
 }
 
@@ -344,6 +351,13 @@ function respawnPlayer(playerName: string): void {
   connectionManager.broadcast({
     type: MessageTypeEnum.RESPAWN_EVENT,
     player: playerName,
+  });
+
+  connectionManager.sendToConnection(playerName, {
+    type: MessageTypeEnum.POSITION_CORRECTION,
+    position: players[playerName].position,
+    rotation: players[playerName].rotation,
+    pitch: players[playerName].pitch,
   });
 
   updatePlayer(players[playerName]);

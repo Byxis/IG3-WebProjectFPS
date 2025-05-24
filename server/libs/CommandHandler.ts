@@ -445,6 +445,154 @@ export class CommandHandler {
       };
     });
 
+    this.registerCommand("promote", RoleLevel.ADMIN, (args, sender) => {
+      if (args.length < 1) {
+        return {
+          message: "Error: You must specify a player name to promote",
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      const playerName = args[0];
+      if (!sqlHandler.doUserExists(playerName)) {
+        return {
+          message: `Error: Player ${playerName} does not exist`,
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      const userId = sqlHandler.getUserByName(playerName);
+      const currentRole = sqlHandler.getUserRole(userId);
+
+      if (currentRole === -1) {
+        return {
+          message: `Error: Could not retrieve role for player ${playerName}`,
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      let newRole: number;
+      let roleText: string;
+
+      switch (currentRole) {
+        case RoleLevel.USER:
+          newRole = RoleLevel.MODERATOR;
+          roleText = "Moderator";
+          break;
+        case RoleLevel.MODERATOR:
+          newRole = RoleLevel.ADMIN;
+          roleText = "Administrator";
+          break;
+        case RoleLevel.ADMIN:
+          return {
+            message:
+              `Error: Player ${playerName} is already at the highest role level`,
+            effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+          };
+        default:
+          return {
+            message: `Error: Invalid role level for player ${playerName}`,
+            effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+          };
+      }
+
+      const success = sqlHandler.changeUserRole(userId, newRole);
+      if (!success) {
+        return {
+          message: `Error: Failed to promote player ${playerName}`,
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      return {
+        message:
+          `Player ${playerName} has been promoted to ${roleText} by ${sender}`,
+        effect: {
+          type: CommandEffectType.ROLE_CHANGE,
+          target: playerName,
+          reason: `Promoted to ${roleText}`,
+        },
+      };
+    });
+
+    this.registerCommand("demote", RoleLevel.ADMIN, (args, sender) => {
+      if (args.length < 1) {
+        return {
+          message: "Error: You must specify a player name to demote",
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      const playerName = args[0];
+
+      if (playerName.toLowerCase() === "byxis") {
+        return {
+          message: "Error: Byxis cannot be demoted",
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      if (!sqlHandler.doUserExists(playerName)) {
+        return {
+          message: `Error: Player ${playerName} does not exist`,
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      const userId = sqlHandler.getUserByName(playerName);
+      const currentRole = sqlHandler.getUserRole(userId);
+
+      if (currentRole === -1) {
+        return {
+          message: `Error: Could not retrieve role for player ${playerName}`,
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      let newRole: number;
+      let roleText: string;
+
+      switch (currentRole) {
+        case RoleLevel.ADMIN:
+          newRole = RoleLevel.MODERATOR;
+          roleText = "Moderator";
+          break;
+        case RoleLevel.MODERATOR:
+          newRole = RoleLevel.USER;
+          roleText = "User";
+          break;
+        case RoleLevel.USER:
+          return {
+            message:
+              `Error: Player ${playerName} is already at the lowest role level`,
+            effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+          };
+        default:
+          return {
+            message: `Error: Invalid role level for player ${playerName}`,
+            effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+          };
+      }
+
+      const success = sqlHandler.changeUserRole(userId, newRole);
+      if (!success) {
+        return {
+          message: `Error: Failed to demote player ${playerName}`,
+          effect: { type: CommandEffectType.NONE, target: "", reason: "" },
+        };
+      }
+
+      return {
+        message:
+          `Player ${playerName} has been demoted to ${roleText} by ${sender}`,
+        effect: {
+          type: CommandEffectType.ROLE_CHANGE,
+          target: playerName,
+          reason: `Demoted to ${roleText}`,
+        },
+      };
+    });
+
     this.registerCommand(
       "settings",
       RoleLevel.USER,

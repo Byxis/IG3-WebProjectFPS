@@ -377,6 +377,9 @@ function handleWebSocketMessage(event) {
           game.handlePlayerRespawn(data.player);
           if (data.player === localStorage.getItem("username")) {
             uiManager.hideDeathOverlay();
+            GAMESTATE.physics.velocity.set(0, 0, 0);
+            GAMESTATE.physics.verticalVelocity = 0;
+            GAMESTATE.physics.isJumping = false;
           }
         }
         break;

