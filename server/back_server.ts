@@ -42,7 +42,7 @@ const app = new Application();
 
 app.use(
   oakCors({
-    origin: "https://localhost:8080",
+    origin: "https://webwarfare.cluster-ig3.igpolytech.fr",
     optionsSuccessStatus: 200,
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
