@@ -154,7 +154,7 @@ export class ServerPhysics {
     if (players[name]) {
       const now = performance.now();
       const deltaTime = (now - players[name].lastUpdateSended) / 1000;
-      return deltaTime > 1;
+      return deltaTime > 0.2;
     }
     return true;
   }

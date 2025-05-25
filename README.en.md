@@ -11,9 +11,10 @@
 
 </div>
 
-Real-time multiplayer first-person shooter developed with a secure client-server
-architecture. Robust authentication, server-side anti-cheat validation, and
-advanced moderation system.
+WebWarfare is a real-time multiplayer first-person shooter developed with a
+secure client-server architecture. The authentication is robust and secure.
+Server-side anti-cheat validation is implemented, with an advanced moderation
+system.
 
 ## 📋 Table of Contents
 
@@ -32,18 +33,17 @@ advanced moderation system.
 - [⚙️ CI/CD and Development Tools](#️-cicd-and-development-tools)
 - [📋 Requirements Compliance](#-requirements-compliance)
 - [🤖 AI Usage](#-ai-usage)
-- [🤝 Contributing](#-contributing)
 
 ## ✨ Features
 
 ### 🎮 Core Gameplay
 
 - **Real-time multiplayer FPS** with server-side validation
-- **Shooting system** with raycasting detection
+- **Shooting system** with raycasting detection + server validation
 - **Fluid movement** with jump and sprint
 - **Weapon reloading** with sounds and animations
 - **Real-time scoreboard** with K/D statistics
-- **Damage system** with specific zones (headshots/bodyshots)
+- **Coming soon**: Damage system with specific zones (headshots/bodyshots)
 
 ### 🔐 Authentication & Security
 
@@ -143,7 +143,8 @@ The game is deployed and accessible at:\
 [webwarfare.cluster-ig3.igpolytech.fr](https://webwarfare.cluster-ig3.igpolytech.fr)
 
 **Local development:**\
-Run with necessary permissions for Deno
+Run with necessary permissions for Deno (or with VSCode: Ctrl+Shift+P > Start
+All)
 
 **Local access:** `https://localhost:8080`
 
@@ -264,7 +265,6 @@ SQLite structure with tables for:
 
 - **Empty ammo** (`empty.mp3`, `dry-fire.mp3`, `dry-fire-high.mp3`): Empty
   weapon feedback
-- **Spatialized audio** for 3D immersion
 - **Synchronization** with visual animations
 
 ### Audio Sources and Copyright
@@ -290,7 +290,7 @@ SQLite structure with tables for:
 - Modern interface with transparencies
 - Fluid CSS animations
 - Responsive adaptive design
-- Consistent gaming theme
+- Consistent theme
 
 ## ⚙️ CI/CD and Development Tools
 
@@ -316,7 +316,7 @@ SQLite structure with tables for:
   - `Start Backend`: Starts back server and restarts on modification
   - `Start All`: Starts both back and front servers
   - `Compile TypeScript`: Compilation of shared files
-  - `Replace Imports`: Import conversion for browser
+  - `Replace Imports`: Replacement of .ts to .js in compiled shared files
 - **TypeScript** with strict configuration
 - **Deno** with granular permissions
 - **Hot-reload** for efficient development
@@ -383,7 +383,7 @@ In the context of this academic project, artificial intelligence tools were
 utilized to optimize the development process:
 
 - **Claude (Anthropic)**: Primary development and documentation assistant
-- **Le Chat (Mistral AI)**: Light technical assistance when needed
+- **Le Chat (Mistral AI)**: Light technical assistance and punctual assistance
 
 ### 🎯 Specific Applications
 
@@ -405,15 +405,6 @@ utilized to optimize the development process:
 
 > 💡 **Important note**: AI usage served as development assistance while
 > preserving the authenticity of academic work and technical skill acquisition.
-
-## 🤝 Contributing
-
-### Guidelines
-
-- TypeScript for server, JSDoc for documentation
-- Server-side validation mandatory
-- Clear client/server/shared separation
-- Testing and security priorities
 
 ---
 
