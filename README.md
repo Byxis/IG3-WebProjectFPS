@@ -11,9 +11,9 @@
 
 </div>
 
-Jeu de tir à la première personne multijoueur en temps réel développé avec une
-architecture client-serveur sécurisée. Authentification robuste, validation
-anti-triche côté serveur et système de modération avancé.
+WebWarfare est un jeu de tir à la première personne multijoueur en temps réel 
+développé avec une architecture client-serveur sécurisée. L'authentification est robuste est sûre.
+Un validation anti-triche côté serveur est implémentée, avec un système de modération avancé.
 
 ## 📋 Table des Matières
 
@@ -32,18 +32,17 @@ anti-triche côté serveur et système de modération avancé.
 - [⚙️ CI/CD et Outils de Développement](#️-cicd-et-outils-de-développement)
 - [📋 Conformité aux Exigences](#-conformité-aux-exigences)
 - [🤖 Utilisation de l'IA](#-utilisation-de-lia)
-- [🤝 Contribution](#-contribution)
 
 ## ✨ Fonctionnalités
 
 ### 🎮 Gameplay Core
 
 - **FPS multijoueur temps réel** avec validation côté serveur
-- **Système de tir** avec détection par raycasting
+- **Système de tir** avec détection par raycasting + validation serveur
 - **Mouvement fluide** avec saut et sprint
 - **Rechargement d'armes** avec sons et animations
 - **Scoreboard en temps réel** avec statistiques K/D
-- **Système de dégâts** avec zones spécifiques (headshots/bodyshots)
+- **Bientôt** : Système de dégâts avec zones spécifiques (headshots/bodyshots)
 
 ### 🔐 Authentification & Sécurité
 
@@ -145,7 +144,8 @@ Le jeu est déployé et accessible à l'adresse :\
 [webwarfare.cluster-ig3.igpolytech.fr](https://webwarfare.cluster-ig3.igpolytech.fr)
 
 **Développement local :**\
-Lancer avec les permissions nécessaires pour Deno
+Lancer avec les permissions nécessaires pour Deno 
+(ou avec VSCode : Ctrl+Shift+P > Start All)
 
 **Accès local :** `https://localhost:8080`
 
@@ -234,7 +234,7 @@ Structure SQLite avec tables pour :
 
 ### Côté Frontend
 
-- **Reconnexion automatique** WebSocket avec backoff exponentiel
+- **Reconnexion automatique** de la WebSocket
 - **Page d'erreur dédiée** avec redirection automatique
 - **Gestion des timeouts** et erreurs réseau
 - **Recovery automatique** après erreurs temporaires
@@ -267,7 +267,6 @@ Structure SQLite avec tables pour :
 
 - **Munitions vides** (`empty.mp3`, `dry-fire.mp3`, `dry-fire-high.mp3`) :
   Feedback d'arme déchargée
-- **Audio spatialisé** pour l'immersion 3D
 - **Synchronisation** avec les animations visuelles
 
 ### Sources Audio et Copyright
@@ -293,8 +292,8 @@ Structure SQLite avec tables pour :
 
 - Interface moderne avec transparences
 - Animations CSS fluides
-- Responsive design adaptatif
-- Thème cohérent gaming
+- Design responsive adaptatif
+- Thème cohérent
 
 ## ⚙️ CI/CD et Outils de Développement
 
@@ -322,7 +321,7 @@ Structure SQLite avec tables pour :
     modification
   - `Start All` : Démarre les deux serveurs back et front
   - `Compile TypeScript` : Compilation des fichiers partagés
-  - `Replace Imports` : Conversion des imports pour le browser
+  - `Replace Imports` : Remplacement des .ts en .js dans les fichiés partagé compilés
 - **TypeScript** avec configuration stricte
 - **Deno** avec permissions granulaires
 - **Hot-reload** pour un développement efficace
@@ -417,14 +416,6 @@ ont été utilisés pour optimiser le processus de développement :
 > développement tout en préservant l'authenticité du travail académique et
 > l'acquisition de compétences techniques.
 
-## 🤝 Contribution
-
-### Guidelines
-
-- TypeScript pour le serveur, JSDoc pour documentation
-- Validation côté serveur obligatoire
-- Séparation claire client/serveur/partagé
-- Tests et sécurité prioritaires
 
 ---
 
