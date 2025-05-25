@@ -11,9 +11,10 @@
 
 </div>
 
-WebWarfare is a real-time multiplayer first-person shooter 
-developed with a secure client-server architecture. The authentication is robust and secure.
-Server-side anti-cheat validation is implemented, with an advanced moderation system.
+WebWarfare is a real-time multiplayer first-person shooter developed with a
+secure client-server architecture. The authentication is robust and secure.
+Server-side anti-cheat validation is implemented, with an advanced moderation
+system.
 
 ## 📋 Table of Contents
 
@@ -142,8 +143,8 @@ The game is deployed and accessible at:\
 [webwarfare.cluster-ig3.igpolytech.fr](https://webwarfare.cluster-ig3.igpolytech.fr)
 
 **Local development:**\
-Run with necessary permissions for Deno 
-(or with VSCode: Ctrl+Shift+P > Start All)
+Run with necessary permissions for Deno (or with VSCode: Ctrl+Shift+P > Start
+All)
 
 **Local access:** `https://localhost:8080`
 
@@ -400,7 +401,7 @@ utilized to optimize the development process:
 - **Manual validation** of all improvement suggestions
 - **Accelerated learning** of new technologies (Deno, Three.js)
 - **Quality maintenance**: AI complements skills without replacing critical
- thinking
+  thinking
 
 > 💡 **Important note**: AI usage served as development assistance while
 > preserving the authenticity of academic work and technical skill acquisition.

@@ -11,9 +11,10 @@
 
 </div>
 
-WebWarfare est un jeu de tir à la première personne multijoueur en temps réel 
-développé avec une architecture client-serveur sécurisée. L'authentification est robuste est sûre.
-Un validation anti-triche côté serveur est implémentée, avec un système de modération avancé.
+WebWarfare est un jeu de tir à la première personne multijoueur en temps réel
+développé avec une architecture client-serveur sécurisée. L'authentification est
+robuste est sûre. Un validation anti-triche côté serveur est implémentée, avec
+un système de modération avancé.
 
 ## 📋 Table des Matières
 
@@ -144,8 +145,9 @@ Le jeu est déployé et accessible à l'adresse :\
 [webwarfare.cluster-ig3.igpolytech.fr](https://webwarfare.cluster-ig3.igpolytech.fr)
 
 **Développement local :**\
-Lancer avec les permissions nécessaires pour Deno 
-(ou avec VSCode : Ctrl+Shift+P > Start All)
+Lancer avec les permissions nécessaires pour Deno (ou avec VSCode : Ctrl+Shift+P
+
+> Start All)
 
 **Accès local :** `https://localhost:8080`
 
@@ -321,7 +323,8 @@ Structure SQLite avec tables pour :
     modification
   - `Start All` : Démarre les deux serveurs back et front
   - `Compile TypeScript` : Compilation des fichiers partagés
-  - `Replace Imports` : Remplacement des .ts en .js dans les fichiés partagé compilés
+  - `Replace Imports` : Remplacement des .ts en .js dans les fichiés partagé
+    compilés
 - **TypeScript** avec configuration stricte
 - **Deno** avec permissions granulaires
 - **Hot-reload** pour un développement efficace
@@ -415,7 +418,6 @@ ont été utilisés pour optimiser le processus de développement :
 > 💡 **Note importante** : L'utilisation de l'IA a servi d'assistance au
 > développement tout en préservant l'authenticité du travail académique et
 > l'acquisition de compétences techniques.
-
 
 ---
 
