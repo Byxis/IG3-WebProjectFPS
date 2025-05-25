@@ -27,7 +27,7 @@ export class MovementManager {
 
     // Verification timer for rare position sync
     this.lastVerificationTime = 0;
-    this.verificationInterval = 2000; // Every 2 seconds is enough for safety checks
+    this.verificationInterval = 500;
 
     // Player state
     this.playerState = {
