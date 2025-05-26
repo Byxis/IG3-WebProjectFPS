@@ -217,7 +217,8 @@ Lancer avec les permissions nécessaires pour Deno (ou avec VSCode : Ctrl+Shift+
 - **JWT Access/Refresh tokens** avec rotation automatique
 - **Validation serveur** de tous les mouvements
 - **CSP, CORS, CSRF** protection
-- **Rate limiting** sur les tentatives de connexion (5 tentatives max, 30s de cooldown)
+- **Rate limiting** sur les tentatives de connexion (5 tentatives max, 30s de
+  cooldown)
 - **Chiffrement bcrypt** des mots de passe
 
 ## 📊 Base de Données
