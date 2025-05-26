@@ -109,6 +109,48 @@ function hideError(elementId = "register-error") {
 }
 
 /**
+ ** Shows a rate limit error with countdown timer
+ * @param {string} message - The error message to display
+ * @param {number} retryAfterSeconds - Time in seconds before retry is allowed
+ */
+function showRateLimitError(message, retryAfterSeconds) {
+  const errorElement = document.getElementById("login-error");
+  if (errorElement) {
+    let countdown = retryAfterSeconds;
+    const baseMessage = message;
+
+    const updateMessage = () => {
+      const minutes = Math.floor(countdown / 60);
+      const seconds = countdown % 60;
+      const timeString = minutes > 0
+        ? `${minutes}m ${seconds}s`
+        : `${seconds}s`;
+
+      errorElement.textContent = `${baseMessage} (Retry in: ${timeString})`;
+    };
+
+    updateMessage();
+    errorElement.style.display = "block";
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-clock"></i> Rate Limited';
+
+    const interval = setInterval(() => {
+      countdown--;
+
+      if (countdown <= 0) {
+        clearInterval(interval);
+        errorElement.style.display = "none";
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'LOGIN <i class="fas fa-arrow-right"></i>';
+      } else {
+        updateMessage();
+      }
+    }, 1000);
+  }
+}
+
+/**
  ** Validates the registration password
  * @returns {boolean} Whether the password is valid
  */
@@ -224,7 +266,15 @@ async function submit() {
 
         if (errorData && errorData.error) {
           console.error("Error:", errorData);
-          showError(errorData.message || "Login failed", "login-error");
+
+          if (response.status === 429 && errorData.retryAfter) {
+            showRateLimitError(errorData.error, errorData.retryAfter);
+          } else {
+            showError(
+              errorData.error || errorData.message || "Login failed",
+              "login-error",
+            );
+          }
         } else {
           if (response.status === ErrorTypes.ACCESS_DENIED) {
             showError("Invalid username or password.", "login-error");

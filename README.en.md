@@ -213,7 +213,7 @@ All)
 - **JWT Access/Refresh tokens** with automatic rotation
 - **Server validation** of all movements
 - **CSP, CORS, CSRF** protection
-- **Rate limiting** on critical actions
+- **Rate limiting** on login/register attempts (5 attempts max, 30s cooldown)
 - **bcrypt encryption** of passwords
 
 ## 📊 Database

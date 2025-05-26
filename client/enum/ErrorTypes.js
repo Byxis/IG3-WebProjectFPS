@@ -11,6 +11,5 @@ export const ErrorTypes = {
   // Custom application errors
   SERVER_UNREACHABLE: 600,
   AUTH_FAILED: 601,
-  TOO_MANY_REQUESTS: 602,
   UNKNOWN: 699,
 };

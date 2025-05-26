@@ -13,7 +13,6 @@ export enum ErrorType {
   // Custom application errors
   SERVER_UNREACHABLE = 600,
   AUTH_FAILED = 601,
-  TOO_MANY_REQUESTS = 602,
   UNKNOWN = 699,
 }
 
@@ -30,7 +29,6 @@ export const ErrorMessages: Record<ErrorType, string> = {
   [ErrorType.NOT_FOUND]: "Resource not found",
   [ErrorType.CONFLICT]: "Resource conflict",
   [ErrorType.UNKNOWN]: "Unknown error",
-  [ErrorType.TOO_MANY_REQUESTS]: "Too many requests",
 };
 
 export function getErrorTypeFromHttpStatus(status: number): ErrorType {
