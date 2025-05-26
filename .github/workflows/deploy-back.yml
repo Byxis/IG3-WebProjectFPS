@@ -31,7 +31,7 @@ jobs:
         run: |
           # Create Procfile with updated permissions for backend
           cat > Procfile << 'EOF'
-          web: ./.heroku/bin/deno run --allow-net --allow-read --allow-import --allow-write --watch server/back_server.ts $PORT
+          web: ./.heroku/bin/deno run --allow-net --allow-read --allow-import --allow-write server/back_server.ts $PORT
           EOF
 
           # Create .buildpacks
