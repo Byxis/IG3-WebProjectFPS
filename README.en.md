@@ -1,3 +1,5 @@
+![Polytech Banner](banner_polytech_ig.png)
+
 # 🎮 WebWarfare - Multiplayer Web FPS
 
 <div align="center">
