@@ -1,9 +1,9 @@
 import movementManager from "./MovementManager.js";
 import sceneManager from "./SceneManager.js";
 import { Player } from "./Player.js";
-import { GAMESTATE } from "https://localhost:3000/shared/Config.js";
+import { GAMESTATE } from "https://webwarfare-back.cluster-ig3.igpolytech.fr/shared/Config.js";
 import { getWebSocket, wsState } from "./WebSocketManager.js";
-import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
+import { MessageTypeEnum } from "https://webwarfare-back.cluster-ig3.igpolytech.fr/shared/MessageTypeEnum.js";
 import uiManager from "./UIManager.js";
 
 export class Game {

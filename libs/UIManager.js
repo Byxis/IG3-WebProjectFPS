@@ -1,7 +1,7 @@
-import { GAMESTATE } from "https://localhost:3000/shared/Config.js";
+import { GAMESTATE } from "https://webwarfare-back.cluster-ig3.igpolytech.fr/shared/Config.js";
 import { getWebSocket } from "./WebSocketManager.js";
 import sceneManager from "./SceneManager.js";
-import { MessageTypeEnum } from "https://localhost:3000/shared/MessageTypeEnum.js";
+import { MessageTypeEnum } from "https://webwarfare-back.cluster-ig3.igpolytech.fr/shared/MessageTypeEnum.js";
 
 export class UIManager {
   /**
