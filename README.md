@@ -151,7 +151,7 @@ Lancer avec les permissions nécessaires pour Deno (ou avec VSCode : Ctrl+Shift+
 
 > Start All)
 
-**Accès local :** `https://localhost:8080`
+**Accès local :** `https://webwarfare.cluster-ig3.igpolytech.fr`
 
 ## 🎯 Gameplay
 

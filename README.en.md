@@ -148,7 +148,7 @@ The game is deployed and accessible at:\
 Run with necessary permissions for Deno (or with VSCode: Ctrl+Shift+P > Start
 All)
 
-**Local access:** `https://localhost:8080`
+**Local access:** `https://webwarfare.cluster-ig3.igpolytech.fr`
 
 ## 🎯 Gameplay
 
