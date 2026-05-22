@@ -165,21 +165,17 @@ The server uses a persistent SQLite database. You can build and run it with or w
     ```
 *   **Run (without data persistence):**
     ```bash
-    docker run --rm -p 3000:3000 webwarfare-back
+    docker run --rm -p 3020:3020 webwarfare-back
     ```
 *   **Run with SQLite database persistence:**
-    *   **On Linux/macOS:**
-        ```bash
-        docker run --rm -p 3000:3000 -v $(pwd)/server/database:/app/server/database webwarfare-back
-        ```
-    *   **On Windows (PowerShell):**
-        ```bash
-        docker run --rm -p 3000:3000 -v ${PWD}/server/database:/app/server/database webwarfare-back
-        ```
+    Use a Docker named volume to let Docker automatically handle file permissions and storage (Recommended & Cross-platform) :
+    ```bash
+    docker run --rm -p 3020:3020 -v webwarfare-db:/app/server/database webwarfare-back
+    ```
 
 ### 2. Frontend (Client)
 
-The static client is served by a minimalist Oak server configured to listen on port `8080`.
+The static client is served by a minimalist Oak server configured to listen on port `8092`.
 
 *   **Build the image (from the project root):**
     ```bash
@@ -187,14 +183,14 @@ The static client is served by a minimalist Oak server configured to listen on p
     ```
 *   **Run the client:**
     ```bash
-    docker run --rm -p 8080:8080 webwarfare-front
+    docker run --rm -p 8092:8092 webwarfare-front
     ```
 
 ### 3. Local Access
 
 Once both containers are running:
-*   Access the game via: `http://localhost:8080` (or `https://localhost:8080` if configured with SSL).
-*   The API and WebSockets will listen on: `http://localhost:3000` / `ws://localhost:3000`.
+*   Access the game via: `http://localhost:8092` (or `https://localhost:8092` if configured with SSL).
+*   The API and WebSockets will listen on: `http://localhost:3020` / `ws://localhost:3020`.
 
 > [!TIP]
 > If you deploy to a remote production server with HTTPS, remember to adapt the URL configuration in the corresponding config files and use a reverse proxy (such as Nginx, Caddy, or Traefik) to handle SSL certificates.

@@ -42,7 +42,12 @@ const app = new Application({ proxy: true });
 
 app.use(
   oakCors({
-    origin: ["http://localhost:8080", "https://localhost:8080"],
+    origin: [
+      "http://localhost:8092",
+      "https://localhost:8092",
+      "https://webwarfare.byxis.axithem.fr",
+      "https://webwarfare.byxis.axithem.fr/",
+    ],
     optionsSuccessStatus: 200,
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],

@@ -168,21 +168,17 @@ Le serveur utilise une base de données SQLite persistante. Vous pouvez le const
     ```
 *   **Lancement (sans persistance des données) :**
     ```bash
-    docker run --rm -p 3000:3000 webwarfare-back
+    docker run --rm -p 3020:3020 webwarfare-back
     ```
 *   **Lancement avec persistance de la base de données SQLite :**
-    *   **Sur Linux/macOS :**
-        ```bash
-        docker run --rm -p 3000:3000 -v $(pwd)/server/database:/app/server/database webwarfare-back
-        ```
-    *   **Sur Windows (PowerShell) :**
-        ```bash
-        docker run --rm -p 3000:3000 -v ${PWD}/server/database:/app/server/database webwarfare-back
-        ```
+    Utilisez un volume nommé Docker pour laisser Docker gérer le stockage et les droits d'accès automatiquement (Recommandé & Multi-plateforme) :
+    ```bash
+    docker run --rm -p 3020:3020 -v webwarfare-db:/app/server/database webwarfare-back
+    ```
 
 ### 2. Frontend (Client)
 
-Le client statique est servi par un serveur Oak minimaliste configuré pour écouter sur le port `8080`.
+Le client statique est servi par un serveur Oak minimaliste configuré pour écouter sur le port `8092`.
 
 *   **Construction de l'image (depuis la racine du projet) :**
     ```bash
@@ -190,14 +186,14 @@ Le client statique est servi par un serveur Oak minimaliste configuré pour éco
     ```
 *   **Lancement du client :**
     ```bash
-    docker run --rm -p 8080:8080 webwarfare-front
+    docker run --rm -p 8092:8092 webwarfare-front
     ```
 
 ### 3. Accès local
 
 Une fois les deux conteneurs lancés :
-*   Accédez au jeu via : `http://localhost:8080` (ou `https://localhost:8080` si configuré avec SSL).
-*   L'API et les WebSockets écouteront sur : `http://localhost:3000` / `ws://localhost:3000`.
+*   Accédez au jeu via : `http://localhost:8092` (ou `https://localhost:8092` si configuré avec SSL).
+*   L'API et les WebSockets écouteront sur : `http://localhost:3020` / `ws://localhost:3020`.
 
 > [!TIP]
 > Si vous déployez sur un serveur distant en production avec HTTPS, n'oubliez pas d'adapter la configuration des URLs dans les fichiers de configuration correspondants et d'utiliser un reverse proxy (comme Nginx, Caddy ou Traefik) pour gérer les certificats SSL.

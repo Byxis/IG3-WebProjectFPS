@@ -14,8 +14,8 @@ COPY --chown=deno:deno server/ ./server/
 
 RUN deno cache --allow-import server/back_server.ts
 
-EXPOSE 3000
-ENV PORT=3000
+EXPOSE 3020
+ENV PORT=3020
 
 VOLUME ["/app/server/database"]
 

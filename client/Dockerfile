@@ -11,7 +11,7 @@ RUN deno cache --allow-import server.ts
 
 COPY --chown=deno:deno . .
 
-EXPOSE 8080
-ENV PORT=8080
+EXPOSE 8092
+ENV PORT=8092
 
 CMD ["run", "--allow-net", "--allow-read", "--allow-env", "--allow-import", "server.ts"]

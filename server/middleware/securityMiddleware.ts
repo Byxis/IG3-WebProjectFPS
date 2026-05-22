@@ -133,7 +133,11 @@ export const csrfProtection = async (
   if (ctx.request.method !== "GET") {
     const origin = ctx.request.headers.get("Origin");
 
-    if (!origin || (!origin.startsWith("https://localhost:8080") && !origin.startsWith("http://localhost:8080"))) {
+    if (!origin || (
+      !origin.startsWith("https://localhost:8092") && 
+      !origin.startsWith("http://localhost:8092") && 
+      !origin.startsWith("https://webwarfare.byxis.axithem.fr")
+    )) {
       console.log("❌ CSRF validation failed: Invalid origin");
       ctx.response.status = 403;
       ctx.response.body = { error: "CSRF validation failed" };
@@ -161,7 +165,7 @@ export const cspMiddleware = async (
       "'self'",
       `'nonce-${nonce}'`,
       "cdn.skypack.dev",
-      "localhost:3000",
+      "localhost:3020",
     ].join(" "),
     styles: [
       "'self'",
