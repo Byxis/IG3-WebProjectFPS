@@ -1,9 +1,9 @@
 import movementManager from "./MovementManager.js";
 import sceneManager from "./SceneManager.js";
 import { Player } from "./Player.js";
-import { GAMESTATE } from "http://localhost:3020/shared/Config.js";
+import { GAMESTATE } from "shared/Config.js";
 import { getWebSocket, wsState } from "./WebSocketManager.js";
-import { MessageTypeEnum } from "http://localhost:3020/shared/MessageTypeEnum.js";
+import { MessageTypeEnum } from "shared/MessageTypeEnum.js";
 import uiManager from "./UIManager.js";
 
 export class Game {

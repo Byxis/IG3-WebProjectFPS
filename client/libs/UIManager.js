@@ -1,7 +1,7 @@
-import { GAMESTATE } from "http://localhost:3020/shared/Config.js";
+import { GAMESTATE } from "shared/Config.js";
 import { getWebSocket } from "./WebSocketManager.js";
 import sceneManager from "./SceneManager.js";
-import { MessageTypeEnum } from "http://localhost:3020/shared/MessageTypeEnum.js";
+import { MessageTypeEnum } from "shared/MessageTypeEnum.js";
 
 export class UIManager {
   /**

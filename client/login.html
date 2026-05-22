@@ -108,6 +108,23 @@
     </div>
     -->
 
+    <script>
+      (function() {
+        const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "0.0.0.0";
+        const backendUrl = isLocal 
+          ? "http://localhost:3020" 
+          : `${window.location.protocol}//${window.location.hostname}:3020`;
+        const importMap = {
+          imports: {
+            "shared/": `${backendUrl}/shared/`
+          }
+        };
+        const script = document.createElement("script");
+        script.type = "importmap";
+        script.textContent = JSON.stringify(importMap);
+        document.currentScript.after(script);
+      })();
+    </script>
     <script src="scripts/background.js" type="module"></script>
     <script src="scripts/login.js" type="module"></script>
   </body>
