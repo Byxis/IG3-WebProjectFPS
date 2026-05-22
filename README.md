@@ -25,6 +25,7 @@ un système de modération avancé.
 - [🔧 Technologies](#-technologies)
 - [⚙️ Installation](#️-installation)
 - [🚀 Démarrage](#-démarrage)
+- [🐳 Déploiement avec Docker](#-déploiement-avec-docker)
 - [🎯 Gameplay](#-gameplay)
 - [👥 Chat et Modération](#-chat-et-modération)
 - [🔐 Sécurité](#-sécurité)
@@ -152,6 +153,54 @@ Lancer avec les permissions nécessaires pour Deno (ou avec VSCode : Ctrl+Shift+
 > Start All)
 
 **Accès local :** `https://localhost:8080`
+
+## 🐳 Déploiement avec Docker
+
+Le projet inclut des configurations Docker pour déployer facilement le frontend et le backend de manière isolée et reproductible.
+
+### 1. Backend (Serveur)
+
+Le serveur utilise une base de données SQLite persistante. Vous pouvez le construire et le lancer avec ou sans persistance des données.
+
+*   **Construction de l'image (depuis la racine du projet) :**
+    ```bash
+    docker build -t webwarfare-back -f server/Dockerfile .
+    ```
+*   **Lancement (sans persistance des données) :**
+    ```bash
+    docker run --rm -p 3000:3000 webwarfare-back
+    ```
+*   **Lancement avec persistance de la base de données SQLite :**
+    *   **Sur Linux/macOS :**
+        ```bash
+        docker run --rm -p 3000:3000 -v $(pwd)/server/database:/app/server/database webwarfare-back
+        ```
+    *   **Sur Windows (PowerShell) :**
+        ```bash
+        docker run --rm -p 3000:3000 -v ${PWD}/server/database:/app/server/database webwarfare-back
+        ```
+
+### 2. Frontend (Client)
+
+Le client statique est servi par un serveur Oak minimaliste configuré pour écouter sur le port `8080`.
+
+*   **Construction de l'image (depuis la racine du projet) :**
+    ```bash
+    docker build -t webwarfare-front -f client/Dockerfile client/
+    ```
+*   **Lancement du client :**
+    ```bash
+    docker run --rm -p 8080:8080 webwarfare-front
+    ```
+
+### 3. Accès local
+
+Une fois les deux conteneurs lancés :
+*   Accédez au jeu via : `http://localhost:8080` (ou `https://localhost:8080` si configuré avec SSL).
+*   L'API et les WebSockets écouteront sur : `http://localhost:3000` / `ws://localhost:3000`.
+
+> [!TIP]
+> Si vous déployez sur un serveur distant en production avec HTTPS, n'oubliez pas d'adapter la configuration des URLs dans les fichiers de configuration correspondants et d'utiliser un reverse proxy (comme Nginx, Caddy ou Traefik) pour gérer les certificats SSL.
 
 ## 🎯 Gameplay
 

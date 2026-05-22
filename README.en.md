@@ -25,6 +25,7 @@ system.
 - [🔧 Technologies](#-technologies)
 - [⚙️ Installation](#️-installation)
 - [🚀 Getting Started](#-getting-started)
+- [🐳 Deployment with Docker](#-deployment-with-docker)
 - [🎯 Gameplay](#-gameplay)
 - [👥 Chat and Moderation](#-chat-and-moderation)
 - [🔐 Security](#-security)
@@ -149,6 +150,54 @@ Run with necessary permissions for Deno (or with VSCode: Ctrl+Shift+P > Start
 All)
 
 **Local access:** `https://localhost:8080`
+
+## 🐳 Deployment with Docker
+
+The project includes Docker configurations to easily deploy the frontend and backend in an isolated and reproducible manner.
+
+### 1. Backend (Server)
+
+The server uses a persistent SQLite database. You can build and run it with or without data persistence.
+
+*   **Build the image (from the project root):**
+    ```bash
+    docker build -t webwarfare-back -f server/Dockerfile .
+    ```
+*   **Run (without data persistence):**
+    ```bash
+    docker run --rm -p 3000:3000 webwarfare-back
+    ```
+*   **Run with SQLite database persistence:**
+    *   **On Linux/macOS:**
+        ```bash
+        docker run --rm -p 3000:3000 -v $(pwd)/server/database:/app/server/database webwarfare-back
+        ```
+    *   **On Windows (PowerShell):**
+        ```bash
+        docker run --rm -p 3000:3000 -v ${PWD}/server/database:/app/server/database webwarfare-back
+        ```
+
+### 2. Frontend (Client)
+
+The static client is served by a minimalist Oak server configured to listen on port `8080`.
+
+*   **Build the image (from the project root):**
+    ```bash
+    docker build -t webwarfare-front -f client/Dockerfile client/
+    ```
+*   **Run the client:**
+    ```bash
+    docker run --rm -p 8080:8080 webwarfare-front
+    ```
+
+### 3. Local Access
+
+Once both containers are running:
+*   Access the game via: `http://localhost:8080` (or `https://localhost:8080` if configured with SSL).
+*   The API and WebSockets will listen on: `http://localhost:3000` / `ws://localhost:3000`.
+
+> [!TIP]
+> If you deploy to a remote production server with HTTPS, remember to adapt the URL configuration in the corresponding config files and use a reverse proxy (such as Nginx, Caddy, or Traefik) to handle SSL certificates.
 
 ## 🎯 Gameplay
 
