@@ -98,14 +98,14 @@ authRoutes.post("/register", csrfProtection, async (ctx) => {
 
   ctx.cookies.set("accessToken", tokens.accessToken, {
     httpOnly: true,
-    secure: true,
+    secure: (ctx.request.url.hostname === "localhost" || ctx.request.url.hostname === "127.0.0.1" || ctx.request.url.hostname === "0.0.0.0") ? false : ctx.request.secure,
     sameSite: "strict",
     maxAge: Math.floor(ACCESS_TOKEN_EXP / 1000), // Convert ms to seconds
   });
 
   ctx.cookies.set("refreshToken", tokens.refreshToken, {
     httpOnly: true,
-    secure: true,
+    secure: (ctx.request.url.hostname === "localhost" || ctx.request.url.hostname === "127.0.0.1" || ctx.request.url.hostname === "0.0.0.0") ? false : ctx.request.secure,
     sameSite: "strict",
     maxAge: Math.floor(REFRESH_TOKEN_EXP / 1000), // Convert ms to seconds
   });
@@ -168,14 +168,14 @@ authRoutes.post("/login", csrfProtection, rateLimiter, async (ctx) => {
 
   ctx.cookies.set("accessToken", tokens.accessToken, {
     httpOnly: true,
-    secure: true,
+    secure: (ctx.request.url.hostname === "localhost" || ctx.request.url.hostname === "127.0.0.1" || ctx.request.url.hostname === "0.0.0.0") ? false : ctx.request.secure,
     sameSite: "strict",
     maxAge: Math.floor(ACCESS_TOKEN_EXP / 1000),
   });
 
   ctx.cookies.set("refreshToken", tokens.refreshToken, {
     httpOnly: true,
-    secure: true,
+    secure: (ctx.request.url.hostname === "localhost" || ctx.request.url.hostname === "127.0.0.1" || ctx.request.url.hostname === "0.0.0.0") ? false : ctx.request.secure,
     sameSite: "strict",
     maxAge: Math.floor(REFRESH_TOKEN_EXP / 1000),
   });
@@ -241,14 +241,14 @@ authRoutes.post("/refresh", async (ctx) => {
 
   ctx.cookies.set("accessToken", newTokens.accessToken, {
     httpOnly: true,
-    secure: true,
+    secure: (ctx.request.url.hostname === "localhost" || ctx.request.url.hostname === "127.0.0.1" || ctx.request.url.hostname === "0.0.0.0") ? false : ctx.request.secure,
     sameSite: "strict",
     maxAge: Math.floor(ACCESS_TOKEN_EXP / 1000),
   });
 
   ctx.cookies.set("refreshToken", newTokens.refreshToken, {
     httpOnly: true,
-    secure: true,
+    secure: (ctx.request.url.hostname === "localhost" || ctx.request.url.hostname === "127.0.0.1" || ctx.request.url.hostname === "0.0.0.0") ? false : ctx.request.secure,
     sameSite: "strict",
     maxAge: Math.floor(REFRESH_TOKEN_EXP / 1000),
   });

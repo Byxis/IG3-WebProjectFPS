@@ -38,11 +38,11 @@ gameLoop.start();
   }
 })();
 
-const app = new Application();
+const app = new Application({ proxy: true });
 
 app.use(
   oakCors({
-    origin: "https://localhost:8080",
+    origin: ["http://localhost:8080", "https://localhost:8080"],
     optionsSuccessStatus: 200,
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -65,15 +65,18 @@ app.use(async (ctx, next) => {
   }
 });
 
-if (Deno.args.length < 1) {
+const envPort = Deno.env.get("PORT");
+if (Deno.args.length < 1 && !envPort) {
   console.log(
     `Usage: $ deno run --allow-net server.ts PORT [CERT_PATH KEY_PATH]`,
   );
   Deno.exit();
 }
 
+const port = Deno.args[0] ? Number(Deno.args[0]) : Number(envPort);
+
 let options: ListenOptions = {
-  port: Number(Deno.args[0]),
+  port: port,
 };
 
 if (Deno.args.length >= 3) {
@@ -81,7 +84,7 @@ if (Deno.args.length >= 3) {
   const key = await Deno.readTextFile(Deno.args[2]);
 
   options = {
-    port: Number(Deno.args[0]),
+    port: port,
     secure: true,
     cert: cert,
     key: key,
@@ -89,10 +92,7 @@ if (Deno.args.length >= 3) {
   console.log(`SSL conf ready (use https) 🔐`);
 } else {
   options = {
-    port: Number(Deno.args[0]),
-    secure: true,
-    cert: "",
-    key: "",
+    port: port,
   };
 }
 
