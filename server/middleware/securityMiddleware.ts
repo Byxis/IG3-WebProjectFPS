@@ -65,14 +65,14 @@ export async function refreshTokenMiddleware(ctx: Context) {
 
   ctx.cookies.set("accessToken", newTokens.accessToken, {
     httpOnly: true,
-    secure: true,
+    secure: (ctx.request.url.hostname === "localhost" || ctx.request.url.hostname === "127.0.0.1" || ctx.request.url.hostname === "0.0.0.0") ? false : ctx.request.secure,
     sameSite: "strict",
     maxAge: Math.floor(ACCESS_TOKEN_EXP / 1000),
   });
 
   ctx.cookies.set("refreshToken", newTokens.refreshToken, {
     httpOnly: true,
-    secure: true,
+    secure: (ctx.request.url.hostname === "localhost" || ctx.request.url.hostname === "127.0.0.1" || ctx.request.url.hostname === "0.0.0.0") ? false : ctx.request.secure,
     sameSite: "strict",
     maxAge: Math.floor(REFRESH_TOKEN_EXP / 1000),
   });
@@ -133,7 +133,7 @@ export const csrfProtection = async (
   if (ctx.request.method !== "GET") {
     const origin = ctx.request.headers.get("Origin");
 
-    if (!origin || !origin.startsWith("https://localhost:8080")) {
+    if (!origin || (!origin.startsWith("https://localhost:8080") && !origin.startsWith("http://localhost:8080"))) {
       console.log("❌ CSRF validation failed: Invalid origin");
       ctx.response.status = 403;
       ctx.response.body = { error: "CSRF validation failed" };

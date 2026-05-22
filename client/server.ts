@@ -34,15 +34,18 @@ app.use(async (ctx) => {
   }
 });
 
-if (Deno.args.length < 1) {
+const envPort = Deno.env.get("PORT");
+if (Deno.args.length < 1 && !envPort) {
   console.log(
     `Usage: $ deno run --allow-net --allow-read=./ server.ts PORT [CERT_PATH KEY_PATH]`,
   );
   Deno.exit();
 }
 
+const port = Deno.args[0] ? Number(Deno.args[0]) : Number(envPort);
+
 let options: ListenOptions = {
-  port: Number(Deno.args[0]),
+  port: port,
 };
 
 if (Deno.args.length >= 3) {
@@ -50,7 +53,7 @@ if (Deno.args.length >= 3) {
   const keyContent = await Deno.readTextFile(Deno.args[2]);
 
   options = {
-    port: Number(Deno.args[0]),
+    port: port,
     secure: true,
     cert: certContent,
     key: keyContent,
@@ -58,9 +61,8 @@ if (Deno.args.length >= 3) {
   console.log(`SSL conf ready (use https)`);
 } else {
   options = {
-    // Force secure to true, Dokku proxy will handle SSL
-    port: Number(Deno.args[0]),
-    secure: true,
+    // Dokku proxy will handle SSL
+    port: port,
   };
 }
 
